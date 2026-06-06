@@ -1,0 +1,1 @@
+// Report event screen placeholder.

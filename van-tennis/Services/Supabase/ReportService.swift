@@ -1,0 +1,1 @@
+// Supabase report service placeholder.

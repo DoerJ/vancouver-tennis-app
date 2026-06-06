@@ -1,0 +1,577 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXContainerItemProxy section */
+		692741D02FD3F8B700751ADB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 692741B72FD3F8B600751ADB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 692741BE2FD3F8B600751ADB;
+			remoteInfo = "van-tennis";
+		};
+		692741DA2FD3F8B700751ADB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 692741B72FD3F8B600751ADB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 692741BE2FD3F8B600751ADB;
+			remoteInfo = "van-tennis";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		692741BF2FD3F8B600751ADB /* van-tennis.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "van-tennis.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		692741CF2FD3F8B700751ADB /* van-tennisTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "van-tennisTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		692741D92FD3F8B700751ADB /* van-tennisUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "van-tennisUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6927441D2FD4080200751ADB /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
+		692744202FD4500000751ADB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		692741C12FD3F8B600751ADB /* van-tennis */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "van-tennis";
+			sourceTree = "<group>";
+		};
+		692741D22FD3F8B700751ADB /* van-tennisTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "van-tennisTests";
+			sourceTree = "<group>";
+		};
+		692741DC2FD3F8B700751ADB /* van-tennisUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "van-tennisUITests";
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		692741BC2FD3F8B600751ADB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		692741CC2FD3F8B700751ADB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		692741D62FD3F8B700751ADB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		692741B62FD3F8B600751ADB = {
+			isa = PBXGroup;
+			children = (
+				6927441D2FD4080200751ADB /* .gitignore */,
+				692744212FD4500000751ADB /* Config */,
+				692741C12FD3F8B600751ADB /* van-tennis */,
+				692741D22FD3F8B700751ADB /* van-tennisTests */,
+				692741DC2FD3F8B700751ADB /* van-tennisUITests */,
+				692741C02FD3F8B600751ADB /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		692741C02FD3F8B600751ADB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				692741BF2FD3F8B600751ADB /* van-tennis.app */,
+				692741CF2FD3F8B700751ADB /* van-tennisTests.xctest */,
+				692741D92FD3F8B700751ADB /* van-tennisUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		692744212FD4500000751ADB /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				692744202FD4500000751ADB /* Info.plist */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		692741BE2FD3F8B600751ADB /* van-tennis */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 692741E32FD3F8B700751ADB /* Build configuration list for PBXNativeTarget "van-tennis" */;
+			buildPhases = (
+				692741BB2FD3F8B600751ADB /* Sources */,
+				692741BC2FD3F8B600751ADB /* Frameworks */,
+				692741BD2FD3F8B600751ADB /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				692741C12FD3F8B600751ADB /* van-tennis */,
+			);
+			name = "van-tennis";
+			packageProductDependencies = (
+			);
+			productName = "van-tennis";
+			productReference = 692741BF2FD3F8B600751ADB /* van-tennis.app */;
+			productType = "com.apple.product-type.application";
+		};
+		692741CE2FD3F8B700751ADB /* van-tennisTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 692741E62FD3F8B700751ADB /* Build configuration list for PBXNativeTarget "van-tennisTests" */;
+			buildPhases = (
+				692741CB2FD3F8B700751ADB /* Sources */,
+				692741CC2FD3F8B700751ADB /* Frameworks */,
+				692741CD2FD3F8B700751ADB /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				692741D12FD3F8B700751ADB /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				692741D22FD3F8B700751ADB /* van-tennisTests */,
+			);
+			name = "van-tennisTests";
+			packageProductDependencies = (
+			);
+			productName = "van-tennisTests";
+			productReference = 692741CF2FD3F8B700751ADB /* van-tennisTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		692741D82FD3F8B700751ADB /* van-tennisUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 692741E92FD3F8B700751ADB /* Build configuration list for PBXNativeTarget "van-tennisUITests" */;
+			buildPhases = (
+				692741D52FD3F8B700751ADB /* Sources */,
+				692741D62FD3F8B700751ADB /* Frameworks */,
+				692741D72FD3F8B700751ADB /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				692741DB2FD3F8B700751ADB /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				692741DC2FD3F8B700751ADB /* van-tennisUITests */,
+			);
+			name = "van-tennisUITests";
+			packageProductDependencies = (
+			);
+			productName = "van-tennisUITests";
+			productReference = 692741D92FD3F8B700751ADB /* van-tennisUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		692741B72FD3F8B600751ADB /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1620;
+				LastUpgradeCheck = 1620;
+				TargetAttributes = {
+					692741BE2FD3F8B600751ADB = {
+						CreatedOnToolsVersion = 16.2;
+					};
+					692741CE2FD3F8B700751ADB = {
+						CreatedOnToolsVersion = 16.2;
+						TestTargetID = 692741BE2FD3F8B600751ADB;
+					};
+					692741D82FD3F8B700751ADB = {
+						CreatedOnToolsVersion = 16.2;
+						TestTargetID = 692741BE2FD3F8B600751ADB;
+					};
+				};
+			};
+			buildConfigurationList = 692741BA2FD3F8B600751ADB /* Build configuration list for PBXProject "van-tennis" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 692741B62FD3F8B600751ADB;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 692741C02FD3F8B600751ADB /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				692741BE2FD3F8B600751ADB /* van-tennis */,
+				692741CE2FD3F8B700751ADB /* van-tennisTests */,
+				692741D82FD3F8B700751ADB /* van-tennisUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		692741BD2FD3F8B600751ADB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		692741CD2FD3F8B700751ADB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		692741D72FD3F8B700751ADB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		692741BB2FD3F8B600751ADB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		692741CB2FD3F8B700751ADB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		692741D52FD3F8B700751ADB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		692741D12FD3F8B700751ADB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 692741BE2FD3F8B600751ADB /* van-tennis */;
+			targetProxy = 692741D02FD3F8B700751ADB /* PBXContainerItemProxy */;
+		};
+		692741DB2FD3F8B700751ADB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 692741BE2FD3F8B600751ADB /* van-tennis */;
+			targetProxy = 692741DA2FD3F8B700751ADB /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		692741E12FD3F8B700751ADB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		692741E22FD3F8B700751ADB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		692741E42FD3F8B700751ADB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"van-tennis/Preview Content\"";
+				DEVELOPMENT_TEAM = 84M89SPH3R;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Config/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.van-tennis";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		692741E52FD3F8B700751ADB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"van-tennis/Preview Content\"";
+				DEVELOPMENT_TEAM = 84M89SPH3R;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Config/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.van-tennis";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		692741E72FD3F8B700751ADB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 84M89SPH3R;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.van-tennisTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/van-tennis.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/van-tennis";
+			};
+			name = Debug;
+		};
+		692741E82FD3F8B700751ADB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 84M89SPH3R;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.van-tennisTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/van-tennis.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/van-tennis";
+			};
+			name = Release;
+		};
+		692741EA2FD3F8B700751ADB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 84M89SPH3R;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.van-tennisUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "van-tennis";
+			};
+			name = Debug;
+		};
+		692741EB2FD3F8B700751ADB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 84M89SPH3R;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.van-tennisUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "van-tennis";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		692741BA2FD3F8B600751ADB /* Build configuration list for PBXProject "van-tennis" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				692741E12FD3F8B700751ADB /* Debug */,
+				692741E22FD3F8B700751ADB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		692741E32FD3F8B700751ADB /* Build configuration list for PBXNativeTarget "van-tennis" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				692741E42FD3F8B700751ADB /* Debug */,
+				692741E52FD3F8B700751ADB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		692741E62FD3F8B700751ADB /* Build configuration list for PBXNativeTarget "van-tennisTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				692741E72FD3F8B700751ADB /* Debug */,
+				692741E82FD3F8B700751ADB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		692741E92FD3F8B700751ADB /* Build configuration list for PBXNativeTarget "van-tennisUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				692741EA2FD3F8B700751ADB /* Debug */,
+				692741EB2FD3F8B700751ADB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 692741B72FD3F8B600751ADB /* Project object */;
+}
