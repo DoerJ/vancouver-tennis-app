@@ -1,2 +1,4 @@
 .root.DS_Store
 .DS_Store
+Config/Local.xcconfig
+*.plist

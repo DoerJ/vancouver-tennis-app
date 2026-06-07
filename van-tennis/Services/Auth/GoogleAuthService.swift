@@ -8,6 +8,7 @@ import UIKit
 final class GoogleAuthService: NSObject {
     private var currentSession: ASWebAuthenticationSession?
 
+    // Sign in with Google using ASWebAuthenticationSession and PKCE for secure authentication.
     func signIn() async throws -> GoogleAuthSession {
         let pkce = try PKCEChallenge()
         let state = UUID().uuidString
@@ -89,8 +90,8 @@ enum GoogleAuthError: LocalizedError {
 }
 
 enum GoogleOAuthConfiguration {
-    static let clientID = "YOUR_GOOGLE_IOS_CLIENT_ID.apps.googleusercontent.com"
-    static let reversedClientID = "com.googleusercontent.apps.YOUR_GOOGLE_IOS_CLIENT_ID"
+    static let clientID = AppConfig.googleClientID
+    static let reversedClientID = AppConfig.googleReversedClientID
     static let callbackScheme = reversedClientID
     static let redirectURI = "\(callbackScheme):/oauthredirect"
 
@@ -163,6 +164,7 @@ private enum GoogleOAuthTokenExchanger {
 
         let tokenResponse = try JSONDecoder().decode(GoogleTokenResponse.self, from: data)
 
+        // Return a GoogleAuthSession containing the JWT access token, ID token, refresh token, and other relevant info.
         return GoogleAuthSession(
             accessToken: tokenResponse.accessToken,
             idToken: tokenResponse.idToken,

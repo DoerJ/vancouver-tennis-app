@@ -12,6 +12,9 @@ struct RootView: View {
                 MainTabView()
             }
         }
+        .task {
+            await appState.restoreExistingSession()
+        }
     }
 }
 

@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		692744232FD4600000751ADB /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 692744222FD4600000751ADB /* Supabase */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		692741D02FD3F8B700751ADB /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -29,6 +33,8 @@
 		692741D92FD3F8B700751ADB /* van-tennisUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "van-tennisUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		6927441D2FD4080200751ADB /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		692744202FD4500000751ADB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		692744252FD4700000751ADB /* Local.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Local.xcconfig; sourceTree = "<group>"; };
+		692744262FD4700000751ADB /* Local.example.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Local.example.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -54,6 +60,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				692744232FD4600000751ADB /* Supabase in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -100,6 +107,8 @@
 			isa = PBXGroup;
 			children = (
 				692744202FD4500000751ADB /* Info.plist */,
+				692744252FD4700000751ADB /* Local.xcconfig */,
+				692744262FD4700000751ADB /* Local.example.xcconfig */,
 			);
 			path = Config;
 			sourceTree = "<group>";
@@ -124,6 +133,7 @@
 			);
 			name = "van-tennis";
 			packageProductDependencies = (
+				692744222FD4600000751ADB /* Supabase */,
 			);
 			productName = "van-tennis";
 			productReference = 692741BF2FD3F8B600751ADB /* van-tennis.app */;
@@ -207,6 +217,9 @@
 			);
 			mainGroup = 692741B62FD3F8B600751ADB;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				692744242FD4600000751ADB /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 692741C02FD3F8B600751ADB /* Products */;
 			projectDirPath = "";
@@ -279,6 +292,25 @@
 			targetProxy = 692741DA2FD3F8B700751ADB /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		692744242FD4600000751ADB /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		692744222FD4600000751ADB /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 692744242FD4600000751ADB /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
 
 /* Begin XCBuildConfiguration section */
 		692741E12FD3F8B700751ADB /* Debug */ = {
@@ -402,6 +434,7 @@
 		};
 		692741E42FD3F8B700751ADB /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 692744252FD4700000751ADB /* Local.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -432,6 +465,7 @@
 		};
 		692741E52FD3F8B700751ADB /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 692744252FD4700000751ADB /* Local.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
