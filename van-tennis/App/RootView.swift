@@ -8,6 +8,8 @@ struct RootView: View {
             switch appState.authenticationState {
             case .signedOut, .signingIn:
                 LoginView()
+            case .needsSkillLevel:
+                SelectSkillLevelView()
             case .signedIn:
                 MainTabView()
             }

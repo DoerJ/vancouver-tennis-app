@@ -14,7 +14,8 @@ struct ProfileService {
             id: user.id,
             email: user.email,
             displayName: defaultDisplayName(for: user),
-            avatarURL: defaultAvatarURL(for: user)
+            avatarURL: defaultAvatarURL(for: user),
+            skillLevel: nil
         )
 
         return try await client
@@ -35,6 +36,26 @@ struct ProfileService {
             .value
 
         return profiles.first
+    }
+
+    func updateProfile(
+        userID: UUID,
+        displayName: String? = nil,
+        skillLevel: SkillLevel? = nil
+    ) async throws -> UserProfile {
+        try await client
+            .from("profiles")
+            .update(
+                UpdateUserProfile(
+                    displayName: displayName,
+                    skillLevel: skillLevel
+                )
+            )
+            .eq("id", value: userID.uuidString)
+            .select()
+            .single()
+            .execute()
+            .value
     }
 
     private func defaultDisplayName(for user: User) -> String {

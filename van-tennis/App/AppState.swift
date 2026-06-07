@@ -22,14 +22,39 @@ final class AppState: ObservableObject {
             let session = try await SupabaseClientProvider.shared.auth.session
             let profile = try await profileService.findOrCreateProfile(for: session.user)
 
-            supabaseSession = session
-            userProfile = profile
-            authenticationState = .signedIn
+            applyAuthenticatedState(supabaseSession: session, userProfile: profile)
         } catch {
             supabaseSession = nil
             userProfile = nil
             authenticationState = .signedOut
         }
+    }
+
+    func completeSignIn(
+        googleSession: GoogleAuthSession,
+        supabaseSession: Session,
+        userProfile: UserProfile
+    ) {
+        self.googleSession = googleSession
+        applyAuthenticatedState(supabaseSession: supabaseSession, userProfile: userProfile)
+    }
+
+    func updateProfile(displayName: String? = nil, skillLevel: SkillLevel? = nil) async throws {
+        guard let supabaseSession else {
+            throw AppStateError.missingAuthenticatedUser
+        }
+
+        guard displayName != nil || skillLevel != nil else {
+            return
+        }
+
+        let updatedProfile = try await profileService.updateProfile(
+            userID: supabaseSession.user.id,
+            displayName: displayName,
+            skillLevel: skillLevel
+        )
+
+        applyAuthenticatedState(supabaseSession: supabaseSession, userProfile: updatedProfile)
     }
 
     func signOut() async {
@@ -44,10 +69,28 @@ final class AppState: ObservableObject {
         userProfile = nil
         authenticationState = .signedOut
     }
+
+    private func applyAuthenticatedState(supabaseSession: Session, userProfile: UserProfile) {
+        self.supabaseSession = supabaseSession
+        self.userProfile = userProfile
+        authenticationState = userProfile.skillLevel == nil ? .needsSkillLevel : .signedIn
+    }
 }
 
 enum AuthenticationState {
     case signedOut
     case signingIn
+    case needsSkillLevel
     case signedIn
+}
+
+enum AppStateError: LocalizedError {
+    case missingAuthenticatedUser
+
+    var errorDescription: String? {
+        switch self {
+        case .missingAuthenticatedUser:
+            return "No authenticated user was found."
+        }
+    }
 }

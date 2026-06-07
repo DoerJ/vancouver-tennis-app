@@ -35,10 +35,11 @@ final class LoginViewModel: ObservableObject {
             // Use Supabase session to find or create user profile in database
             let userProfile = try await profileService.findOrCreateProfile(for: supabaseSession.user)
 
-            appState.googleSession = googleSession
-            appState.supabaseSession = supabaseSession
-            appState.userProfile = userProfile
-            appState.authenticationState = .signedIn
+            appState.completeSignIn(
+                googleSession: googleSession,
+                supabaseSession: supabaseSession,
+                userProfile: userProfile
+            )
         } catch {
             appState.googleSession = nil
             appState.supabaseSession = nil
