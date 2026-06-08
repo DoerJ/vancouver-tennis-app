@@ -4,7 +4,30 @@ import Supabase
 struct EventService {
     private let client = SupabaseClientProvider.shared
 
-    func createEvent(_ draft: TennisEventDraft, hostID: UUID) async throws {
+    func fetchEvents(from startIndex: Int, limit: Int, city: EventCity? = nil) async throws -> [TennisEvent] {
+        let endIndex = startIndex + limit - 1
+
+        if let city {
+            return try await client
+                .from("tennis_events")
+                .select()
+                .eq("location_city", value: city.rawValue)
+                .order("start_time", ascending: true)
+                .range(from: startIndex, to: endIndex)
+                .execute()
+                .value
+        }
+
+        return try await client
+            .from("tennis_events")
+            .select()
+            .order("start_time", ascending: true)
+            .range(from: startIndex, to: endIndex)
+            .execute()
+            .value
+    }
+
+    func createEvent(_ draft: TennisEventDraft, hostID: UUID) async throws -> TennisEvent {
         let newEvent = NewTennisEvent(
             hostID: hostID,
             startTime: draft.startTime,
@@ -16,9 +39,12 @@ struct EventService {
             skillLevel: draft.skillLevel
         )
 
-        try await client
+        return try await client
             .from("tennis_events")
             .insert(newEvent)
+            .select()
+            .single()
             .execute()
+            .value
     }
 }

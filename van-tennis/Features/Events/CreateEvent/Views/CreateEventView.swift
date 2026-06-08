@@ -4,8 +4,13 @@ struct CreateEventView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appState: AppState
     @StateObject private var viewModel: CreateEventViewModel
+    private let onEventCreated: (TennisEvent) -> Void
 
-    init(creatorSkillLevel: SkillLevel) {
+    init(
+        creatorSkillLevel: SkillLevel,
+        onEventCreated: @escaping (TennisEvent) -> Void = { _ in }
+    ) {
+        self.onEventCreated = onEventCreated
         _viewModel = StateObject(
             wrappedValue: CreateEventViewModel(creatorSkillLevel: creatorSkillLevel)
         )
@@ -82,7 +87,8 @@ struct CreateEventView: View {
                             return
                         }
 
-                        if await viewModel.save(hostID: hostID) {
+                        if let event = await viewModel.save(hostID: hostID) {
+                            onEventCreated(event)
                             dismiss()
                         }
                     }

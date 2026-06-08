@@ -61,22 +61,22 @@ final class CreateEventViewModel: ObservableObject {
         return true
     }
 
-    func save(hostID: UUID) async -> Bool {
+    func save(hostID: UUID) async -> TennisEvent? {
         guard let draft else {
-            return false
+            return nil
         }
 
         isSaving = true
         errorMessage = nil
 
         do {
-            try await eventService.createEvent(draft, hostID: hostID)
+            let event = try await eventService.createEvent(draft, hostID: hostID)
             isSaving = false
-            return true
+            return event
         } catch {
             errorMessage = error.localizedDescription
             isSaving = false
-            return false
+            return nil
         }
     }
 }
