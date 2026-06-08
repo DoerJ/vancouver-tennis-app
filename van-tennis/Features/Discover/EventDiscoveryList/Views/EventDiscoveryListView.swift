@@ -20,11 +20,13 @@ struct EventDiscoveryListView: View {
                         cityFilterPicker
                             .padding([.horizontal, .top])
 
-                        if viewModel.filteredEvents.isEmpty {
-                            emptyEventsView
-                        } else {
-                            ScrollView {
-                                LazyVStack(spacing: 12) {
+                        ScrollView {
+                            LazyVStack(spacing: 12) {
+                                if viewModel.filteredEvents.isEmpty {
+                                    emptyEventsView
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.top, 80)
+                                } else {
                                     ForEach(viewModel.filteredEvents) { event in
                                         EventCardView(event: event)
                                     }
@@ -34,24 +36,25 @@ struct EventDiscoveryListView: View {
                                             .padding(.vertical, 12)
                                     }
                                 }
-                                .padding()
                             }
-                            .onScrollGeometryChange(for: Bool.self) { geometry in
-                                let distanceToBottom = geometry.contentSize.height - geometry.containerSize.height - geometry.contentOffset.y
-                                let canScroll = geometry.contentSize.height > geometry.containerSize.height
-                                return canScroll && geometry.contentOffset.y > 0 && distanceToBottom < 80
-                            } action: { wasNearBottom, isNearBottom in
-                                guard !wasNearBottom, isNearBottom else {
-                                    return
-                                }
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                        }
+                        .onScrollGeometryChange(for: Bool.self) { geometry in
+                            let distanceToBottom = geometry.contentSize.height - geometry.containerSize.height - geometry.contentOffset.y
+                            let canScroll = geometry.contentSize.height > geometry.containerSize.height
+                            return canScroll && geometry.contentOffset.y > 0 && distanceToBottom < 80
+                        } action: { wasNearBottom, isNearBottom in
+                            guard !wasNearBottom, isNearBottom else {
+                                return
+                            }
 
-                                Task {
-                                    await viewModel.loadNextPage()
-                                }
+                            Task {
+                                await viewModel.loadNextPage()
                             }
-                            .refreshable {
-                                await viewModel.loadEvents()
-                            }
+                        }
+                        .refreshable {
+                            await viewModel.loadEvents()
                         }
                     }
                 }

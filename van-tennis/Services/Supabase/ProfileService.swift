@@ -16,6 +16,7 @@ struct ProfileService {
             displayName: defaultDisplayName(for: user),
             avatarURL: defaultAvatarURL(for: user),
             skillLevel: nil,
+            gender: nil,
             hostedEvents: []
         )
 
@@ -56,6 +57,7 @@ struct ProfileService {
         userID: UUID,
         displayName: String? = nil,
         skillLevel: SkillLevel? = nil,
+        gender: Gender? = nil,
         hostedEvents: [UUID]? = nil
     ) async throws -> UserProfile {
         try await client
@@ -64,6 +66,7 @@ struct ProfileService {
                 UpdateUserProfile(
                     displayName: displayName,
                     skillLevel: skillLevel,
+                    gender: gender,
                     hostedEvents: hostedEvents
                 )
             )

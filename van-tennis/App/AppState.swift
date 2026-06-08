@@ -41,19 +41,24 @@ final class AppState: ObservableObject {
         applyAuthenticatedState(supabaseSession: supabaseSession, userProfile: userProfile)
     }
 
-    func updateProfile(displayName: String? = nil, skillLevel: SkillLevel? = nil) async throws {
+    func updateProfile(
+        displayName: String? = nil,
+        skillLevel: SkillLevel? = nil,
+        gender: Gender? = nil
+    ) async throws {
         guard let supabaseSession else {
             throw AppStateError.missingAuthenticatedUser
         }
 
-        guard displayName != nil || skillLevel != nil else {
+        guard displayName != nil || skillLevel != nil || gender != nil else {
             return
         }
 
         let updatedProfile = try await profileService.updateProfile(
             userID: supabaseSession.user.id,
             displayName: displayName,
-            skillLevel: skillLevel
+            skillLevel: skillLevel,
+            gender: gender
         )
 
         applyAuthenticatedState(supabaseSession: supabaseSession, userProfile: updatedProfile)
@@ -112,7 +117,7 @@ final class AppState: ObservableObject {
     private func applyAuthenticatedState(supabaseSession: Session, userProfile: UserProfile) {
         self.supabaseSession = supabaseSession
         self.userProfile = userProfile
-        authenticationState = userProfile.skillLevel == nil ? .needsSkillLevel : .signedIn
+        authenticationState = userProfile.skillLevel == nil || userProfile.gender == nil ? .needsSkillLevel : .signedIn
     }
 }
 

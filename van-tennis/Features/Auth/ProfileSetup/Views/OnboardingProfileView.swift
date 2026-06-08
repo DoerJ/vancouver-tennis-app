@@ -1,8 +1,9 @@
 import SwiftUI
 
-struct SelectSkillLevelView: View {
+struct OnboardingProfileView: View {
     @EnvironmentObject private var appState: AppState
     @State private var selectedLevel: SkillLevel?
+    @State private var selectedGender: Gender?
     @State private var isSaving = false
     @State private var errorMessage: String?
 
@@ -11,17 +12,21 @@ struct SelectSkillLevelView: View {
             Spacer()
 
             VStack(spacing: 8) {
-                Text("Select your level")
+                Text("Complete your profile")
                     .font(.largeTitle)
                     .fontWeight(.semibold)
 
-                Text("Choose the tennis skill level that best matches you.")
+                Text("Choose the tennis skill level and gender that best match you.")
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
 
             VStack(spacing: 12) {
+                Text("Skill Level")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
                 ForEach(SkillLevel.allCases) { level in
                     Button {
                         selectedLevel = level
@@ -43,6 +48,32 @@ struct SelectSkillLevelView: View {
                 }
             }
 
+            VStack(spacing: 12) {
+                Text("Gender")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                ForEach(Gender.allCases) { gender in
+                    Button {
+                        selectedGender = gender
+                    } label: {
+                        HStack {
+                            Text(gender.displayName)
+                                .font(.headline)
+
+                            Spacer()
+
+                            if selectedGender == gender {
+                                Image(systemName: "checkmark.circle.fill")
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+                }
+            }
+
             if let errorMessage {
                 Text(errorMessage)
                     .font(.footnote)
@@ -52,7 +83,7 @@ struct SelectSkillLevelView: View {
 
             Button {
                 Task {
-                    await saveSkillLevel()
+                    await saveProfile()
                 }
             } label: {
                 Text(isSaving ? "Saving..." : "Continue")
@@ -60,15 +91,19 @@ struct SelectSkillLevelView: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            .disabled(selectedLevel == nil || isSaving)
+            .disabled(selectedLevel == nil || selectedGender == nil || isSaving)
 
             Spacer()
         }
         .padding(24)
+        .onAppear {
+            selectedLevel = appState.userProfile?.skillLevel
+            selectedGender = appState.userProfile?.gender
+        }
     }
 
-    private func saveSkillLevel() async {
-        guard let selectedLevel else {
+    private func saveProfile() async {
+        guard let selectedLevel, let selectedGender else {
             return
         }
 
@@ -76,7 +111,10 @@ struct SelectSkillLevelView: View {
         errorMessage = nil
 
         do {
-            try await appState.updateProfile(skillLevel: selectedLevel)
+            try await appState.updateProfile(
+                skillLevel: selectedLevel,
+                gender: selectedGender
+            )
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -86,6 +124,6 @@ struct SelectSkillLevelView: View {
 }
 
 #Preview {
-    SelectSkillLevelView()
+    OnboardingProfileView()
         .environmentObject(AppState())
 }

@@ -4,6 +4,7 @@ create table if not exists public.profiles (
     display_name text not null,
     avatar_url text,
     skill_level text,
+    gender text check (gender in ('male', 'female', 'non_binary', 'prefer_not_to_say')),
     preferred_area text,
     bio text,
     hosted_events uuid[] not null default '{}',

@@ -81,6 +81,7 @@ struct EditProfileView: View {
                 displayName: "Tennis Player",
                 avatarURL: nil,
                 skillLevel: .three,
+                gender: .preferNotToSay,
                 hostedEvents: [],
                 createdAt: nil,
                 updatedAt: nil

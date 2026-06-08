@@ -9,7 +9,7 @@ struct RootView: View {
             case .signedOut, .signingIn:
                 LoginView()
             case .needsSkillLevel:
-                SelectSkillLevelView()
+                OnboardingProfileView()
             case .signedIn:
                 MainTabView()
             }

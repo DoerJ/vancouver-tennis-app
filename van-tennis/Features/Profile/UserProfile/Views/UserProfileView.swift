@@ -17,6 +17,12 @@ struct UserProfileView: View {
                             .font(.body)
                             .foregroundStyle(.secondary)
                     }
+
+                    if let gender = appState.userProfile?.gender {
+                        Text("Gender: \(gender.displayName)")
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
                 if let profile = appState.userProfile {
