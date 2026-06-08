@@ -88,8 +88,13 @@ struct CreateEventView: View {
                         }
 
                         if let event = await viewModel.save(hostID: hostID) {
-                            onEventCreated(event)
-                            dismiss()
+                            do {
+                                try await appState.appendHostedEvent(event.id)
+                                onEventCreated(event)
+                                dismiss()
+                            } catch {
+                                viewModel.errorMessage = error.localizedDescription
+                            }
                         }
                     }
                 }

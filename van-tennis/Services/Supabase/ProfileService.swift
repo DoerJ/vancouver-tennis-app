@@ -15,7 +15,8 @@ struct ProfileService {
             email: user.email,
             displayName: defaultDisplayName(for: user),
             avatarURL: defaultAvatarURL(for: user),
-            skillLevel: nil
+            skillLevel: nil,
+            hostedEvents: []
         )
 
         return try await client
@@ -41,14 +42,16 @@ struct ProfileService {
     func updateProfile(
         userID: UUID,
         displayName: String? = nil,
-        skillLevel: SkillLevel? = nil
+        skillLevel: SkillLevel? = nil,
+        hostedEvents: [UUID]? = nil
     ) async throws -> UserProfile {
         try await client
             .from("profiles")
             .update(
                 UpdateUserProfile(
                     displayName: displayName,
-                    skillLevel: skillLevel
+                    skillLevel: skillLevel,
+                    hostedEvents: hostedEvents
                 )
             )
             .eq("id", value: userID.uuidString)
@@ -56,6 +59,23 @@ struct ProfileService {
             .single()
             .execute()
             .value
+    }
+
+    func appendHostedEvent(userID: UUID, eventID: UUID) async throws -> UserProfile {
+        guard let profile = try await findProfile(userID: userID) else {
+            throw ProfileServiceError.profileNotFound
+        }
+
+        var hostedEvents = profile.hostedEvents
+
+        if !hostedEvents.contains(eventID) {
+            hostedEvents.append(eventID)
+        }
+
+        return try await updateProfile(
+            userID: userID,
+            hostedEvents: hostedEvents
+        )
     }
 
     private func defaultDisplayName(for user: User) -> String {
@@ -82,5 +102,16 @@ struct ProfileService {
         }
 
         return nil
+    }
+}
+
+enum ProfileServiceError: LocalizedError {
+    case profileNotFound
+
+    var errorDescription: String? {
+        switch self {
+        case .profileNotFound:
+            return "User profile was not found."
+        }
     }
 }

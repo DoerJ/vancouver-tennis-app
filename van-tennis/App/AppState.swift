@@ -57,6 +57,19 @@ final class AppState: ObservableObject {
         applyAuthenticatedState(supabaseSession: supabaseSession, userProfile: updatedProfile)
     }
 
+    func appendHostedEvent(_ eventID: UUID) async throws {
+        guard let supabaseSession else {
+            throw AppStateError.missingAuthenticatedUser
+        }
+
+        let updatedProfile = try await profileService.appendHostedEvent(
+            userID: supabaseSession.user.id,
+            eventID: eventID
+        )
+
+        applyAuthenticatedState(supabaseSession: supabaseSession, userProfile: updatedProfile)
+    }
+
     func signOut() async {
         do {
             try await authService.signOut()

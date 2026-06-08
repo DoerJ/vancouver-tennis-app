@@ -10,6 +10,9 @@ final class EventDiscoveryListViewModel: ObservableObject {
     @Published var hasMoreEvents = true
     @Published var errorMessage: String?
 
+    private(set) var hasLoadedInitialPage = false
+    private var shouldSkipNextFilterReload = false
+    // The number of events to load per page when paginating
     private let pageSize = 10
     private let eventService = EventService()
 
@@ -18,61 +21,39 @@ final class EventDiscoveryListViewModel: ObservableObject {
     }
 
     func loadEvents() async {
-        events = []
-        hasMoreEvents = true
-        await loadFirstPage()
+        await loadPage(reset: true)
     }
 
-    func loadFirstPage() async {
-        isLoading = true
-        errorMessage = nil
-
-        do {
-            let page = try await eventService.fetchEvents(
-                from: 0,
-                limit: pageSize,
-                city: selectedCityFilter.city
-            )
-            events = page
-            hasMoreEvents = page.count == pageSize
-        } catch {
-            errorMessage = error.localizedDescription
+    func loadInitialEventsIfNeeded() async {
+        guard !hasLoadedInitialPage else {
+            return
         }
 
-        isLoading = false
+        await loadEvents()
     }
 
     func loadNextPage() async {
-        guard hasMoreEvents, !isLoading, !isLoadingNextPage else {
-            return
-        }
-
-        isLoadingNextPage = true
-        errorMessage = nil
-
-        do {
-            let page = try await eventService.fetchEvents(
-                from: events.count,
-                limit: pageSize,
-                city: selectedCityFilter.city
-            )
-            appendPage(page)
-            hasMoreEvents = page.count == pageSize
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-
-        isLoadingNextPage = false
+        await loadPage(reset: false)
     }
 
     func applyCreatedEvent(_ event: TennisEvent) {
-        guard selectedCityFilter.matches(event.city) else {
-            return
+        if !selectedCityFilter.matches(event.city) {
+            shouldSkipNextFilterReload = true
+            selectedCityFilter = .all
         }
 
         events.removeAll { $0.id == event.id }
         events.append(event)
         events.sort { $0.startTime < $1.startTime }
+    }
+
+    func consumeShouldSkipNextFilterReload() -> Bool {
+        guard shouldSkipNextFilterReload else {
+            return false
+        }
+
+        shouldSkipNextFilterReload = false
+        return true
     }
 
     private func appendPage(_ page: [TennisEvent]) {
@@ -81,6 +62,51 @@ final class EventDiscoveryListViewModel: ObservableObject {
         }
 
         events.sort { $0.startTime < $1.startTime }
+    }
+
+    private func loadPage(reset: Bool) async {
+        guard !isLoading, !isLoadingNextPage else {
+            return
+        }
+
+        if !reset {
+            guard hasMoreEvents else {
+                return
+            }
+
+            isLoadingNextPage = true
+        } else {
+            isLoading = true
+            events = []
+            hasMoreEvents = true
+        }
+
+        errorMessage = nil
+
+        do {
+            let page = try await eventService.fetchEvents(
+                from: reset ? 0 : events.count,
+                limit: pageSize,
+                city: selectedCityFilter.city
+            )
+
+            if reset {
+                events = page
+                hasLoadedInitialPage = true
+            } else {
+                appendPage(page)
+            }
+
+            hasMoreEvents = page.count == pageSize
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+
+        if reset {
+            isLoading = false
+        } else {
+            isLoadingNextPage = false
+        }
     }
 }
 

@@ -27,6 +27,20 @@ struct EventService {
             .value
     }
 
+    func fetchEvents(ids eventIDs: [UUID]) async throws -> [TennisEvent] {
+        guard !eventIDs.isEmpty else {
+            return []
+        }
+
+        return try await client
+            .from("tennis_events")
+            .select()
+            .in("id", values: eventIDs.map(\.uuidString))
+            .order("start_time", ascending: true)
+            .execute()
+            .value
+    }
+
     func createEvent(_ draft: TennisEventDraft, hostID: UUID) async throws -> TennisEvent {
         let newEvent = NewTennisEvent(
             hostID: hostID,

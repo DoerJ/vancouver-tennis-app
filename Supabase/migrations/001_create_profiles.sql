@@ -6,6 +6,7 @@ create table if not exists public.profiles (
     skill_level text,
     preferred_area text,
     bio text,
+    hosted_events uuid[] not null default '{}',
     social_tags text[] not null default '{}',
     play_style text,
     availability_preferences text[] not null default '{}',

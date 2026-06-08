@@ -6,6 +6,7 @@ struct UserProfile: Codable, Identifiable, Equatable {
     let displayName: String
     let avatarURL: URL?
     let skillLevel: SkillLevel?
+    let hostedEvents: [UUID]
     let createdAt: Date?
     let updatedAt: Date?
 
@@ -15,6 +16,7 @@ struct UserProfile: Codable, Identifiable, Equatable {
         case displayName = "display_name"
         case avatarURL = "avatar_url"
         case skillLevel = "skill_level"
+        case hostedEvents = "hosted_events"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
@@ -26,6 +28,7 @@ struct NewUserProfile: Encodable {
     let displayName: String
     let avatarURL: URL?
     let skillLevel: SkillLevel?
+    let hostedEvents: [UUID]
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -33,16 +36,19 @@ struct NewUserProfile: Encodable {
         case displayName = "display_name"
         case avatarURL = "avatar_url"
         case skillLevel = "skill_level"
+        case hostedEvents = "hosted_events"
     }
 }
 
 struct UpdateUserProfile: Encodable {
     let displayName: String?
     let skillLevel: SkillLevel?
+    let hostedEvents: [UUID]?
 
     enum CodingKeys: String, CodingKey {
         case displayName = "display_name"
         case skillLevel = "skill_level"
+        case hostedEvents = "hosted_events"
     }
 
     func encode(to encoder: Encoder) throws {
@@ -50,5 +56,6 @@ struct UpdateUserProfile: Encodable {
 
         try container.encodeIfPresent(displayName, forKey: .displayName)
         try container.encodeIfPresent(skillLevel, forKey: .skillLevel)
+        try container.encodeIfPresent(hostedEvents, forKey: .hostedEvents)
     }
 }

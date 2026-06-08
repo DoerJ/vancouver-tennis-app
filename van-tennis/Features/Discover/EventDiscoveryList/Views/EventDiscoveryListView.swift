@@ -15,55 +15,43 @@ struct EventDiscoveryListView: View {
                         systemImage: "exclamationmark.triangle",
                         description: Text(errorMessage)
                     )
-                } else if viewModel.events.isEmpty {
-                    ContentUnavailableView(
-                        "No tennis events",
-                        systemImage: "calendar.badge.exclamationmark",
-                        description: Text("Created events will appear here.")
-                    )
-                } else if viewModel.filteredEvents.isEmpty {
-                    VStack(spacing: 16) {
-                        cityFilterPicker
-
-                        ContentUnavailableView(
-                            "No events in \(viewModel.selectedCityFilter.displayName)",
-                            systemImage: "line.3.horizontal.decrease.circle",
-                            description: Text("Try a different city filter.")
-                        )
-                    }
                 } else {
                     VStack(spacing: 0) {
                         cityFilterPicker
                             .padding([.horizontal, .top])
 
-                        ScrollView {
-                            LazyVStack(spacing: 12) {
-                                ForEach(viewModel.filteredEvents) { event in
-                                    EventCardView(event: event)
+                        if viewModel.filteredEvents.isEmpty {
+                            emptyEventsView
+                        } else {
+                            ScrollView {
+                                LazyVStack(spacing: 12) {
+                                    ForEach(viewModel.filteredEvents) { event in
+                                        EventCardView(event: event)
+                                    }
+
+                                    if viewModel.isLoadingNextPage {
+                                        ProgressView()
+                                            .padding(.vertical, 12)
+                                    }
+                                }
+                                .padding()
+                            }
+                            .onScrollGeometryChange(for: Bool.self) { geometry in
+                                let distanceToBottom = geometry.contentSize.height - geometry.containerSize.height - geometry.contentOffset.y
+                                let canScroll = geometry.contentSize.height > geometry.containerSize.height
+                                return canScroll && geometry.contentOffset.y > 0 && distanceToBottom < 80
+                            } action: { wasNearBottom, isNearBottom in
+                                guard !wasNearBottom, isNearBottom else {
+                                    return
                                 }
 
-                                if viewModel.isLoadingNextPage {
-                                    ProgressView()
-                                        .padding(.vertical, 12)
+                                Task {
+                                    await viewModel.loadNextPage()
                                 }
                             }
-                            .padding()
-                        }
-                        .onScrollGeometryChange(for: Bool.self) { geometry in
-                            let distanceToBottom = geometry.contentSize.height - geometry.containerSize.height - geometry.contentOffset.y
-                            let canScroll = geometry.contentSize.height > geometry.containerSize.height
-                            return canScroll && geometry.contentOffset.y > 0 && distanceToBottom < 80
-                        } action: { wasNearBottom, isNearBottom in
-                            guard !wasNearBottom, isNearBottom else {
-                                return
+                            .refreshable {
+                                await viewModel.loadEvents()
                             }
-
-                            Task {
-                                await viewModel.loadNextPage()
-                            }
-                        }
-                        .refreshable {
-                            await viewModel.loadEvents()
                         }
                     }
                 }
@@ -86,10 +74,14 @@ struct EventDiscoveryListView: View {
         }
         .onAppear {
             Task {
-                await viewModel.loadEvents()
+                await viewModel.loadInitialEventsIfNeeded()
             }
         }
         .onChange(of: viewModel.selectedCityFilter) {
+            guard !viewModel.consumeShouldSkipNextFilterReload() else {
+                return
+            }
+
             Task {
                 await viewModel.loadEvents()
             }
@@ -103,6 +95,23 @@ struct EventDiscoveryListView: View {
             }
         }
         .pickerStyle(.segmented)
+    }
+
+    @ViewBuilder
+    private var emptyEventsView: some View {
+        if viewModel.selectedCityFilter == .all {
+            ContentUnavailableView(
+                "No tennis events",
+                systemImage: "calendar.badge.exclamationmark",
+                description: Text("Created events will appear here.")
+            )
+        } else {
+            ContentUnavailableView(
+                "No events in \(viewModel.selectedCityFilter.displayName)",
+                systemImage: "line.3.horizontal.decrease.circle",
+                description: Text("Try a different city filter.")
+            )
+        }
     }
 }
 
