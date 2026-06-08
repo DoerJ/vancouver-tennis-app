@@ -11,6 +11,7 @@ struct TennisEvent: Codable, Identifiable, Equatable {
     let court: TennisCourt
     let skillLevel: SkillLevel
     let status: EventStatus
+    let participants: [UUID]
     let createdAt: Date?
     let updatedAt: Date?
 
@@ -25,6 +26,7 @@ struct TennisEvent: Codable, Identifiable, Equatable {
         case court = "location_court"
         case skillLevel = "skill_level"
         case status
+        case participants
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
@@ -49,6 +51,7 @@ struct NewTennisEvent: Encodable {
     let city: EventCity
     let court: TennisCourt
     let skillLevel: SkillLevel
+    let participants: [UUID]
 
     enum CodingKeys: String, CodingKey {
         case hostID = "host_id"
@@ -59,5 +62,6 @@ struct NewTennisEvent: Encodable {
         case city = "location_city"
         case court = "location_court"
         case skillLevel = "skill_level"
+        case participants
     }
 }

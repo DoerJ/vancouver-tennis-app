@@ -21,4 +21,8 @@ final class MyEventsViewModel: ObservableObject {
 
         isLoading = false
     }
+
+    func removeEvent(id: UUID) {
+        events.removeAll { $0.id == id }
+    }
 }

@@ -8,8 +8,10 @@ final class AppState: ObservableObject {
     @Published var googleSession: GoogleAuthSession?
     @Published var supabaseSession: Session?
     @Published var userProfile: UserProfile?
+    @Published var eventsRevision = 0
 
     private let profileService = ProfileService()
+    private let eventService = EventService()
     private let authService = SupabaseAuthService()
 
     func restoreExistingSession() async {
@@ -68,6 +70,30 @@ final class AppState: ObservableObject {
         )
 
         applyAuthenticatedState(supabaseSession: supabaseSession, userProfile: updatedProfile)
+        eventsRevision += 1
+    }
+
+    func cancelHostedEvent(_ event: TennisEvent) async throws {
+        guard let supabaseSession else {
+            throw AppStateError.missingAuthenticatedUser
+        }
+
+        guard event.hostID == supabaseSession.user.id else {
+            throw AppStateError.notEventHost
+        }
+
+        try await eventService.deleteEvent(
+            eventID: event.id,
+            hostID: supabaseSession.user.id
+        )
+
+        let updatedProfile = try await profileService.removeHostedEvent(
+            userID: supabaseSession.user.id,
+            eventID: event.id
+        )
+
+        applyAuthenticatedState(supabaseSession: supabaseSession, userProfile: updatedProfile)
+        eventsRevision += 1
     }
 
     func signOut() async {
@@ -99,11 +125,14 @@ enum AuthenticationState {
 
 enum AppStateError: LocalizedError {
     case missingAuthenticatedUser
+    case notEventHost
 
     var errorDescription: String? {
         switch self {
         case .missingAuthenticatedUser:
             return "No authenticated user was found."
+        case .notEventHost:
+            return "Only the host can cancel this event."
         }
     }
 }

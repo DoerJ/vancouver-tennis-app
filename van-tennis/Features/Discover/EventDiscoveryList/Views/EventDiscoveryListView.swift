@@ -86,6 +86,11 @@ struct EventDiscoveryListView: View {
                 await viewModel.loadEvents()
             }
         }
+        .onChange(of: appState.eventsRevision) {
+            Task {
+                await viewModel.loadEvents()
+            }
+        }
     }
 
     private var cityFilterPicker: some View {

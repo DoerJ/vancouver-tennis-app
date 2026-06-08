@@ -25,7 +25,14 @@ struct MyEventsView: View {
                     ScrollView {
                         LazyVStack(spacing: 12) {
                             ForEach(viewModel.events) { event in
-                                EventCardView(event: event)
+                                NavigationLink {
+                                    EventDetailView(event: event) { eventID in
+                                        viewModel.removeEvent(id: eventID)
+                                    }
+                                } label: {
+                                    EventCardView(event: event)
+                                }
+                                .buttonStyle(.plain)
                             }
                         }
                         .padding()

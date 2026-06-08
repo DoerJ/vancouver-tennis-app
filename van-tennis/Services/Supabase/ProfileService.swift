@@ -39,6 +39,19 @@ struct ProfileService {
         return profiles.first
     }
 
+    func fetchProfiles(userIDs: [UUID]) async throws -> [UserProfile] {
+        guard !userIDs.isEmpty else {
+            return []
+        }
+
+        return try await client
+            .from("profiles")
+            .select()
+            .in("id", values: userIDs.map(\.uuidString))
+            .execute()
+            .value
+    }
+
     func updateProfile(
         userID: UUID,
         displayName: String? = nil,
@@ -71,6 +84,19 @@ struct ProfileService {
         if !hostedEvents.contains(eventID) {
             hostedEvents.append(eventID)
         }
+
+        return try await updateProfile(
+            userID: userID,
+            hostedEvents: hostedEvents
+        )
+    }
+
+    func removeHostedEvent(userID: UUID, eventID: UUID) async throws -> UserProfile {
+        guard let profile = try await findProfile(userID: userID) else {
+            throw ProfileServiceError.profileNotFound
+        }
+
+        let hostedEvents = profile.hostedEvents.filter { $0 != eventID }
 
         return try await updateProfile(
             userID: userID,

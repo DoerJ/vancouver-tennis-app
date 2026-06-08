@@ -50,7 +50,8 @@ struct EventService {
             maxPlayers: draft.maxPlayers,
             city: draft.city,
             court: draft.court,
-            skillLevel: draft.skillLevel
+            skillLevel: draft.skillLevel,
+            participants: []
         )
 
         return try await client
@@ -60,5 +61,14 @@ struct EventService {
             .single()
             .execute()
             .value
+    }
+
+    func deleteEvent(eventID: UUID, hostID: UUID) async throws {
+        try await client
+            .from("tennis_events")
+            .delete()
+            .eq("id", value: eventID.uuidString)
+            .eq("host_id", value: hostID.uuidString)
+            .execute()
     }
 }
