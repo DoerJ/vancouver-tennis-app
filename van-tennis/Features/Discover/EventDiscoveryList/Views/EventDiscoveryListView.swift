@@ -28,7 +28,12 @@ struct EventDiscoveryListView: View {
                                         .padding(.top, 80)
                                 } else {
                                     ForEach(viewModel.filteredEvents) { event in
-                                        EventCardView(event: event)
+                                        NavigationLink {
+                                            EventDetailView(event: event)
+                                        } label: {
+                                            EventCardView(event: event)
+                                        }
+                                        .buttonStyle(.plain)
                                     }
 
                                     if viewModel.isLoadingNextPage {

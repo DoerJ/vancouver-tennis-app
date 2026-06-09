@@ -31,7 +31,7 @@ final class LoginViewModel: ObservableObject {
 
             // Exchange Google JWT token with Supabase to get Supabase session (access token, user info)
             let supabaseSession = try await supabaseAuthService.signInWithGoogle(googleSession)
-            
+
             // Use Supabase session to find or create user profile in database
             let userProfile = try await profileService.findOrCreateProfile(for: supabaseSession.user)
 

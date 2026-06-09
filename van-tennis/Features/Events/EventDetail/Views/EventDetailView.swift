@@ -1,11 +1,11 @@
 import SwiftUI
 
 struct EventDetailView: View {
-    let event: TennisEvent
     let onEventCancelled: (UUID) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appState: AppState
+    @State private var event: TennisEvent
     @StateObject private var viewModel = EventDetailViewModel()
     @State private var isShowingCancelConfirmation = false
     @State private var isCancelling = false
@@ -14,7 +14,7 @@ struct EventDetailView: View {
         event: TennisEvent,
         onEventCancelled: @escaping (UUID) -> Void = { _ in }
     ) {
-        self.event = event
+        _event = State(initialValue: event)
         self.onEventCancelled = onEventCancelled
     }
 
@@ -82,6 +82,16 @@ struct EventDetailView: View {
                     .disabled(isCancelling)
                 }
             }
+
+            if canJoinEvent {
+                Section {
+                    Button("Join Event") {
+                        // TODO: Implement join event action.
+                    }
+                    .frame(maxWidth: .infinity)
+                    .buttonStyle(.borderedProminent)
+                }
+            }
         }
         .navigationTitle("Event Detail")
         .navigationBarTitleDisplayMode(.inline)
@@ -110,6 +120,14 @@ struct EventDetailView: View {
 
     private var isCurrentUserHost: Bool {
         appState.supabaseSession?.user.id == event.hostID
+    }
+
+    private var canJoinEvent: Bool {
+        guard let currentUserID = appState.supabaseSession?.user.id else {
+            return false
+        }
+
+        return event.hostID != currentUserID && !event.participants.contains(currentUserID)
     }
 
     private var maxPlayersText: String {

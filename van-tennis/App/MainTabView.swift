@@ -13,6 +13,11 @@ struct MainTabView: View {
                     Label("My Events", systemImage: "calendar")
                 }
 
+            NotificationListView()
+                .tabItem {
+                    Label("Notifications", systemImage: "bell")
+                }
+
             UserProfileView()
                 .tabItem {
                     Label("Profile", systemImage: "person.circle")
