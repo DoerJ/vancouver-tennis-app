@@ -85,11 +85,24 @@ struct EventDetailView: View {
 
             if canJoinEvent {
                 Section {
-                    Button("Join Event") {
-                        // TODO: Implement join event action.
+                    Button {
+                        Task {
+                            await joinEvent()
+                        }
+                    } label: {
+                        if viewModel.isJoining {
+                            HStack {
+                                Spacer()
+                                ProgressView()
+                                Spacer()
+                            }
+                        } else {
+                            Text("Join Event")
+                        }
                     }
                     .frame(maxWidth: .infinity)
                     .buttonStyle(.borderedProminent)
+                    .disabled(viewModel.isJoining)
                 }
             }
         }
@@ -151,6 +164,19 @@ struct EventDetailView: View {
         }
 
         isCancelling = false
+    }
+
+    private func joinEvent() async {
+        guard let currentUser = appState.userProfile else {
+            viewModel.errorMessage = "No authenticated user was found."
+            return
+        }
+
+        do {
+            try await viewModel.joinEvent(event, currentUser: currentUser)
+        } catch {
+            viewModel.errorMessage = error.localizedDescription
+        }
     }
 
     private static let dateTimeFormatter: DateFormatter = {

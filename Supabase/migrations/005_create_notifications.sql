@@ -11,7 +11,7 @@ create table if not exists public.notifications (
     read_by uuid[] not null default '{}',
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
-    check (array_length(recipients, 1) is not null)
+    constraint notifications_recipients_not_empty check (cardinality(recipients) > 0)
 );
 
 create index if not exists notifications_sender_idx

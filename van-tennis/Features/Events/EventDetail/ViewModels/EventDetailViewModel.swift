@@ -6,9 +6,11 @@ final class EventDetailViewModel: ObservableObject {
     @Published var hostProfile: UserProfile?
     @Published var participantProfiles: [UserProfile] = []
     @Published var isLoading = false
+    @Published var isJoining = false
     @Published var errorMessage: String?
 
     private let profileService = ProfileService()
+    private let notificationEventService = NotificationEventService()
 
     func loadDetails(for event: TennisEvent) async {
         isLoading = true
@@ -25,5 +27,50 @@ final class EventDetailViewModel: ObservableObject {
         }
 
         isLoading = false
+    }
+
+    func joinEvent(_ event: TennisEvent, currentUser: UserProfile) async throws {
+        guard event.hostID != currentUser.id else {
+            throw EventDetailViewModelError.hostCannotJoinOwnEvent
+        }
+
+        guard !event.participants.contains(currentUser.id) else {
+            return
+        }
+
+        if let maxPlayers = event.maxPlayers, event.participants.count >= maxPlayers {
+            throw EventDetailViewModelError.eventIsFull
+        }
+
+        isJoining = true
+        errorMessage = nil
+        defer {
+            isJoining = false
+        }
+
+        _ = try await notificationEventService.createNotification(
+            NewNotificationEvent(
+                sender: currentUser.id,
+                recipients: [event.hostID],
+                notificationType: .eventJoined,
+                title: "Player joined your event",
+                body: "\(currentUser.displayName) joined your event at \(event.court.displayName).",
+                relatedEventID: event.id
+            )
+        )
+    }
+}
+
+enum EventDetailViewModelError: LocalizedError {
+    case hostCannotJoinOwnEvent
+    case eventIsFull
+
+    var errorDescription: String? {
+        switch self {
+        case .hostCannotJoinOwnEvent:
+            return "Hosts cannot join their own event."
+        case .eventIsFull:
+            return "This event is already full."
+        }
     }
 }

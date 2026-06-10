@@ -71,4 +71,5 @@ struct EventService {
             .eq("host_id", value: hostID.uuidString)
             .execute()
     }
+
 }
