@@ -12,7 +12,21 @@ final class AppState: ObservableObject {
 
     private let profileService = ProfileService()
     private let eventService = EventService()
+    private let deviceTokenService = DeviceTokenService()
     private let authService = SupabaseAuthService()
+    private var cancellables: Set<AnyCancellable> = []
+    private var lastSavedDeviceToken: String?
+
+    init() {
+        NotificationCenter.default.publisher(for: NotificationService.deviceTokenDidUpdateNotification)
+            .compactMap { $0.object as? String }
+            .sink { [weak self] deviceToken in
+                Task {
+                    await self?.saveDeviceTokenIfPossible(deviceToken)
+                }
+            }
+            .store(in: &cancellables)
+    }
 
     func restoreExistingSession() async {
         guard AppConfig.isSupabaseConfigured else {
@@ -25,6 +39,7 @@ final class AppState: ObservableObject {
             let profile = try await profileService.findOrCreateProfile(for: session.user)
 
             applyAuthenticatedState(supabaseSession: session, userProfile: profile)
+            await saveCurrentDeviceTokenIfPossible()
         } catch {
             supabaseSession = nil
             userProfile = nil
@@ -39,6 +54,10 @@ final class AppState: ObservableObject {
     ) {
         self.googleSession = googleSession
         applyAuthenticatedState(supabaseSession: supabaseSession, userProfile: userProfile)
+
+        Task {
+            await saveCurrentDeviceTokenIfPossible()
+        }
     }
 
     func updateProfile(
@@ -118,6 +137,37 @@ final class AppState: ObservableObject {
         self.supabaseSession = supabaseSession
         self.userProfile = userProfile
         authenticationState = userProfile.skillLevel == nil || userProfile.gender == nil ? .needsSkillLevel : .signedIn
+    }
+
+    private func saveCurrentDeviceTokenIfPossible() async {
+        guard let deviceToken = NotificationService.currentDeviceToken else {
+            print("AppState: no APNs device token available to save.")
+            return
+        }
+
+        await saveDeviceTokenIfPossible(deviceToken)
+    }
+
+    private func saveDeviceTokenIfPossible(_ deviceToken: String) async {
+        guard let userID = userProfile?.id else {
+            print("AppState: device token received before user profile was available.")
+            return
+        }
+
+        guard lastSavedDeviceToken != deviceToken else {
+            return
+        }
+
+        do {
+            try await deviceTokenService.saveDeviceToken(
+                userID: userID,
+                deviceToken: deviceToken
+            )
+            lastSavedDeviceToken = deviceToken
+            print("AppState: saved APNs device token.")
+        } catch {
+            print("AppState: failed to save APNs device token: \(error.localizedDescription)")
+        }
     }
 }
 

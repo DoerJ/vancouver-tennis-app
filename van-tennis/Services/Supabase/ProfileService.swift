@@ -3,6 +3,7 @@ import Supabase
 
 struct ProfileService {
     private let client = SupabaseClientProvider.shared
+    private let deviceTokenService = DeviceTokenService()
 
     func findOrCreateProfile(for user: User) async throws -> UserProfile {
         // uuid is used as the primary key to query the profile
@@ -20,13 +21,17 @@ struct ProfileService {
             hostedEvents: []
         )
 
-        return try await client
+        let createdProfile: UserProfile = try await client
             .from("profiles")
             .insert(newProfile)
             .select()
             .single()
             .execute()
             .value
+
+        await saveCurrentDeviceTokenIfAvailable(userID: createdProfile.id)
+
+        return createdProfile
     }
 
     func findProfile(userID: UUID) async throws -> UserProfile? {
@@ -120,6 +125,23 @@ struct ProfileService {
         }
 
         return String(username)
+    }
+
+    private func saveCurrentDeviceTokenIfAvailable(userID: UUID) async {
+        guard let deviceToken = NotificationService.currentDeviceToken else {
+            print("ProfileService: no APNs device token available when creating profile.")
+            return
+        }
+
+        do {
+            try await deviceTokenService.saveDeviceToken(
+                userID: userID,
+                deviceToken: deviceToken
+            )
+            print("ProfileService: saved device token for new profile.")
+        } catch {
+            print("ProfileService: failed to save device token for new profile: \(error.localizedDescription)")
+        }
     }
 
     private func defaultAvatarURL(for user: User) -> URL? {
