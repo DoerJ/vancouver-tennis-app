@@ -53,8 +53,8 @@ final class EventDetailViewModel: ObservableObject {
                 sender: currentUser.id,
                 recipients: [event.hostID],
                 notificationType: .eventJoined,
-                title: "Player joined your event",
-                body: "\(currentUser.displayName) joined your event at \(event.court.displayName).",
+                title: "Player wants to join your event",
+                body: "\(currentUser.displayName) wants to join your event at \(event.court.displayName).",
                 relatedEventID: event.id
             )
         )

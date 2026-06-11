@@ -83,6 +83,8 @@ struct EditProfileView: View {
                 skillLevel: .three,
                 gender: .preferNotToSay,
                 hostedEvents: [],
+                participatedEvents: [],
+                notifications: [],
                 createdAt: nil,
                 updatedAt: nil
             )

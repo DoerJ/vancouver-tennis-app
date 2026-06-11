@@ -8,6 +8,8 @@ struct UserProfile: Codable, Identifiable, Equatable {
     let skillLevel: SkillLevel?
     let gender: Gender?
     let hostedEvents: [UUID]
+    let participatedEvents: [UUID]
+    let notifications: [UUID]
     let createdAt: Date?
     let updatedAt: Date?
 
@@ -19,6 +21,8 @@ struct UserProfile: Codable, Identifiable, Equatable {
         case skillLevel = "skill_level"
         case gender
         case hostedEvents = "hosted_events"
+        case participatedEvents = "participated_events"
+        case notifications
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
@@ -32,6 +36,8 @@ struct NewUserProfile: Encodable {
     let skillLevel: SkillLevel?
     let gender: Gender?
     let hostedEvents: [UUID]
+    let participatedEvents: [UUID]
+    let notifications: [UUID]
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -41,6 +47,8 @@ struct NewUserProfile: Encodable {
         case skillLevel = "skill_level"
         case gender
         case hostedEvents = "hosted_events"
+        case participatedEvents = "participated_events"
+        case notifications
     }
 }
 
@@ -49,12 +57,16 @@ struct UpdateUserProfile: Encodable {
     let skillLevel: SkillLevel?
     let gender: Gender?
     let hostedEvents: [UUID]?
+    let participatedEvents: [UUID]?
+    let notifications: [UUID]?
 
     enum CodingKeys: String, CodingKey {
         case displayName = "display_name"
         case skillLevel = "skill_level"
         case gender
         case hostedEvents = "hosted_events"
+        case participatedEvents = "participated_events"
+        case notifications
     }
 
     func encode(to encoder: Encoder) throws {
@@ -64,5 +76,7 @@ struct UpdateUserProfile: Encodable {
         try container.encodeIfPresent(skillLevel, forKey: .skillLevel)
         try container.encodeIfPresent(gender, forKey: .gender)
         try container.encodeIfPresent(hostedEvents, forKey: .hostedEvents)
+        try container.encodeIfPresent(participatedEvents, forKey: .participatedEvents)
+        try container.encodeIfPresent(notifications, forKey: .notifications)
     }
 }

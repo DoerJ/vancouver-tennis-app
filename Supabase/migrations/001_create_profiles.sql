@@ -8,6 +8,8 @@ create table if not exists public.profiles (
     preferred_area text,
     bio text,
     hosted_events uuid[] not null default '{}',
+    partificated_events uuid[] not null default '{}',
+    notifications uuid[] not null default '{}',
     social_tags text[] not null default '{}',
     play_style text,
     availability_preferences text[] not null default '{}',

@@ -18,7 +18,9 @@ struct ProfileService {
             avatarURL: defaultAvatarURL(for: user),
             skillLevel: nil,
             gender: nil,
-            hostedEvents: []
+            hostedEvents: [],
+            participatedEvents: [],
+            notifications: []
         )
 
         let createdProfile: UserProfile = try await client
@@ -63,7 +65,9 @@ struct ProfileService {
         displayName: String? = nil,
         skillLevel: SkillLevel? = nil,
         gender: Gender? = nil,
-        hostedEvents: [UUID]? = nil
+        hostedEvents: [UUID]? = nil,
+        participatedEvents: [UUID]? = nil,
+        notifications: [UUID]? = nil
     ) async throws -> UserProfile {
         try await client
             .from("profiles")
@@ -72,7 +76,9 @@ struct ProfileService {
                     displayName: displayName,
                     skillLevel: skillLevel,
                     gender: gender,
-                    hostedEvents: hostedEvents
+                    hostedEvents: hostedEvents,
+                    participatedEvents: participatedEvents,
+                    notifications: notifications
                 )
             )
             .eq("id", value: userID.uuidString)
