@@ -2,13 +2,41 @@ import SwiftUI
 
 struct NotificationCardView: View {
     let notification: NotificationEvent
+    let isDeleting: Bool
+    let onTap: (() -> Void)?
+    let onDelete: () -> Void
+
+    init(
+        notification: NotificationEvent,
+        isDeleting: Bool = false,
+        onTap: (() -> Void)? = nil,
+        onDelete: @escaping () -> Void = {}
+    ) {
+        self.notification = notification
+        self.isDeleting = isDeleting
+        self.onTap = onTap
+        self.onDelete = onDelete
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(notification.body)
-                .font(.body)
-                .foregroundStyle(.primary)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            HStack(alignment: .top, spacing: 12) {
+                Text(notification.body)
+                    .font(.body)
+                    .foregroundStyle(.primary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Button(role: .destructive, action: onDelete) {
+                    if isDeleting {
+                        ProgressView()
+                    } else {
+                        Image(systemName: "trash")
+                    }
+                }
+                .disabled(isDeleting)
+                .buttonStyle(.borderless)
+                .accessibilityLabel("Delete notification")
+            }
 
             Label(createdAtText, systemImage: "clock")
                 .font(.subheadline)
@@ -17,6 +45,10 @@ struct NotificationCardView: View {
         .padding()
         .background(Color(.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 8))
+        .contentShape(RoundedRectangle(cornerRadius: 8))
+        .onTapGesture {
+            onTap?()
+        }
     }
 
     private var createdAtText: String {

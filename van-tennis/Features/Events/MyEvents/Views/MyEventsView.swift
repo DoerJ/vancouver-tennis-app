@@ -17,9 +17,9 @@ struct MyEventsView: View {
                     )
                 } else if viewModel.events.isEmpty {
                     ContentUnavailableView(
-                        "No hosted events",
+                        "No events yet",
                         systemImage: "calendar.badge.exclamationmark",
-                        description: Text("Events you create will appear here.")
+                        description: Text("Events you host or join will appear here.")
                     )
                 } else {
                     ScrollView {
@@ -38,22 +38,30 @@ struct MyEventsView: View {
                         .padding()
                     }
                     .refreshable {
-                        await loadHostedEvents()
+                        refreshMyEvents(showsLoading: viewModel.events.isEmpty)
                     }
                 }
             }
             .onAppear {
                 Task {
-                    await loadHostedEvents()
+                    await loadMyEvents(showsLoading: true)
                 }
             }
             .navigationTitle("My Events")
         }
     }
 
-    private func loadHostedEvents() async {
+    private func loadMyEvents(showsLoading: Bool) async {
         await viewModel.loadEvents(
-            hostedEventIDs: appState.userProfile?.hostedEvents ?? []
+            currentUserID: appState.userProfile?.id,
+            showsLoading: showsLoading
+        )
+    }
+
+    private func refreshMyEvents(showsLoading: Bool) {
+        viewModel.refreshEvents(
+            currentUserID: appState.userProfile?.id,
+            showsLoading: showsLoading
         )
     }
 }
