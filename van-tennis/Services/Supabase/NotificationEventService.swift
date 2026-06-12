@@ -38,6 +38,21 @@ struct NotificationEventService {
             .value
     }
 
+    func hasJoinRequest(senderID: UUID, hostID: UUID, eventID: UUID) async throws -> Bool {
+        let notifications: [NotificationEvent] = try await client
+            .from("notifications")
+            .select()
+            .eq("sender", value: senderID.uuidString)
+            .contains("recipients", value: [hostID.uuidString])
+            .eq("notification_type", value: NotificationType.eventJoined.rawValue)
+            .eq("related_event_id", value: eventID.uuidString)
+            .limit(1)
+            .execute()
+            .value
+
+        return !notifications.isEmpty
+    }
+
     func deleteNotificationForCurrentUser(notificationID: UUID) async throws {
         /*
             Perform a Supasbase RPC call to delete the notification for the current user.

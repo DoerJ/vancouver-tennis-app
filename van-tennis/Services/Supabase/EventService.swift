@@ -41,6 +41,18 @@ struct EventService {
             .value
     }
 
+    func fetchEventDetails(id eventID: UUID) async throws -> TennisEvent? {
+        let events: [TennisEvent] = try await client
+            .from("tennis_events")
+            .select()
+            .eq("id", value: eventID.uuidString)
+            .limit(1)
+            .execute()
+            .value
+
+        return events.first
+    }
+
     func createEvent(_ draft: TennisEventDraft, hostID: UUID) async throws -> TennisEvent {
         let newEvent = NewTennisEvent(
             hostID: hostID,
@@ -72,4 +84,26 @@ struct EventService {
             .execute()
     }
 
+    func leaveEvent(eventID: UUID) async throws {
+        try await client
+            .rpc(
+                "leave_event",
+                params: LeaveEventParams(eventID: eventID)
+            )
+            .execute()
+    }
+
+    func deleteExpiredEvents() async throws {
+        try await client
+            .rpc("delete_expired_events")
+            .execute()
+    }
+}
+
+private struct LeaveEventParams: Encodable {
+    let eventID: UUID
+
+    enum CodingKeys: String, CodingKey {
+        case eventID = "event_id"
+    }
 }

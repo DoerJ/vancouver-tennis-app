@@ -7,38 +7,65 @@ final class EventDetailViewModel: ObservableObject {
     @Published var participantProfiles: [UserProfile] = []
     @Published var isLoading = false
     @Published var isJoining = false
+    @Published var isLeaving = false
     @Published var errorMessage: String?
 
     private let profileService = ProfileService()
+    private let eventService = EventService()
     private let notificationEventService = NotificationEventService()
 
-    func loadDetails(for event: TennisEvent) async {
+    func loadDetails(for event: TennisEvent) async -> TennisEvent? {
         isLoading = true
         errorMessage = nil
-
-        do {
-            hostProfile = try await profileService.findProfile(userID: event.hostID)
-
-            participantProfiles = try await profileService
-                .fetchProfiles(userIDs: event.participants)
-                .sorted { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
-        } catch {
-            errorMessage = error.localizedDescription
+        defer {
+            isLoading = false
         }
 
-        isLoading = false
+        do {
+            guard let latestEvent = try await eventService.fetchEventDetails(id: event.id) else {
+                throw EventDetailViewModelError.eventNotFound
+            }
+
+            hostProfile = try await profileService.findProfile(userID: latestEvent.hostID)
+
+            participantProfiles = try await profileService
+                .fetchProfiles(userIDs: latestEvent.participants)
+                .sorted { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
+
+            return latestEvent
+        } catch {
+            errorMessage = error.localizedDescription
+            return nil
+        }
+    }
+
+    func hasRequestedToJoin(event: TennisEvent, currentUserID: UUID?) async -> Bool {
+        guard let currentUserID else {
+            return false
+        }
+
+        do {
+            return try await notificationEventService.hasJoinRequest(
+                senderID: currentUserID,
+                hostID: event.hostID,
+                eventID: event.id
+            )
+        } catch {
+            print("EventDetailViewModel: failed to check join request: \(error.localizedDescription)")
+            return false
+        }
     }
 
     func joinEvent(_ event: TennisEvent, currentUser: UserProfile) async throws {
-        guard event.hostID != currentUser.id else {
-            throw EventDetailViewModelError.hostCannotJoinOwnEvent
+        guard let latestEvent = try await eventService.fetchEventDetails(id: event.id) else {
+            throw EventDetailViewModelError.eventNotFound
         }
 
-        guard !event.participants.contains(currentUser.id) else {
+        guard !latestEvent.participants.contains(currentUser.id) else {
             return
         }
 
-        if let maxPlayers = event.maxPlayers, event.participants.count >= maxPlayers {
+        if let maxPlayers = latestEvent.maxPlayers, latestEvent.participants.count >= maxPlayers {
             throw EventDetailViewModelError.eventIsFull
         }
 
@@ -51,24 +78,53 @@ final class EventDetailViewModel: ObservableObject {
         _ = try await notificationEventService.createNotification(
             NewNotificationEvent(
                 sender: currentUser.id,
-                recipients: [event.hostID],
+                recipients: [latestEvent.hostID],
                 notificationType: .eventJoined,
                 title: "Player wants to join your event",
-                body: "\(currentUser.displayName) wants to join your event at \(event.court.displayName).",
-                relatedEventID: event.id
+                body: "\(currentUser.displayName) wants to join your event at \(latestEvent.court.displayName).",
+                relatedEventID: latestEvent.id
+            )
+        )
+    }
+
+    func leaveEvent(_ event: TennisEvent, currentUser: UserProfile) async throws {
+        guard let latestEvent = try await eventService.fetchEventDetails(id: event.id) else {
+            throw EventDetailViewModelError.eventNotFound
+        }
+
+        guard latestEvent.participants.contains(currentUser.id) else {
+            return
+        }
+
+        isLeaving = true
+        errorMessage = nil
+        defer {
+            isLeaving = false
+        }
+
+        try await eventService.leaveEvent(eventID: latestEvent.id)
+
+        _ = try await notificationEventService.createNotification(
+            NewNotificationEvent(
+                sender: currentUser.id,
+                recipients: [latestEvent.hostID],
+                notificationType: .eventLeft,
+                title: "Player left your event",
+                body: "\(currentUser.displayName) left your event at \(latestEvent.court.displayName).",
+                relatedEventID: latestEvent.id
             )
         )
     }
 }
 
 enum EventDetailViewModelError: LocalizedError {
-    case hostCannotJoinOwnEvent
+    case eventNotFound
     case eventIsFull
 
     var errorDescription: String? {
         switch self {
-        case .hostCannotJoinOwnEvent:
-            return "Hosts cannot join their own event."
+        case .eventNotFound:
+            return "This event is no longer available."
         case .eventIsFull:
             return "This event is already full."
         }

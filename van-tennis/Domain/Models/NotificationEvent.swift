@@ -4,6 +4,7 @@ enum NotificationType: String, CaseIterable, Codable, Identifiable {
     case eventJoined = "event_joined"
     case eventCanceled = "event_canceled"
     case eventUpdated = "event_updated"
+    case eventLeft = "event_left"
     case approveJoinRequest = "approve_join_request"
     case rejectJoinRequest = "reject_join_request"
 
@@ -19,6 +20,8 @@ enum NotificationType: String, CaseIterable, Codable, Identifiable {
             return "Event Canceled"
         case .eventUpdated:
             return "Event Updated"
+        case .eventLeft:
+            return "Event Left"
         case .approveJoinRequest:
             return "Join Request Approved"
         case .rejectJoinRequest:

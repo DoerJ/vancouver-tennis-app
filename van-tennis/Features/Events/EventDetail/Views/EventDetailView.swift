@@ -9,6 +9,7 @@ struct EventDetailView: View {
     @StateObject private var viewModel = EventDetailViewModel()
     @State private var isShowingCancelConfirmation = false
     @State private var isCancelling = false
+    @State private var hasRequestedToJoin = false
 
     init(
         event: TennisEvent,
@@ -22,7 +23,6 @@ struct EventDetailView: View {
         Form {
             Section("Event") {
                 LabeledContent("Type", value: event.eventType.displayName)
-                LabeledContent("Status", value: event.status.displayName)
                 LabeledContent("Skill Level", value: event.skillLevel.rawValue)
                 LabeledContent("Max Players", value: maxPlayersText)
             }
@@ -96,13 +96,48 @@ struct EventDetailView: View {
                                 ProgressView()
                                 Spacer()
                             }
+                        } else if hasRequestedToJoin {
+                            Text("Waiting for host to approve")
                         } else {
                             Text("Join Event")
                         }
                     }
                     .frame(maxWidth: .infinity)
                     .buttonStyle(.borderedProminent)
-                    .disabled(viewModel.isJoining)
+                    .disabled(viewModel.isJoining || hasRequestedToJoin)
+                }
+            }
+
+            if isCurrentUserParticipant {
+                Section {
+                    Button(role: .destructive) {
+                        Task {
+                            await leaveEvent()
+                        }
+                    } label: {
+                        if viewModel.isLeaving {
+                            HStack {
+                                Spacer()
+                                ProgressView()
+                                Spacer()
+                            }
+                        } else {
+                            Text("Leave Event")
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .buttonStyle(.bordered)
+                    .disabled(viewModel.isLeaving)
+                }
+            }
+
+            if canReportEvent {
+                Section {
+                    Button(role: .destructive) {} label: {
+                        Text("Report Event")
+                    }
+                    .frame(maxWidth: .infinity)
+                    .buttonStyle(.bordered)
                 }
             }
         }
@@ -124,10 +159,10 @@ struct EventDetailView: View {
             Text("This will delete the event and remove it from your hosted events.")
         }
         .task {
-            await viewModel.loadDetails(for: event)
+            await loadEventDetails()
         }
         .refreshable {
-            await viewModel.loadDetails(for: event)
+            await loadEventDetails()
         }
     }
 
@@ -143,12 +178,36 @@ struct EventDetailView: View {
         return event.hostID != currentUserID && !event.participants.contains(currentUserID)
     }
 
+    private var isCurrentUserParticipant: Bool {
+        guard let currentUserID = appState.supabaseSession?.user.id else {
+            return false
+        }
+
+        return event.participants.contains(currentUserID)
+    }
+
+    private var canReportEvent: Bool {
+        (isCurrentUserHost && !event.participants.isEmpty) || isCurrentUserParticipant
+    }
+
     private var maxPlayersText: String {
         guard let maxPlayers = event.maxPlayers else {
             return "Unlimited"
         }
 
         return "\(maxPlayers)"
+    }
+
+    private func loadEventDetails() async {
+        guard let latestEvent = await viewModel.loadDetails(for: event) else {
+            return
+        }
+
+        event = latestEvent
+        hasRequestedToJoin = await viewModel.hasRequestedToJoin(
+            event: latestEvent,
+            currentUserID: appState.userProfile?.id
+        )
     }
 
     private func cancelEvent() async {
@@ -174,6 +233,21 @@ struct EventDetailView: View {
 
         do {
             try await viewModel.joinEvent(event, currentUser: currentUser)
+            hasRequestedToJoin = true
+        } catch {
+            viewModel.errorMessage = error.localizedDescription
+        }
+    }
+
+    private func leaveEvent() async {
+        guard let currentUser = appState.userProfile else {
+            viewModel.errorMessage = "No authenticated user was found."
+            return
+        }
+
+        do {
+            try await viewModel.leaveEvent(event, currentUser: currentUser)
+            dismiss()
         } catch {
             viewModel.errorMessage = error.localizedDescription
         }

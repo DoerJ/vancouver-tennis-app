@@ -15,28 +15,34 @@ struct MyEventsView: View {
                         systemImage: "exclamationmark.triangle",
                         description: Text(errorMessage)
                     )
-                } else if viewModel.events.isEmpty {
-                    ContentUnavailableView(
-                        "No events yet",
-                        systemImage: "calendar.badge.exclamationmark",
-                        description: Text("Events you host or join will appear here.")
-                    )
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 12) {
-                            ForEach(viewModel.events) { event in
-                                NavigationLink {
-                                    EventDetailView(event: event) { eventID in
-                                        viewModel.removeEvent(id: eventID)
+                            if viewModel.events.isEmpty {
+                                ContentUnavailableView(
+                                    "No events yet",
+                                    systemImage: "calendar.badge.exclamationmark",
+                                    description: Text("Events you host or join will appear here.")
+                                )
+                                .frame(maxWidth: .infinity)
+                                .padding(.top, 80)
+                            } else {
+                                ForEach(viewModel.events) { event in
+                                    NavigationLink {
+                                        EventDetailView(event: event) { eventID in
+                                            viewModel.removeEvent(id: eventID)
+                                        }
+                                    } label: {
+                                        EventCardView(event: event)
                                     }
-                                } label: {
-                                    EventCardView(event: event)
+                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
                         .padding()
+                        .frame(maxWidth: .infinity)
                     }
+                    .scrollBounceBehavior(.always)
                     .refreshable {
                         refreshMyEvents(showsLoading: viewModel.events.isEmpty)
                     }
