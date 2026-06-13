@@ -41,6 +41,11 @@ final class ReviewParticipantJoinRequestViewModel: ObservableObject {
             return false
         }
 
+        guard let requesterID = notification.sender else {
+            errorMessage = "This join request is missing a player."
+            return false
+        }
+
         isApproving = true
         errorMessage = nil
         defer {
@@ -53,7 +58,7 @@ final class ReviewParticipantJoinRequestViewModel: ObservableObject {
             _ = try await notificationEventService.createNotification(
                 NewNotificationEvent(
                     sender: currentUser.id,
-                    recipients: [notification.sender],
+                    recipients: [requesterID],
                     notificationType: .approveJoinRequest,
                     title: "Join request approved",
                     body: "\(currentUser.displayName) approved your request to join the event.",
@@ -84,6 +89,11 @@ final class ReviewParticipantJoinRequestViewModel: ObservableObject {
             return false
         }
 
+        guard let requesterID = notification.sender else {
+            errorMessage = "This join request is missing a player."
+            return false
+        }
+
         isDisapproving = true
         errorMessage = nil
         defer {
@@ -94,7 +104,7 @@ final class ReviewParticipantJoinRequestViewModel: ObservableObject {
             _ = try await notificationEventService.createNotification(
                 NewNotificationEvent(
                     sender: currentUser.id,
-                    recipients: [notification.sender],
+                    recipients: [requesterID],
                     notificationType: .rejectJoinRequest,
                     title: "Join request declined",
                     body: "\(currentUser.displayName) declined your request to join the event.",

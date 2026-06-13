@@ -106,18 +106,29 @@ final class AppState: ObservableObject {
             throw AppStateError.notEventHost
         }
 
-        try await eventService.deleteEvent(
-            eventID: event.id,
-            hostID: supabaseSession.user.id
-        )
+        try await eventService.cancelHostedEvent(eventID: event.id)
 
-        let updatedProfile = try await profileService.removeHostedEvent(
-            userID: supabaseSession.user.id,
-            eventID: event.id
-        )
-
-        applyAuthenticatedState(supabaseSession: supabaseSession, userProfile: updatedProfile)
+        if let updatedProfile = try await profileService.findProfile(userID: supabaseSession.user.id) {
+            applyAuthenticatedState(supabaseSession: supabaseSession, userProfile: updatedProfile)
+        }
         eventsRevision += 1
+    }
+
+    func deleteAccountProfileDataAndRevokeSession() async throws {
+        guard supabaseSession != nil else {
+            throw AppStateError.missingAuthenticatedUser
+        }
+
+        try await profileService.deleteAccountProfileData()
+        try await authService.signOut()
+        eventsRevision += 1
+    }
+
+    func finishDeletedAccountFlow() {
+        googleSession = nil
+        supabaseSession = nil
+        userProfile = nil
+        authenticationState = .signedOut
     }
 
     func signOut() async {

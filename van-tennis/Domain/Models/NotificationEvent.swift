@@ -2,7 +2,7 @@ import Foundation
 
 enum NotificationType: String, CaseIterable, Codable, Identifiable {
     case eventJoined = "event_joined"
-    case eventCanceled = "event_canceled"
+    case eventCancelled = "event_cancelled"
     case eventUpdated = "event_updated"
     case eventLeft = "event_left"
     case approveJoinRequest = "approve_join_request"
@@ -16,8 +16,8 @@ enum NotificationType: String, CaseIterable, Codable, Identifiable {
         switch self {
         case .eventJoined:
             return "Event Joined"
-        case .eventCanceled:
-            return "Event Canceled"
+        case .eventCancelled:
+            return "Event Cancelled"
         case .eventUpdated:
             return "Event Updated"
         case .eventLeft:
@@ -32,7 +32,7 @@ enum NotificationType: String, CaseIterable, Codable, Identifiable {
 
 struct NotificationEvent: Codable, Identifiable, Equatable, Hashable {
     let id: UUID
-    let sender: UUID
+    let sender: UUID?
     let recipients: [UUID]
     let notificationType: NotificationType
     let title: String

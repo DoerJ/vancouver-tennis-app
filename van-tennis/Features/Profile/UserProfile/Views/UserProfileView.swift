@@ -3,6 +3,10 @@ import SwiftUI
 struct UserProfileView: View {
     @EnvironmentObject private var appState: AppState
     @State private var isSigningOut = false
+    @State private var isDeletingAccount = false
+    @State private var isShowingDeleteAccountConfirmation = false
+    @State private var isShowingAccountDeletedAlert = false
+    @State private var deleteAccountErrorMessage: String?
 
     var body: some View {
         NavigationStack {
@@ -35,6 +39,13 @@ struct UserProfileView: View {
                     .buttonStyle(.borderedProminent)
                 }
 
+                if let deleteAccountErrorMessage {
+                    Text(deleteAccountErrorMessage)
+                        .font(.footnote)
+                        .foregroundStyle(.red)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
                 Button(role: .destructive) {
                     Task {
                         isSigningOut = true
@@ -47,10 +58,55 @@ struct UserProfileView: View {
                 }
                 .buttonStyle(.bordered)
                 .disabled(isSigningOut)
+
+                Button(role: .destructive) {
+                    isShowingDeleteAccountConfirmation = true
+                } label: {
+                    Text(isDeletingAccount ? "Deleting account..." : "Delete Account")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .disabled(isDeletingAccount)
             }
             .padding()
             .navigationTitle("Profile")
+            .confirmationDialog(
+                "Delete your account?",
+                isPresented: $isShowingDeleteAccountConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("Delete Account", role: .destructive) {
+                    Task {
+                        await prepareAccountDeletion()
+                    }
+                }
+
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This action cannot be undone.")
+            }
+            .alert("Account Deleted", isPresented: $isShowingAccountDeletedAlert) {
+                Button("OK") {
+                    appState.finishDeletedAccountFlow()
+                }
+            } message: {
+                Text("Your account has been successfully deleted.")
+            }
         }
+    }
+
+    private func prepareAccountDeletion() async {
+        isDeletingAccount = true
+        deleteAccountErrorMessage = nil
+
+        do {
+            try await appState.deleteAccountProfileDataAndRevokeSession()
+            isShowingAccountDeletedAlert = true
+        } catch {
+            deleteAccountErrorMessage = error.localizedDescription
+        }
+
+        isDeletingAccount = false
     }
 }
 

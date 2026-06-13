@@ -79,7 +79,7 @@ struct EventDetailView: View {
                             Text("Cancel Event")
                         }
                     }
-                    .disabled(isCancelling)
+                    .disabled(isCancelling || isEventNotFound)
                 }
             }
 
@@ -104,7 +104,7 @@ struct EventDetailView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .buttonStyle(.borderedProminent)
-                    .disabled(viewModel.isJoining || hasRequestedToJoin)
+                    .disabled(viewModel.isJoining || hasRequestedToJoin || isEventNotFound)
                 }
             }
 
@@ -127,7 +127,7 @@ struct EventDetailView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .buttonStyle(.bordered)
-                    .disabled(viewModel.isLeaving)
+                    .disabled(viewModel.isLeaving || isEventNotFound)
                 }
             }
 
@@ -138,6 +138,7 @@ struct EventDetailView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .buttonStyle(.bordered)
+                    .disabled(isEventNotFound)
                 }
             }
         }
@@ -153,6 +154,7 @@ struct EventDetailView: View {
                     await cancelEvent()
                 }
             }
+            .disabled(isEventNotFound)
 
             Button("Keep Event", role: .cancel) {}
         } message: {
@@ -188,6 +190,10 @@ struct EventDetailView: View {
 
     private var canReportEvent: Bool {
         (isCurrentUserHost && !event.participants.isEmpty) || isCurrentUserParticipant
+    }
+
+    private var isEventNotFound: Bool {
+        viewModel.errorMessage == EventDetailViewModelError.eventNotFound.errorDescription
     }
 
     private var maxPlayersText: String {

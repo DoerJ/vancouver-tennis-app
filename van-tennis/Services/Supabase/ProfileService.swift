@@ -118,6 +118,12 @@ struct ProfileService {
         )
     }
 
+    func deleteAccountProfileData() async throws {
+        try await client
+            .rpc("delete_account_profile_data")
+            .execute()
+    }
+
     private func defaultDisplayName(for user: User) -> String {
         for key in ["name", "full_name", "display_name"] {
             if let displayName = user.userMetadata[key]?.stringValue,

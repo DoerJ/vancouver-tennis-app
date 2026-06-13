@@ -101,7 +101,9 @@ struct ReviewParticipantJoinRequestView: View {
         .navigationTitle("Join Request")
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            await viewModel.loadSenderProfile(senderID: notification.sender)
+            if let senderID = notification.sender {
+                await viewModel.loadSenderProfile(senderID: senderID)
+            }
         }
     }
 

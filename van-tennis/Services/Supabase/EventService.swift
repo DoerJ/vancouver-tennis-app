@@ -84,6 +84,15 @@ struct EventService {
             .execute()
     }
 
+    func cancelHostedEvent(eventID: UUID) async throws {
+        try await client
+            .rpc(
+                "cancel_hosted_event",
+                params: CancelHostedEventParams(eventID: eventID)
+            )
+            .execute()
+    }
+
     func leaveEvent(eventID: UUID) async throws {
         try await client
             .rpc(
@@ -98,9 +107,23 @@ struct EventService {
             .rpc("delete_expired_events")
             .execute()
     }
+
+    func cancelHostedEventsForAccountDeletion() async throws {
+        try await client
+            .rpc("cancel_hosted_events_for_account_deletion")
+            .execute()
+    }
 }
 
 private struct LeaveEventParams: Encodable {
+    let eventID: UUID
+
+    enum CodingKeys: String, CodingKey {
+        case eventID = "event_id"
+    }
+}
+
+private struct CancelHostedEventParams: Encodable {
     let eventID: UUID
 
     enum CodingKeys: String, CodingKey {
