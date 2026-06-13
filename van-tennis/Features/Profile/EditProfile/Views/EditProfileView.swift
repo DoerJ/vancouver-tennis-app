@@ -6,12 +6,16 @@ struct EditProfileView: View {
 
     @State private var displayName: String
     @State private var skillLevel: SkillLevel
+    @State private var selectedSocialTags: Set<String>
     @State private var isSaving = false
     @State private var errorMessage: String?
+
+    private let socialTagOptions = ["intj", "enfp", "software engineer"]
 
     init(profile: UserProfile) {
         _displayName = State(initialValue: profile.displayName)
         _skillLevel = State(initialValue: profile.skillLevel ?? .one)
+        _selectedSocialTags = State(initialValue: Set(profile.socialTags))
     }
 
     var body: some View {
@@ -24,6 +28,33 @@ struct EditProfileView: View {
                     ForEach(SkillLevel.allCases) { level in
                         Text(level.rawValue).tag(level)
                     }
+                }
+            }
+
+            Section("Social Tags") {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(socialTagOptions, id: \.self) { tag in
+                            Button {
+                                toggleSocialTag(tag)
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Text(tag)
+                                        .font(.subheadline)
+
+                                    if selectedSocialTags.contains(tag) {
+                                        Image(systemName: "checkmark")
+                                            .font(.caption)
+                                    }
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .frame(minHeight: 36)
+                            }
+                            .buttonStyle(.bordered)
+                        }
+                    }
+                    .padding(.vertical, 4)
                 }
             }
 
@@ -47,6 +78,14 @@ struct EditProfileView: View {
         }
     }
 
+    private func toggleSocialTag(_ tag: String) {
+        if selectedSocialTags.contains(tag) {
+            selectedSocialTags.remove(tag)
+        } else {
+            selectedSocialTags.insert(tag)
+        }
+    }
+
     private func save() async {
         let trimmedDisplayName = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -61,7 +100,8 @@ struct EditProfileView: View {
         do {
             try await appState.updateProfile(
                 displayName: trimmedDisplayName,
-                skillLevel: skillLevel
+                skillLevel: skillLevel,
+                socialTags: socialTagOptions.filter { selectedSocialTags.contains($0) }
             )
             dismiss()
         } catch {
@@ -85,6 +125,7 @@ struct EditProfileView: View {
                 hostedEvents: [],
                 participatedEvents: [],
                 notifications: [],
+                socialTags: ["intj", "software engineer"],
                 createdAt: nil,
                 updatedAt: nil
             )

@@ -27,6 +27,19 @@ struct UserProfileView: View {
                             .font(.body)
                             .foregroundStyle(.secondary)
                     }
+
+                    if let socialTags = appState.userProfile?.socialTags, !socialTags.isEmpty {
+                        HStack(spacing: 8) {
+                            ForEach(socialTags, id: \.self) { tag in
+                                Text(tag)
+                                    .font(.subheadline)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 8)
+                                    .background(Color(.secondarySystemBackground))
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                            }
+                        }
+                    }
                 }
 
                 if let profile = appState.userProfile {

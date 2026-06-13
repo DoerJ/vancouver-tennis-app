@@ -63,13 +63,14 @@ final class AppState: ObservableObject {
     func updateProfile(
         displayName: String? = nil,
         skillLevel: SkillLevel? = nil,
-        gender: Gender? = nil
+        gender: Gender? = nil,
+        socialTags: [String]? = nil
     ) async throws {
         guard let supabaseSession else {
             throw AppStateError.missingAuthenticatedUser
         }
 
-        guard displayName != nil || skillLevel != nil || gender != nil else {
+        guard displayName != nil || skillLevel != nil || gender != nil || socialTags != nil else {
             return
         }
 
@@ -77,7 +78,8 @@ final class AppState: ObservableObject {
             userID: supabaseSession.user.id,
             displayName: displayName,
             skillLevel: skillLevel,
-            gender: gender
+            gender: gender,
+            socialTags: socialTags
         )
 
         applyAuthenticatedState(supabaseSession: supabaseSession, userProfile: updatedProfile)
