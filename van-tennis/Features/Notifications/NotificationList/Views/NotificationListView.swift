@@ -36,10 +36,14 @@ struct NotificationListView: View {
                                             onTap: tapAction(for: notification)
                                         ) {
                                             Task {
-                                                await viewModel.deleteNotification(
+                                                let didDeleteNotification = await viewModel.deleteNotification(
                                                     notification,
                                                     currentUserID: appState.userProfile?.id
                                                 )
+
+                                                if didDeleteNotification {
+                                                    appState.removeCachedNotification(notification.id)
+                                                }
                                             }
                                         }
                                     }
@@ -77,17 +81,23 @@ struct NotificationListView: View {
     }
 
     private func loadNotifications(showsLoading: Bool) async {
-        await viewModel.loadNotifications(
+        if let notificationIDs = await viewModel.loadNotifications(
             currentUserID: appState.userProfile?.id,
             showsLoading: showsLoading
-        )
+        ) {
+            appState.updateCachedNotifications(notificationIDs)
+        }
     }
 
     private func refreshNotifications(showsLoading: Bool) {
         viewModel.refreshNotifications(
             currentUserID: appState.userProfile?.id,
             showsLoading: showsLoading
-        )
+        ) { notificationIDs in
+            if let notificationIDs {
+                appState.updateCachedNotifications(notificationIDs)
+            }
+        }
     }
 
     private func tapAction(for notification: NotificationEvent) -> (() -> Void)? {

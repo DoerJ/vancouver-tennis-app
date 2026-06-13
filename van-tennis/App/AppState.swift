@@ -114,6 +114,52 @@ final class AppState: ObservableObject {
         eventsRevision += 1
     }
 
+    func refreshCurrentProfile() async {
+        guard let supabaseSession else {
+            return
+        }
+
+        do {
+            if let profile = try await profileService.findProfile(userID: supabaseSession.user.id) {
+                applyAuthenticatedState(supabaseSession: supabaseSession, userProfile: profile)
+            }
+        } catch {
+            print("AppState: failed to refresh current profile: \(error.localizedDescription)")
+        }
+    }
+
+    func updateCachedNotifications(_ notificationIDs: [UUID]) {
+        userProfile = userProfile?.updatingNotifications(notificationIDs)
+    }
+
+    func updateCachedEvents(hostedEvents: [UUID], participatedEvents: [UUID]) {
+        userProfile = userProfile?.updatingEvents(
+            hostedEvents: hostedEvents,
+            participatedEvents: participatedEvents
+        )
+    }
+
+    func removeCachedEvent(_ eventID: UUID) {
+        guard let userProfile else {
+            return
+        }
+
+        self.userProfile = userProfile.updatingEvents(
+            hostedEvents: userProfile.hostedEvents.filter { $0 != eventID },
+            participatedEvents: userProfile.participatedEvents.filter { $0 != eventID }
+        )
+    }
+
+    func removeCachedNotification(_ notificationID: UUID) {
+        guard let userProfile else {
+            return
+        }
+
+        self.userProfile = userProfile.updatingNotifications(
+            userProfile.notifications.filter { $0 != notificationID }
+        )
+    }
+
     func deleteAccountProfileDataAndRevokeSession() async throws {
         guard supabaseSession != nil else {
             throw AppStateError.missingAuthenticatedUser

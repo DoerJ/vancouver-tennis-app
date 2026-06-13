@@ -12,31 +12,36 @@ final class NotificationListViewModel: ObservableObject {
     private let notificationEventService = NotificationEventService()
     private var refreshTask: Task<Void, Never>?
 
-    func refreshNotifications(currentUserID: UUID?, showsLoading: Bool = false) {
+    func refreshNotifications(
+        currentUserID: UUID?,
+        showsLoading: Bool = false,
+        onComplete: (@MainActor ([UUID]?) async -> Void)? = nil
+    ) {
         guard refreshTask == nil else {
             return
         }
 
         refreshTask = Task { [weak self] in
-            await self?.loadNotifications(
+            let notificationIDs = await self?.loadNotifications(
                 currentUserID: currentUserID,
                 showsLoading: showsLoading
             )
+            await onComplete?(notificationIDs)
             await MainActor.run {
                 self?.refreshTask = nil
             }
         }
     }
 
-    func loadNotifications(currentUserID: UUID?, showsLoading: Bool = false) async {
+    func loadNotifications(currentUserID: UUID?, showsLoading: Bool = false) async -> [UUID]? {
         guard !isLoading else {
-            return
+            return nil
         }
 
         guard let currentUserID else {
             notifications = []
             errorMessage = "No authenticated user was found."
-            return
+            return []
         }
 
         if showsLoading {
@@ -54,30 +59,32 @@ final class NotificationListViewModel: ObservableObject {
             guard let profile = try await profileService.findProfile(userID: currentUserID) else {
                 notifications = []
                 errorMessage = "User profile was not found."
-                return
+                return []
             }
 
             notifications = try await notificationEventService.fetchNotifications(
                 ids: profile.notifications
             )
             print("NotificationListViewModel: loaded \(notifications.count) notifications.")
+            return profile.notifications
         } catch is CancellationError {
             print("NotificationListViewModel: notification load was cancelled.")
-            return
+            return nil
         } catch {
             print("NotificationListViewModel: failed to load notifications: \(error.localizedDescription)")
             errorMessage = error.localizedDescription
+            return nil
         }
     }
 
-    func deleteNotification(_ notification: NotificationEvent, currentUserID: UUID?) async {
+    func deleteNotification(_ notification: NotificationEvent, currentUserID: UUID?) async -> Bool {
         guard currentUserID != nil else {
             errorMessage = "No authenticated user was found."
-            return
+            return false
         }
 
         guard !deletingNotificationIDs.contains(notification.id) else {
-            return
+            return false
         }
 
         deletingNotificationIDs.insert(notification.id)
@@ -88,10 +95,13 @@ final class NotificationListViewModel: ObservableObject {
                 notificationID: notification.id
             )
             notifications.removeAll { $0.id == notification.id }
+            deletingNotificationIDs.remove(notification.id)
+            return true
         } catch {
             errorMessage = error.localizedDescription
         }
 
         deletingNotificationIDs.remove(notification.id)
+        return false
     }
 }

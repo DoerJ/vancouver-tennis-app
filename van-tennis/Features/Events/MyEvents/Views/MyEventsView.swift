@@ -31,6 +31,7 @@ struct MyEventsView: View {
                                     NavigationLink {
                                         EventDetailView(event: event) { eventID in
                                             viewModel.removeEvent(id: eventID)
+                                            appState.removeCachedEvent(eventID)
                                         }
                                     } label: {
                                         EventCardView(event: event)
@@ -58,17 +59,29 @@ struct MyEventsView: View {
     }
 
     private func loadMyEvents(showsLoading: Bool) async {
-        await viewModel.loadEvents(
+        if let eventIDs = await viewModel.loadEvents(
             currentUserID: appState.userProfile?.id,
             showsLoading: showsLoading
-        )
+        ) {
+            appState.updateCachedEvents(
+                hostedEvents: eventIDs.hostedEvents,
+                participatedEvents: eventIDs.participatedEvents
+            )
+        }
     }
 
     private func refreshMyEvents(showsLoading: Bool) {
         viewModel.refreshEvents(
             currentUserID: appState.userProfile?.id,
             showsLoading: showsLoading
-        )
+        ) { eventIDs in
+            if let eventIDs {
+                appState.updateCachedEvents(
+                    hostedEvents: eventIDs.hostedEvents,
+                    participatedEvents: eventIDs.participatedEvents
+                )
+            }
+        }
     }
 }
 

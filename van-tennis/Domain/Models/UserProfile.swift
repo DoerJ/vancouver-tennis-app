@@ -28,6 +28,40 @@ struct UserProfile: Codable, Identifiable, Equatable {
     }
 }
 
+extension UserProfile {
+    func updatingEvents(hostedEvents: [UUID], participatedEvents: [UUID]) -> UserProfile {
+        UserProfile(
+            id: id,
+            email: email,
+            displayName: displayName,
+            avatarURL: avatarURL,
+            skillLevel: skillLevel,
+            gender: gender,
+            hostedEvents: hostedEvents,
+            participatedEvents: participatedEvents,
+            notifications: notifications,
+            createdAt: createdAt,
+            updatedAt: updatedAt
+        )
+    }
+
+    func updatingNotifications(_ notifications: [UUID]) -> UserProfile {
+        UserProfile(
+            id: id,
+            email: email,
+            displayName: displayName,
+            avatarURL: avatarURL,
+            skillLevel: skillLevel,
+            gender: gender,
+            hostedEvents: hostedEvents,
+            participatedEvents: participatedEvents,
+            notifications: notifications,
+            createdAt: createdAt,
+            updatedAt: updatedAt
+        )
+    }
+}
+
 struct NewUserProfile: Encodable {
     let id: UUID
     let email: String?
