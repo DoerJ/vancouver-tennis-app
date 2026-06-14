@@ -1,4 +1,4 @@
-enum EventStatus: String, Codable, Identifiable {
+enum EventStatus: String, Codable, Identifiable, Hashable {
     case upcoming
     case inProgress = "in_progress"
     case completed

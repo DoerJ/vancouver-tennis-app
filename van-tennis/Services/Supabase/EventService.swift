@@ -53,24 +53,12 @@ struct EventService {
         return events.first
     }
 
-    func createEvent(_ draft: TennisEventDraft, hostID: UUID) async throws -> TennisEvent {
-        let newEvent = NewTennisEvent(
-            hostID: hostID,
-            startTime: draft.startTime,
-            endTime: draft.endTime,
-            eventType: draft.eventType,
-            maxPlayers: draft.maxPlayers,
-            city: draft.city,
-            court: draft.court,
-            skillLevel: draft.skillLevel,
-            participants: []
-        )
-
-        return try await client
-            .from("tennis_events")
-            .insert(newEvent)
-            .select()
-            .single()
+    func createEvent(_ draft: TennisEventDraft) async throws -> TennisEvent {
+        try await client
+            .rpc(
+                "create_tennis_event",
+                params: CreateTennisEventParams(draft: draft)
+            )
             .execute()
             .value
     }
@@ -128,5 +116,53 @@ private struct CancelHostedEventParams: Encodable {
 
     enum CodingKeys: String, CodingKey {
         case eventID = "event_id"
+    }
+}
+
+private struct CreateTennisEventParams: Encodable {
+    let startTime: Date
+    let endTime: Date
+    let eventType: EventType
+    let maxPlayers: Int?
+    let city: EventCity
+    let court: TennisCourt
+    let skillLevel: SkillLevel
+
+    init(draft: TennisEventDraft) {
+        startTime = draft.startTime
+        endTime = draft.endTime
+        eventType = draft.eventType
+        maxPlayers = draft.maxPlayers
+        city = draft.city
+        court = draft.court
+        skillLevel = draft.skillLevel
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case startTime = "p_start_time"
+        case endTime = "p_end_time"
+        case eventType = "p_event_type"
+        case maxPlayers = "p_max_players"
+        case city = "p_location_city"
+        case court = "p_location_court"
+        case skillLevel = "p_skill_level"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+
+        try container.encode(startTime, forKey: .startTime)
+        try container.encode(endTime, forKey: .endTime)
+        try container.encode(eventType, forKey: .eventType)
+
+        if let maxPlayers {
+            try container.encode(maxPlayers, forKey: .maxPlayers)
+        } else {
+            try container.encodeNil(forKey: .maxPlayers)
+        }
+
+        try container.encode(city, forKey: .city)
+        try container.encode(court, forKey: .court)
+        try container.encode(skillLevel, forKey: .skillLevel)
     }
 }

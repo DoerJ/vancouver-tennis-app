@@ -17,13 +17,15 @@ struct EventCardView: View {
 
                 Spacer()
 
-                Text(event.status.displayName)
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(.thinMaterial)
-                    .clipShape(Capsule())
+                TimelineView(.periodic(from: Date(), by: 60)) { context in
+                    Text(upcomingTimeText(now: context.date))
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(.thinMaterial)
+                        .clipShape(Capsule())
+                }
             }
 
             VStack(alignment: .leading, spacing: 6) {
@@ -40,6 +42,32 @@ struct EventCardView: View {
 
     private var timeRangeText: String {
         "\(Self.dateFormatter.string(from: event.startTime)) - \(Self.timeFormatter.string(from: event.endTime))"
+    }
+
+    private func upcomingTimeText(now: Date) -> String {
+        let calendar = Calendar.current
+
+        if event.startTime <= now {
+            return event.endTime > now ? "In progress" : "Ended"
+        }
+
+        if calendar.isDateInTomorrow(event.startTime) {
+            return "Tomorrow"
+        }
+
+        let secondsUntilStart = event.startTime.timeIntervalSince(now)
+        let hoursUntilStart = Int(ceil(secondsUntilStart / 3_600))
+
+        if hoursUntilStart < 24 {
+            return "In \(hoursUntilStart) \(hoursUntilStart == 1 ? "hour" : "hours")"
+        }
+
+        let startOfToday = calendar.startOfDay(for: now)
+        let startOfEventDay = calendar.startOfDay(for: event.startTime)
+        let daysUntilStart = calendar.dateComponents([.day], from: startOfToday, to: startOfEventDay).day ?? 1
+        let displayDays = max(daysUntilStart, 1)
+
+        return "In \(displayDays) \(displayDays == 1 ? "day" : "days")"
     }
 
     private static let dateFormatter: DateFormatter = {

@@ -1,4 +1,4 @@
-enum EventType: String, CaseIterable, Codable, Identifiable {
+enum EventType: String, CaseIterable, Codable, Identifiable, Hashable {
     case practice
     case casual
     case match

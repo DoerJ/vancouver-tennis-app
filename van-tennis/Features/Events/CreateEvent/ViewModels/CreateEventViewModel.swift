@@ -47,6 +47,11 @@ final class CreateEventViewModel: ObservableObject {
     }
 
     func validate() -> Bool {
+        guard startTime > Date() else {
+            errorMessage = "Start time must be in the future."
+            return false
+        }
+
         guard endTime > startTime else {
             errorMessage = "End time must be after start time."
             return false
@@ -61,7 +66,7 @@ final class CreateEventViewModel: ObservableObject {
         return true
     }
 
-    func save(hostID: UUID) async -> TennisEvent? {
+    func save() async -> TennisEvent? {
         guard let draft else {
             return nil
         }
@@ -70,7 +75,7 @@ final class CreateEventViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            let event = try await eventService.createEvent(draft, hostID: hostID)
+            let event = try await eventService.createEvent(draft)
             isSaving = false
             return event
         } catch {

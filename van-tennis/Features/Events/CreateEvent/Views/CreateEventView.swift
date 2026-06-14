@@ -83,11 +83,11 @@ struct CreateEventView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Button(viewModel.isSaving ? "Saving..." : "Save") {
                     Task {
-                        guard let hostID = appState.supabaseSession?.user.id else {
+                        guard appState.supabaseSession != nil else {
                             return
                         }
 
-                        if let event = await viewModel.save(hostID: hostID) {
+                        if let event = await viewModel.save() {
                             do {
                                 try await appState.appendHostedEvent(event.id)
                                 onEventCreated(event)

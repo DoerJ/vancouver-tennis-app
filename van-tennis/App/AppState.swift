@@ -15,6 +15,9 @@ final class AppState: ObservableObject {
     private let deviceTokenService = DeviceTokenService()
     private let authService = SupabaseAuthService()
     private var cancellables: Set<AnyCancellable> = []
+    private var profileRealtimeTask: Task<Void, Never>?
+    private var profileRealtimeChannel: RealtimeChannelV2?
+    private var subscribedProfileID: UUID?
     private var lastSavedDeviceToken: String?
 
     init() {
@@ -173,6 +176,7 @@ final class AppState: ObservableObject {
     }
 
     func finishDeletedAccountFlow() {
+        stopProfileRealtimeSubscription()
         googleSession = nil
         supabaseSession = nil
         userProfile = nil
@@ -180,6 +184,8 @@ final class AppState: ObservableObject {
     }
 
     func signOut() async {
+        stopProfileRealtimeSubscription()
+
         do {
             try await authService.signOut()
         } catch {
@@ -196,6 +202,78 @@ final class AppState: ObservableObject {
         self.supabaseSession = supabaseSession
         self.userProfile = userProfile
         authenticationState = userProfile.skillLevel == nil || userProfile.gender == nil ? .needsSkillLevel : .signedIn
+        startProfileRealtimeSubscription(userID: userProfile.id)
+    }
+
+    private func startProfileRealtimeSubscription(userID: UUID) {
+        /*
+            Subscribe to Supabase realtime for current user's profiles table row,
+            and update cached notifications whenever the profile row is updated
+        */
+        guard subscribedProfileID != userID else {
+            return
+        }
+
+        stopProfileRealtimeSubscription()
+        subscribedProfileID = userID
+
+        let client = SupabaseClientProvider.shared
+        let channel = client.realtimeV2.channel("profile-\(userID.uuidString)")
+        profileRealtimeChannel = channel
+
+        profileRealtimeTask = Task { [weak self] in
+            let updates = channel.postgresChange(
+                UpdateAction.self,
+                schema: "public",
+                table: "profiles",
+                filter: .eq("id", value: userID.uuidString)
+            )
+
+            do {
+                await client.realtimeV2.connect()
+                try await channel.subscribeWithError()
+
+                for await update in updates {
+                    guard !Task.isCancelled else {
+                        break
+                    }
+
+                    do {
+                        let updatedProfile = try update.decodeRecord(
+                            as: UserProfile.self,
+                            decoder: Self.supabaseRealtimeDecoder
+                        )
+
+                        await MainActor.run {
+                            self?.updateCachedNotifications(updatedProfile.notifications)
+                        }
+                    } catch {
+                        print("AppState: failed to decode realtime profile update: \(error.localizedDescription)")
+                        await self?.refreshCurrentProfile()
+                    }
+                }
+            } catch is CancellationError {
+                // Expected when signing out or switching users.
+            } catch {
+                print("AppState: profile realtime subscription failed: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private func stopProfileRealtimeSubscription() {
+        profileRealtimeTask?.cancel()
+        profileRealtimeTask = nil
+        subscribedProfileID = nil
+
+        guard let profileRealtimeChannel else {
+            return
+        }
+
+        self.profileRealtimeChannel = nil
+
+        Task {
+            await SupabaseClientProvider.shared.realtimeV2.removeChannel(profileRealtimeChannel)
+        }
     }
 
     private func saveCurrentDeviceTokenIfPossible() async {
@@ -228,6 +306,34 @@ final class AppState: ObservableObject {
             print("AppState: failed to save APNs device token: \(error.localizedDescription)")
         }
     }
+
+    private static let supabaseRealtimeDecoder: JSONDecoder = {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let dateString = try container.decode(String.self)
+
+            let fractionalFormatter = ISO8601DateFormatter()
+            fractionalFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+            if let date = fractionalFormatter.date(from: dateString) {
+                return date
+            }
+
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime]
+
+            if let date = formatter.date(from: dateString) {
+                return date
+            }
+
+            throw DecodingError.dataCorruptedError(
+                in: container,
+                debugDescription: "Invalid Supabase date: \(dateString)"
+            )
+        }
+        return decoder
+    }()
 }
 
 enum AuthenticationState {

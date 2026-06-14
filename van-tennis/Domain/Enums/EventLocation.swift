@@ -1,4 +1,4 @@
-enum EventCity: String, CaseIterable, Codable, Identifiable {
+enum EventCity: String, CaseIterable, Codable, Identifiable, Hashable {
     case burnaby
     case richmond
 
@@ -25,7 +25,7 @@ enum EventCity: String, CaseIterable, Codable, Identifiable {
     }
 }
 
-enum TennisCourt: String, CaseIterable, Codable, Identifiable {
+enum TennisCourt: String, CaseIterable, Codable, Identifiable, Hashable {
     case bcitCourt
     case centralParkCourt
     case southarmCourt

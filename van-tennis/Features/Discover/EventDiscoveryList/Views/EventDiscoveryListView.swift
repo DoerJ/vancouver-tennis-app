@@ -3,9 +3,15 @@ import SwiftUI
 struct EventDiscoveryListView: View {
     @EnvironmentObject private var appState: AppState
     @StateObject private var viewModel = EventDiscoveryListViewModel()
+    @State private var navigationPath: [EventDiscoveryRoute] = []
+    let resetTrigger: Int
+
+    init(resetTrigger: Int = 0) {
+        self.resetTrigger = resetTrigger
+    }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             Group {
                 if viewModel.isLoading && viewModel.events.isEmpty {
                     ProgressView("Loading events")
@@ -28,9 +34,7 @@ struct EventDiscoveryListView: View {
                                         .padding(.top, 80)
                                 } else {
                                     ForEach(viewModel.filteredEvents) { event in
-                                        NavigationLink {
-                                            EventDetailView(event: event)
-                                        } label: {
+                                        NavigationLink(value: EventDiscoveryRoute.eventDetail(event)) {
                                             EventCardView(event: event)
                                         }
                                         .buttonStyle(.plain)
@@ -68,14 +72,20 @@ struct EventDiscoveryListView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     if let skillLevel = appState.userProfile?.skillLevel {
-                        NavigationLink {
-                            CreateEventView(creatorSkillLevel: skillLevel) { event in
-                                viewModel.applyCreatedEvent(event)
-                            }
-                        } label: {
+                        NavigationLink(value: EventDiscoveryRoute.createEvent(skillLevel)) {
                             Image(systemName: "plus")
                         }
                         .accessibilityLabel("Create Event")
+                    }
+                }
+            }
+            .navigationDestination(for: EventDiscoveryRoute.self) { route in
+                switch route {
+                case .eventDetail(let event):
+                    EventDetailView(event: event)
+                case .createEvent(let skillLevel):
+                    CreateEventView(creatorSkillLevel: skillLevel) { event in
+                        viewModel.applyCreatedEvent(event)
                     }
                 }
             }
@@ -98,6 +108,9 @@ struct EventDiscoveryListView: View {
             Task {
                 await viewModel.loadEvents()
             }
+        }
+        .onChange(of: resetTrigger) {
+            navigationPath = []
         }
     }
 
@@ -126,6 +139,11 @@ struct EventDiscoveryListView: View {
             )
         }
     }
+}
+
+private enum EventDiscoveryRoute: Hashable {
+    case eventDetail(TennisEvent)
+    case createEvent(SkillLevel)
 }
 
 #Preview {

@@ -8,8 +8,14 @@ struct EventDetailView: View {
     @State private var event: TennisEvent
     @StateObject private var viewModel = EventDetailViewModel()
     @State private var isShowingCancelConfirmation = false
+    @State private var isShowingReportSheet = false
+    @State private var isShowingReportSubmittedAlert = false
     @State private var isCancelling = false
     @State private var hasRequestedToJoin = false
+    @State private var selectedReportReason: ReportReason = .harassment
+    @State private var selectedReportedUserIDs: Set<UUID> = []
+    @State private var reportDescription = ""
+    @State private var reportErrorMessage: String?
 
     init(
         event: TennisEvent,
@@ -64,7 +70,7 @@ struct EventDetailView: View {
                 }
             }
 
-            if isCurrentUserHost {
+            if !isEventEnded && isCurrentUserHost {
                 Section {
                     Button(role: .destructive) {
                         isShowingCancelConfirmation = true
@@ -83,7 +89,7 @@ struct EventDetailView: View {
                 }
             }
 
-            if canJoinEvent {
+            if !isEventEnded && canJoinEvent {
                 Section {
                     Button {
                         Task {
@@ -108,7 +114,7 @@ struct EventDetailView: View {
                 }
             }
 
-            if isCurrentUserParticipant {
+            if !isEventEnded && isCurrentUserParticipant {
                 Section {
                     Button(role: .destructive) {
                         Task {
@@ -131,9 +137,11 @@ struct EventDetailView: View {
                 }
             }
 
-            if canReportEvent {
+            if !isEventEnded && canReportEvent {
                 Section {
-                    Button(role: .destructive) {} label: {
+                    Button(role: .destructive) {
+                        prepareReportSheet()
+                    } label: {
                         Text("Report Event")
                     }
                     .frame(maxWidth: .infinity)
@@ -154,7 +162,7 @@ struct EventDetailView: View {
                     await cancelEvent()
                 }
             }
-            .disabled(isEventNotFound)
+            .disabled(isEventNotFound || isEventEnded)
 
             Button("Keep Event", role: .cancel) {}
         } message: {
@@ -165,6 +173,23 @@ struct EventDetailView: View {
         }
         .refreshable {
             await loadEventDetails()
+        }
+        .sheet(isPresented: $isShowingReportSheet) {
+            ReportEventSheet(
+                selectedReason: $selectedReportReason,
+                selectedReportedUserIDs: $selectedReportedUserIDs,
+                reportDescription: $reportDescription,
+                errorMessage: reportErrorMessage,
+                isSubmitting: viewModel.isSubmittingReport,
+                reportableProfiles: reportableProfiles,
+                currentUserID: appState.userProfile?.id,
+                onSubmit: submitReport
+            )
+        }
+        .alert("Report Received", isPresented: $isShowingReportSubmittedAlert) {
+            Button("OK") {}
+        } message: {
+            Text("We have received your report and will review it. We will notify you of the results.")
         }
     }
 
@@ -196,6 +221,25 @@ struct EventDetailView: View {
         viewModel.errorMessage == EventDetailViewModelError.eventNotFound.errorDescription
     }
 
+    private var isEventEnded: Bool {
+        event.endTime <= Date()
+    }
+
+    private var reportableProfiles: [UserProfile] {
+        var seenProfileIDs: Set<UUID> = []
+        var profiles: [UserProfile] = []
+
+        if let hostProfile = viewModel.hostProfile, seenProfileIDs.insert(hostProfile.id).inserted {
+            profiles.append(hostProfile)
+        }
+
+        for participantProfile in viewModel.participantProfiles where seenProfileIDs.insert(participantProfile.id).inserted {
+            profiles.append(participantProfile)
+        }
+
+        return profiles
+    }
+
     private var maxPlayersText: String {
         guard let maxPlayers = event.maxPlayers else {
             return "Unlimited"
@@ -214,6 +258,35 @@ struct EventDetailView: View {
             event: latestEvent,
             currentUserID: appState.userProfile?.id
         )
+    }
+
+    private func prepareReportSheet() {
+        selectedReportReason = .harassment
+        selectedReportedUserIDs = []
+        reportDescription = ""
+        reportErrorMessage = nil
+        isShowingReportSheet = true
+    }
+
+    private func submitReport() async {
+        guard let currentUser = appState.userProfile else {
+            reportErrorMessage = "No authenticated user was found."
+            return
+        }
+
+        do {
+            try await viewModel.submitReport(
+                event: event,
+                reporter: currentUser,
+                reportedUserIDs: Array(selectedReportedUserIDs),
+                reason: selectedReportReason,
+                details: reportDescription
+            )
+            isShowingReportSheet = false
+            isShowingReportSubmittedAlert = true
+        } catch {
+            reportErrorMessage = error.localizedDescription
+        }
     }
 
     private func cancelEvent() async {
@@ -265,6 +338,114 @@ struct EventDetailView: View {
         formatter.timeStyle = .short
         return formatter
     }()
+}
+
+private struct ReportEventSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Binding var selectedReason: ReportReason
+    @Binding var selectedReportedUserIDs: Set<UUID>
+    @Binding var reportDescription: String
+
+    let errorMessage: String?
+    let isSubmitting: Bool
+    let reportableProfiles: [UserProfile]
+    let currentUserID: UUID?
+    let onSubmit: () async -> Void
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Reason") {
+                    Picker("Reason", selection: $selectedReason) {
+                        ForEach(ReportReason.allCases) { reason in
+                            Text(reason.displayName).tag(reason)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+
+                Section("Who to Report") {
+                    if reportableProfiles.isEmpty {
+                        Text("No players available")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(reportableProfiles, id: \.id) { profile in
+                                    reportProfileChip(profile)
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        }
+                    }
+                }
+
+                Section("Details") {
+                    TextEditor(text: $reportDescription)
+                        .frame(minHeight: 120)
+                }
+
+                if let errorMessage {
+                    Section {
+                        Text(errorMessage)
+                            .foregroundStyle(.red)
+                    }
+                }
+            }
+            .navigationTitle("Report Event")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .disabled(isSubmitting)
+                }
+
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(isSubmitting ? "Submitting..." : "Submit") {
+                        Task {
+                            await onSubmit()
+                        }
+                    }
+                    .disabled(isSubmitting || selectedReportedUserIDs.isEmpty || reportDescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+        }
+    }
+
+    private func reportProfileChip(_ profile: UserProfile) -> some View {
+        let isCurrentUser = profile.id == currentUserID
+        let isSelected = selectedReportedUserIDs.contains(profile.id)
+
+        return Button {
+            guard !isCurrentUser else {
+                return
+            }
+
+            if isSelected {
+                selectedReportedUserIDs.remove(profile.id)
+            } else {
+                selectedReportedUserIDs.insert(profile.id)
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Text(profile.displayName)
+                    .font(.subheadline)
+
+                if isSelected {
+                    Image(systemName: "checkmark")
+                        .font(.caption)
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .frame(minHeight: 36)
+        }
+        .buttonStyle(.bordered)
+        .disabled(isCurrentUser)
+        .opacity(isCurrentUser ? 0.45 : 1)
+    }
 }
 
 #Preview {

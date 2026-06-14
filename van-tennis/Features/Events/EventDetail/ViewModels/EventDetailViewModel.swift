@@ -8,11 +8,13 @@ final class EventDetailViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var isJoining = false
     @Published var isLeaving = false
+    @Published var isSubmittingReport = false
     @Published var errorMessage: String?
 
     private let profileService = ProfileService()
     private let eventService = EventService()
     private let notificationEventService = NotificationEventService()
+    private let reportService = ReportService()
 
     func loadDetails(for event: TennisEvent) async -> TennisEvent? {
         isLoading = true
@@ -114,6 +116,37 @@ final class EventDetailViewModel: ObservableObject {
                 relatedEventID: latestEvent.id
             )
         )
+    }
+
+    func submitReport(
+        event: TennisEvent,
+        reporter: UserProfile,
+        reportedUserIDs: [UUID],
+        reason: ReportReason,
+        details: String
+    ) async throws {
+        guard !reportedUserIDs.isEmpty else {
+            return
+        }
+
+        let trimmedDetails = details.trimmingCharacters(in: .whitespacesAndNewlines)
+        let reports = reportedUserIDs.map {
+            NewReport(
+                reporterID: reporter.id,
+                reportedUserID: $0,
+                reportedEventID: event.id,
+                reason: reason,
+                details: trimmedDetails.isEmpty ? nil : trimmedDetails
+            )
+        }
+
+        isSubmittingReport = true
+        errorMessage = nil
+        defer {
+            isSubmittingReport = false
+        }
+
+        _ = try await reportService.createReports(reports)
     }
 }
 
