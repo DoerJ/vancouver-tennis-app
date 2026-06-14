@@ -4,6 +4,11 @@ struct NotificationListView: View {
     @EnvironmentObject private var appState: AppState
     @StateObject private var viewModel = NotificationListViewModel()
     @State private var selectedJoinRequest: NotificationEvent?
+    let onOpenProfile: () -> Void
+
+    init(onOpenProfile: @escaping () -> Void = {}) {
+        self.onOpenProfile = onOpenProfile
+    }
 
     var body: some View {
         NavigationStack {
@@ -60,6 +65,16 @@ struct NotificationListView: View {
                 }
             }
             .navigationTitle("Notifications")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        onOpenProfile()
+                    } label: {
+                        Image(systemName: "person.circle")
+                    }
+                    .accessibilityLabel("Profile")
+                }
+            }
             .navigationDestination(item: $selectedJoinRequest) { notification in
                 ReviewParticipantJoinRequestView(notification: notification)
             }

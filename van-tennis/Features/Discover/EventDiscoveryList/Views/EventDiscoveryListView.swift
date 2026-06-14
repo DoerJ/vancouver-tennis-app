@@ -5,9 +5,11 @@ struct EventDiscoveryListView: View {
     @StateObject private var viewModel = EventDiscoveryListViewModel()
     @State private var navigationPath: [EventDiscoveryRoute] = []
     let resetTrigger: Int
+    let onOpenProfile: () -> Void
 
-    init(resetTrigger: Int = 0) {
+    init(resetTrigger: Int = 0, onOpenProfile: @escaping () -> Void = {}) {
         self.resetTrigger = resetTrigger
+        self.onOpenProfile = onOpenProfile
     }
 
     var body: some View {
@@ -71,11 +73,20 @@ struct EventDiscoveryListView: View {
             .navigationTitle("Find Events")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    if let skillLevel = appState.userProfile?.skillLevel {
-                        NavigationLink(value: EventDiscoveryRoute.createEvent(skillLevel)) {
-                            Image(systemName: "plus")
+                    HStack {
+                        if let skillLevel = appState.userProfile?.skillLevel {
+                            NavigationLink(value: EventDiscoveryRoute.createEvent(skillLevel)) {
+                                Image(systemName: "plus")
+                            }
+                            .accessibilityLabel("Create Event")
                         }
-                        .accessibilityLabel("Create Event")
+
+                        Button {
+                            onOpenProfile()
+                        } label: {
+                            Image(systemName: "person.circle")
+                        }
+                        .accessibilityLabel("Profile")
                     }
                 }
             }

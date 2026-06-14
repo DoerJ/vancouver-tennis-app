@@ -46,13 +46,6 @@ struct EventDetailView: View {
             HostSummaryView(host: viewModel.hostProfile)
             ParticipantListView(participants: viewModel.participantProfiles)
 
-            Section("Event ID") {
-                Text(event.id.uuidString)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .textSelection(.enabled)
-            }
-
             if viewModel.isLoading {
                 Section {
                     HStack {

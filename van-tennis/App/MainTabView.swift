@@ -4,34 +4,47 @@ struct MainTabView: View {
     @EnvironmentObject private var appState: AppState
     @State private var selectedTab: MainTab = .find
     @State private var findResetTrigger = 0
+    @State private var isShowingProfile = false
 
     var body: some View {
         TabView(selection: tabSelection) {
-            EventDiscoveryListView(resetTrigger: findResetTrigger)
+            EventDiscoveryListView(resetTrigger: findResetTrigger) {
+                isShowingProfile = true
+            }
                 .tabItem {
                     Label("Find", systemImage: "magnifyingglass")
                 }
                 .tag(MainTab.find)
 
-            MyEventsView()
+            MyEventsView {
+                isShowingProfile = true
+            }
                 .tabItem {
                     Label("My Events", systemImage: "calendar")
                 }
                 .badge(hasMyEvents ? "" : nil)
                 .tag(MainTab.myEvents)
 
-            NotificationListView()
+            NotificationListView {
+                isShowingProfile = true
+            }
                 .tabItem {
                     Label("Notifications", systemImage: "bell")
                 }
                 .badge(hasNotifications ? "" : nil)
                 .tag(MainTab.notifications)
 
-            UserProfileView()
+            ChatView {
+                isShowingProfile = true
+            }
                 .tabItem {
-                    Label("Profile", systemImage: "person.circle")
+                    Label("Chat", systemImage: "message")
                 }
-                .tag(MainTab.profile)
+                .tag(MainTab.chat)
+        }
+        .sheet(isPresented: $isShowingProfile) {
+            UserProfileView()
+                .environmentObject(appState)
         }
     }
 
@@ -68,7 +81,7 @@ private enum MainTab: Hashable {
     case find
     case myEvents
     case notifications
-    case profile
+    case chat
 }
 
 #Preview {

@@ -3,6 +3,11 @@ import SwiftUI
 struct MyEventsView: View {
     @EnvironmentObject private var appState: AppState
     @StateObject private var viewModel = MyEventsViewModel()
+    let onOpenProfile: () -> Void
+
+    init(onOpenProfile: @escaping () -> Void = {}) {
+        self.onOpenProfile = onOpenProfile
+    }
 
     var body: some View {
         NavigationStack {
@@ -55,6 +60,16 @@ struct MyEventsView: View {
                 }
             }
             .navigationTitle("My Events")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        onOpenProfile()
+                    } label: {
+                        Image(systemName: "person.circle")
+                    }
+                    .accessibilityLabel("Profile")
+                }
+            }
         }
     }
 
