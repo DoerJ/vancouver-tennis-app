@@ -82,6 +82,12 @@ struct ChatRoomView: View {
         .onChange(of: appState.chatMessagesRevision) { _, _ in
             syncMessagesFromCache()
         }
+        .onAppear {
+            appState.startChatMessagesRealtimeSubscription(eventID: event.id)
+        }
+        .onDisappear {
+            appState.stopChatMessagesRealtimeSubscription()
+        }
     }
 
     @MainActor
@@ -129,6 +135,7 @@ struct ChatRoomView: View {
     }
 
     private func loadMessagesIfNeeded() async {
+        // Load chat messages from cache first
         if let cachedMessages = appState.cachedChatMessages(eventID: event.id) {
             messages = cachedMessages
             return

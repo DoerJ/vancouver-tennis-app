@@ -8,6 +8,7 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
         2. Edge function fetches device token for the user to be notified
         3. Edge function sends notification payload to APNs
         4. APNs delivers notification to user's device
+        5. Refresh local user profile when notification is received
     */
     static let deviceTokenDidUpdateNotification = Notification.Name("DeviceTokenDidUpdateNotification")
     static let remoteNotificationDidArriveNotification = Notification.Name("RemoteNotificationDidArriveNotification")

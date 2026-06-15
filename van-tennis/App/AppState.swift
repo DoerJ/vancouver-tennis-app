@@ -14,9 +14,13 @@ final class AppState: ObservableObject {
 
     private let profileService = ProfileService()
     private let eventService = EventService()
+    private let chatMessageService = ChatMessageService()
     private let deviceTokenService = DeviceTokenService()
     private let authService = SupabaseAuthService()
     private var cancellables: Set<AnyCancellable> = []
+    private var chatMessagesRealtimeTask: Task<Void, Never>?
+    private var chatMessagesRealtimeChannel: RealtimeChannelV2?
+    private var subscribedChatEventID: UUID?
     private var lastSavedDeviceToken: String?
 
     init() {
@@ -207,6 +211,64 @@ final class AppState: ObservableObject {
         chatMessagesRevision += 1
     }
 
+    func startChatMessagesRealtimeSubscription(eventID: UUID) {
+        // Subscribe to Supabase Realtime channel for listening to new row insertion of chat_messages table
+        guard subscribedChatEventID != eventID else {
+            return
+        }
+
+        stopChatMessagesRealtimeSubscription()
+        subscribedChatEventID = eventID
+
+        let client = SupabaseClientProvider.shared
+        let channel = client.realtimeV2.channel("chat-messages-\(eventID.uuidString)")
+        chatMessagesRealtimeChannel = channel
+
+        chatMessagesRealtimeTask = Task { [weak self] in
+            let inserts = channel.postgresChange(
+                InsertAction.self,
+                schema: "public",
+                table: "chat_messages",
+                filter: .eq("event_id", value: eventID.uuidString)
+            )
+
+            do {
+                await client.realtimeV2.setAuth()
+                await client.realtimeV2.connect()
+                try await channel.subscribeWithError()
+                print("AppState: subscribed to realtime chat messages for event \(eventID).")
+
+                for await _ in inserts {
+                    guard !Task.isCancelled else {
+                        break
+                    }
+
+                    await self?.refreshCachedChatMessages(eventID: eventID)
+                }
+            } catch is CancellationError {
+                // Expected when leaving the chat room or switching events.
+            } catch {
+                print("AppState: chat messages realtime subscription failed: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    func stopChatMessagesRealtimeSubscription() {
+        chatMessagesRealtimeTask?.cancel()
+        chatMessagesRealtimeTask = nil
+        subscribedChatEventID = nil
+
+        guard let chatMessagesRealtimeChannel else {
+            return
+        }
+
+        self.chatMessagesRealtimeChannel = nil
+
+        Task {
+            await SupabaseClientProvider.shared.realtimeV2.removeChannel(chatMessagesRealtimeChannel)
+        }
+    }
+
     func deleteAccountProfileDataAndRevokeSession() async throws {
         guard supabaseSession != nil else {
             throw AppStateError.missingAuthenticatedUser
@@ -218,6 +280,7 @@ final class AppState: ObservableObject {
     }
 
     func finishDeletedAccountFlow() {
+        stopChatMessagesRealtimeSubscription()
         googleSession = nil
         supabaseSession = nil
         userProfile = nil
@@ -227,6 +290,8 @@ final class AppState: ObservableObject {
     }
 
     func signOut() async {
+        stopChatMessagesRealtimeSubscription()
+
         do {
             try await authService.signOut()
         } catch {
@@ -245,6 +310,32 @@ final class AppState: ObservableObject {
         self.supabaseSession = supabaseSession
         self.userProfile = userProfile
         authenticationState = userProfile.skillLevel == nil || userProfile.gender == nil ? .needsSkillLevel : .signedIn
+    }
+
+    private func refreshCachedChatMessages(eventID: UUID) async {
+        // Refresh cached chat messages so chat page can be re-rendered with the new message
+        do {
+            let chatMessages = try await chatMessageService.fetchMessages(eventID: eventID)
+            let senderIDs = Array(Set(chatMessages.map(\.senderID)))
+            let profilesByID = try await profileService.fetchProfiles(userIDs: senderIDs)
+                .reduce(into: [UUID: UserProfile]()) { profiles, profile in
+                    profiles[profile.id] = profile
+                }
+            let messages = chatMessages.map { message in
+                ChatRoomMessage(
+                    id: message.id,
+                    senderID: message.senderID,
+                    senderDisplayName: profilesByID[message.senderID]?.displayName ?? "Unknown Player",
+                    body: message.body,
+                    sentAt: message.createdAt
+                )
+            }
+
+            updateCachedChatMessages(messages, eventID: eventID)
+            print("AppState: refreshed cached chat messages for event \(eventID).")
+        } catch {
+            print("AppState: failed to refresh cached chat messages: \(error.localizedDescription)")
+        }
     }
 
     private func saveCurrentDeviceTokenIfPossible() async {
@@ -273,7 +364,7 @@ final class AppState: ObservableObject {
             )
             lastSavedDeviceToken = deviceToken
             print("AppState: saved APNs device token.")
-    } catch {
+        } catch {
             print("AppState: failed to save APNs device token: \(error.localizedDescription)")
         }
     }
