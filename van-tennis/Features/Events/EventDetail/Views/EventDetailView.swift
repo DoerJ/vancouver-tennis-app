@@ -63,6 +63,18 @@ struct EventDetailView: View {
                 }
             }
 
+            if !isEventEnded && canOpenChat {
+                Section {
+                    NavigationLink {
+                        ChatRoomView(event: event)
+                    } label: {
+                        Label("Chat", systemImage: "message")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .disabled(isEventNotFound)
+                }
+            }
+
             if !isEventEnded && isCurrentUserHost {
                 Section {
                     Button(role: .destructive) {
@@ -208,6 +220,10 @@ struct EventDetailView: View {
 
     private var canReportEvent: Bool {
         (isCurrentUserHost && !event.participants.isEmpty) || isCurrentUserParticipant
+    }
+
+    private var canOpenChat: Bool {
+        isCurrentUserHost || isCurrentUserParticipant
     }
 
     private var isEventNotFound: Bool {

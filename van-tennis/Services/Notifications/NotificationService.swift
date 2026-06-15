@@ -10,6 +10,7 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
         4. APNs delivers notification to user's device
     */
     static let deviceTokenDidUpdateNotification = Notification.Name("DeviceTokenDidUpdateNotification")
+    static let remoteNotificationDidArriveNotification = Notification.Name("RemoteNotificationDidArriveNotification")
     static private(set) var currentDeviceToken: String?
 
     func application(
@@ -45,6 +46,33 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
         print("NotificationService: failed to register for remote notifications: \(error.localizedDescription)")
     }
 
+    func application(
+        _ application: UIApplication,
+        didReceiveRemoteNotification userInfo: [AnyHashable: Any],
+        fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
+    ) {
+        print("NotificationService: received remote notification.")
+        postRemoteNotificationDidArrive()
+        completionHandler(.newData)
+    }
+
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification
+    ) async -> UNNotificationPresentationOptions {
+        print("NotificationService: received foreground notification.")
+        postRemoteNotificationDidArrive()
+        return [.banner, .badge, .sound]
+    }
+
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse
+    ) async {
+        print("NotificationService: user opened notification.")
+        postRemoteNotificationDidArrive()
+    }
+
     private func requestRemoteNotificationRegistration() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { isGranted, error in
             if let error {
@@ -58,5 +86,12 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
                 UIApplication.shared.registerForRemoteNotifications()
             }
         }
+    }
+
+    private func postRemoteNotificationDidArrive() {
+        NotificationCenter.default.post(
+            name: Self.remoteNotificationDidArriveNotification,
+            object: nil
+        )
     }
 }

@@ -9,15 +9,14 @@ final class AppState: ObservableObject {
     @Published var supabaseSession: Session?
     @Published var userProfile: UserProfile?
     @Published var eventsRevision = 0
+    @Published private(set) var chatMessagesRevision = 0
+    @Published private(set) var cachedChatMessagesByEventID: [UUID: [ChatRoomMessage]] = [:]
 
     private let profileService = ProfileService()
     private let eventService = EventService()
     private let deviceTokenService = DeviceTokenService()
     private let authService = SupabaseAuthService()
     private var cancellables: Set<AnyCancellable> = []
-    private var profileRealtimeTask: Task<Void, Never>?
-    private var profileRealtimeChannel: RealtimeChannelV2?
-    private var subscribedProfileID: UUID?
     private var lastSavedDeviceToken: String?
 
     init() {
@@ -26,6 +25,15 @@ final class AppState: ObservableObject {
             .sink { [weak self] deviceToken in
                 Task {
                     await self?.saveDeviceTokenIfPossible(deviceToken)
+                }
+            }
+            .store(in: &cancellables)
+
+        NotificationCenter.default.publisher(for: NotificationService.remoteNotificationDidArriveNotification)
+            .sink { [weak self] _ in
+                Task {
+                    // Refresh the current user profile when a remote notification arrives
+                    await self?.refreshCurrentProfile()
                 }
             }
             .store(in: &cancellables)
@@ -165,6 +173,40 @@ final class AppState: ObservableObject {
         )
     }
 
+    func cachedChatMessages(eventID: UUID) -> [ChatRoomMessage]? {
+        cachedChatMessagesByEventID[eventID]
+    }
+
+    func updateCachedChatMessages(_ messages: [ChatRoomMessage], eventID: UUID) {
+        let existingMessages = cachedChatMessagesByEventID[eventID] ?? []
+        let mergedMessages = (existingMessages + messages)
+            .reduce(into: [UUID: ChatRoomMessage]()) { messagesByID, message in
+                messagesByID[message.id] = message
+            }
+            .values
+            .sorted { $0.sentAt < $1.sentAt }
+
+        guard cachedChatMessagesByEventID[eventID] != mergedMessages else {
+            return
+        }
+
+        cachedChatMessagesByEventID[eventID] = mergedMessages
+        chatMessagesRevision += 1
+    }
+
+    func appendCachedChatMessage(_ message: ChatRoomMessage, eventID: UUID) {
+        var messages = cachedChatMessagesByEventID[eventID] ?? []
+
+        guard !messages.contains(where: { $0.id == message.id }) else {
+            return
+        }
+
+        messages.append(message)
+        messages.sort { $0.sentAt < $1.sentAt }
+        cachedChatMessagesByEventID[eventID] = messages
+        chatMessagesRevision += 1
+    }
+
     func deleteAccountProfileDataAndRevokeSession() async throws {
         guard supabaseSession != nil else {
             throw AppStateError.missingAuthenticatedUser
@@ -176,16 +218,15 @@ final class AppState: ObservableObject {
     }
 
     func finishDeletedAccountFlow() {
-        stopProfileRealtimeSubscription()
         googleSession = nil
         supabaseSession = nil
         userProfile = nil
+        cachedChatMessagesByEventID = [:]
+        chatMessagesRevision += 1
         authenticationState = .signedOut
     }
 
     func signOut() async {
-        stopProfileRealtimeSubscription()
-
         do {
             try await authService.signOut()
         } catch {
@@ -195,6 +236,8 @@ final class AppState: ObservableObject {
         googleSession = nil
         supabaseSession = nil
         userProfile = nil
+        cachedChatMessagesByEventID = [:]
+        chatMessagesRevision += 1
         authenticationState = .signedOut
     }
 
@@ -202,78 +245,6 @@ final class AppState: ObservableObject {
         self.supabaseSession = supabaseSession
         self.userProfile = userProfile
         authenticationState = userProfile.skillLevel == nil || userProfile.gender == nil ? .needsSkillLevel : .signedIn
-        startProfileRealtimeSubscription(userID: userProfile.id)
-    }
-
-    private func startProfileRealtimeSubscription(userID: UUID) {
-        /*
-            Subscribe to Supabase realtime for current user's profiles table row,
-            and update cached notifications whenever the profile row is updated
-        */
-        guard subscribedProfileID != userID else {
-            return
-        }
-
-        stopProfileRealtimeSubscription()
-        subscribedProfileID = userID
-
-        let client = SupabaseClientProvider.shared
-        let channel = client.realtimeV2.channel("profile-\(userID.uuidString)")
-        profileRealtimeChannel = channel
-
-        profileRealtimeTask = Task { [weak self] in
-            let updates = channel.postgresChange(
-                UpdateAction.self,
-                schema: "public",
-                table: "profiles",
-                filter: .eq("id", value: userID.uuidString)
-            )
-
-            do {
-                await client.realtimeV2.connect()
-                try await channel.subscribeWithError()
-
-                for await update in updates {
-                    guard !Task.isCancelled else {
-                        break
-                    }
-
-                    do {
-                        let updatedProfile = try update.decodeRecord(
-                            as: UserProfile.self,
-                            decoder: Self.supabaseRealtimeDecoder
-                        )
-
-                        await MainActor.run {
-                            self?.updateCachedNotifications(updatedProfile.notifications)
-                        }
-                    } catch {
-                        print("AppState: failed to decode realtime profile update: \(error.localizedDescription)")
-                        await self?.refreshCurrentProfile()
-                    }
-                }
-            } catch is CancellationError {
-                // Expected when signing out or switching users.
-            } catch {
-                print("AppState: profile realtime subscription failed: \(error.localizedDescription)")
-            }
-        }
-    }
-
-    private func stopProfileRealtimeSubscription() {
-        profileRealtimeTask?.cancel()
-        profileRealtimeTask = nil
-        subscribedProfileID = nil
-
-        guard let profileRealtimeChannel else {
-            return
-        }
-
-        self.profileRealtimeChannel = nil
-
-        Task {
-            await SupabaseClientProvider.shared.realtimeV2.removeChannel(profileRealtimeChannel)
-        }
     }
 
     private func saveCurrentDeviceTokenIfPossible() async {
@@ -302,38 +273,10 @@ final class AppState: ObservableObject {
             )
             lastSavedDeviceToken = deviceToken
             print("AppState: saved APNs device token.")
-        } catch {
+    } catch {
             print("AppState: failed to save APNs device token: \(error.localizedDescription)")
         }
     }
-
-    private static let supabaseRealtimeDecoder: JSONDecoder = {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .custom { decoder in
-            let container = try decoder.singleValueContainer()
-            let dateString = try container.decode(String.self)
-
-            let fractionalFormatter = ISO8601DateFormatter()
-            fractionalFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-
-            if let date = fractionalFormatter.date(from: dateString) {
-                return date
-            }
-
-            let formatter = ISO8601DateFormatter()
-            formatter.formatOptions = [.withInternetDateTime]
-
-            if let date = formatter.date(from: dateString) {
-                return date
-            }
-
-            throw DecodingError.dataCorruptedError(
-                in: container,
-                debugDescription: "Invalid Supabase date: \(dateString)"
-            )
-        }
-        return decoder
-    }()
 }
 
 enum AuthenticationState {
