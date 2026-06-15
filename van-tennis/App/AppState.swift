@@ -246,7 +246,7 @@ final class AppState: ObservableObject {
                     await self?.refreshCachedChatMessages(eventID: eventID)
                 }
             } catch is CancellationError {
-                // Expected when leaving the chat room or switching events.
+                // Expected when switching events, signing out, or deleting the account.
             } catch {
                 print("AppState: chat messages realtime subscription failed: \(error.localizedDescription)")
             }

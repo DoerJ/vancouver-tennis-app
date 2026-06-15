@@ -85,9 +85,6 @@ struct ChatRoomView: View {
         .onAppear {
             appState.startChatMessagesRealtimeSubscription(eventID: event.id)
         }
-        .onDisappear {
-            appState.stopChatMessagesRealtimeSubscription()
-        }
     }
 
     @MainActor
