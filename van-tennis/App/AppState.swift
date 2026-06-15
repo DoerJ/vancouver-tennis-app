@@ -211,6 +211,12 @@ final class AppState: ObservableObject {
         chatMessagesRevision += 1
     }
 
+    func preloadCachedChatMessages(eventIDs: [UUID]) async {
+        for eventID in eventIDs where cachedChatMessagesByEventID[eventID] == nil {
+            await refreshCachedChatMessages(eventID: eventID)
+        }
+    }
+
     func startChatMessagesRealtimeSubscription(eventID: UUID) {
         // Subscribe to Supabase Realtime channel for listening to new row insertion of chat_messages table
         guard subscribedChatEventID != eventID else {
