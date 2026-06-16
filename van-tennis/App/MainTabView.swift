@@ -40,6 +40,7 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Chat", systemImage: "message")
                 }
+                .badge(appState.hasUnreadChats ? "" : nil)
                 .tag(MainTab.chat)
         }
         .sheet(isPresented: $isShowingProfile) {

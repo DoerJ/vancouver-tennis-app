@@ -74,7 +74,11 @@ struct ChatView: View {
                 return nil
             }
 
-            return ChatConversationPreview(event: event, latestMessage: latestMessage)
+            return ChatConversationPreview(
+                event: event,
+                latestMessage: latestMessage,
+                unreadCount: appState.unreadChatCount(eventID: event.id)
+            )
         }
         .sorted { $0.latestMessage.sentAt > $1.latestMessage.sentAt }
     }
@@ -129,6 +133,7 @@ struct ChatView: View {
 private struct ChatConversationPreview: Identifiable {
     let event: TennisEvent
     let latestMessage: ChatRoomMessage
+    let unreadCount: Int
 
     var id: UUID {
         event.id
@@ -151,6 +156,16 @@ private struct ChatConversationCard: View {
                     .lineLimit(1)
 
                 Spacer(minLength: 8)
+
+                if preview.unreadCount > 0 {
+                    Text(preview.unreadCount > 99 ? "99+" : "\(preview.unreadCount)")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(Color.red, in: Capsule())
+                        .accessibilityLabel("\(preview.unreadCount) unread messages")
+                }
 
                 Text(Self.timestampFormatter.string(from: preview.latestMessage.sentAt))
                     .font(.caption)

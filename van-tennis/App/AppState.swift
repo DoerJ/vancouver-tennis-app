@@ -10,6 +10,7 @@ final class AppState: ObservableObject {
     @Published var userProfile: UserProfile?
     @Published var eventsRevision = 0
     @Published private(set) var chatMessagesRevision = 0
+    @Published private(set) var unreadChatCountsByEventID: [UUID: Int] = [:]
     @Published private(set) var cachedEventsByID: [UUID: TennisEvent] = [:]
     @Published private(set) var cachedChatMessagesByEventID: [UUID: [ChatRoomMessage]] = [:]
 
@@ -21,10 +22,42 @@ final class AppState: ObservableObject {
     private var cancellables: Set<AnyCancellable> = []
     private var chatMessagesRealtimeTask: Task<Void, Never>?
     private var chatMessagesRealtimeChannel: RealtimeChannelV2?
-    private var subscribedChatEventID: UUID?
+    private var subscribedChatEventIDs: Set<UUID> = []
+    private var activeChatEventID: UUID?
     private var lastSavedDeviceToken: String?
+    private static let unreadChatCountsKey = "van-tennis.unreadChatCountsByEventID"
+
+    private static let supabaseRealtimeDecoder: JSONDecoder = {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let dateString = try container.decode(String.self)
+
+            if let date = AppState.iso8601DateFormatter.date(from: dateString) {
+                return date
+            }
+
+            if let date = AppState.iso8601DateFormatterWithoutFractionalSeconds.date(from: dateString) {
+                return date
+            }
+
+            throw DecodingError.dataCorruptedError(
+                in: container,
+                debugDescription: "Invalid date format: \(dateString)"
+            )
+        }
+        return decoder
+    }()
+    private static let iso8601DateFormatter: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
+    }()
+    private static let iso8601DateFormatterWithoutFractionalSeconds = ISO8601DateFormatter()
 
     init() {
+        unreadChatCountsByEventID = Self.loadUnreadChatCounts()
+
         NotificationCenter.default.publisher(for: NotificationService.deviceTokenDidUpdateNotification)
             .compactMap { $0.object as? String }
             .sink { [weak self] deviceToken in
@@ -155,6 +188,7 @@ final class AppState: ObservableObject {
             hostedEvents: hostedEvents,
             participatedEvents: participatedEvents
         )
+        startChatMessagesRealtimeSubscriptions(eventIDs: Array(Set(hostedEvents + participatedEvents)))
     }
 
     func removeCachedEvent(_ eventID: UUID) {
@@ -164,6 +198,8 @@ final class AppState: ObservableObject {
 
         cachedEventsByID[eventID] = nil
         cachedChatMessagesByEventID[eventID] = nil
+        subscribedChatEventIDs.remove(eventID)
+        clearUnreadChatCount(eventID: eventID)
 
         self.userProfile = userProfile.updatingEvents(
             hostedEvents: userProfile.hostedEvents.filter { $0 != eventID },
@@ -197,6 +233,30 @@ final class AppState: ObservableObject {
         for event in events {
             cachedEventsByID[event.id] = event
         }
+    }
+
+    var hasUnreadChats: Bool {
+        unreadChatCountsByEventID.values.contains { $0 > 0 }
+    }
+
+    func unreadChatCount(eventID: UUID) -> Int {
+        unreadChatCountsByEventID[eventID] ?? 0
+    }
+
+    func openChat(eventID: UUID) {
+        activeChatEventID = eventID
+        clearUnreadChatCount(eventID: eventID)
+        startChatMessagesRealtimeSubscription(eventID: eventID)
+    }
+
+    func closeChat(eventID: UUID) {
+        if activeChatEventID == eventID {
+            activeChatEventID = nil
+        }
+    }
+
+    private func isSubscribedChatEvent(_ eventID: UUID) -> Bool {
+        subscribedChatEventIDs.contains(eventID)
     }
 
     func cachedChatMessages(eventID: UUID) -> [ChatRoomMessage]? {
@@ -233,48 +293,103 @@ final class AppState: ObservableObject {
         chatMessagesRevision += 1
     }
 
+    private func incrementUnreadChatCount(eventID: UUID) {
+        unreadChatCountsByEventID[eventID, default: 0] += 1
+        persistUnreadChatCounts()
+    }
+
+    private func clearUnreadChatCount(eventID: UUID) {
+        guard unreadChatCountsByEventID[eventID] != nil else {
+            return
+        }
+
+        unreadChatCountsByEventID[eventID] = nil
+        persistUnreadChatCounts()
+    }
+
+    private func recordIncomingRealtimeChatMessage(_ message: ChatRoomMessage, eventID: UUID) {
+        guard message.senderID != userProfile?.id else {
+            return
+        }
+
+        guard activeChatEventID != eventID else {
+            return
+        }
+
+        incrementUnreadChatCount(eventID: eventID)
+    }
+
     func preloadCachedChatMessages(eventIDs: [UUID]) async {
         for eventID in eventIDs where cachedChatMessagesByEventID[eventID] == nil {
             await refreshCachedChatMessages(eventID: eventID)
         }
     }
 
-    func startChatMessagesRealtimeSubscription(eventID: UUID) {
-        // Subscribe to Supabase Realtime channel for listening to new row insertion of chat_messages table
-        guard subscribedChatEventID != eventID else {
+    func startChatMessagesRealtimeSubscriptions(eventIDs: [UUID]) {
+        subscribedChatEventIDs.formUnion(eventIDs)
+
+        guard !subscribedChatEventIDs.isEmpty else {
             return
         }
 
-        stopChatMessagesRealtimeSubscription()
-        subscribedChatEventID = eventID
+        startChatMessagesRealtimeSubscriptionIfNeeded()
+    }
+
+    func startChatMessagesRealtimeSubscription(eventID: UUID) {
+        subscribedChatEventIDs.insert(eventID)
+        startChatMessagesRealtimeSubscriptionIfNeeded()
+    }
+
+    private func startChatMessagesRealtimeSubscriptionIfNeeded() {
+        // Listen for realtime update of chat messages table to update the local cached chat messages
+        guard chatMessagesRealtimeTask == nil else {
+            return
+        }
 
         let client = SupabaseClientProvider.shared
-        let channel = client.realtimeV2.channel("chat-messages-\(eventID.uuidString)")
+        let channel = client.realtimeV2.channel("chat-messages")
         chatMessagesRealtimeChannel = channel
 
         chatMessagesRealtimeTask = Task { [weak self] in
             let inserts = channel.postgresChange(
                 InsertAction.self,
                 schema: "public",
-                table: "chat_messages",
-                filter: .eq("event_id", value: eventID.uuidString)
+                table: "chat_messages"
             )
 
             do {
                 await client.realtimeV2.setAuth()
                 await client.realtimeV2.connect()
                 try await channel.subscribeWithError()
-                print("AppState: subscribed to realtime chat messages for event \(eventID).")
+                print("AppState: subscribed to realtime chat messages.")
 
-                for await _ in inserts {
+                for await insert in inserts {
                     guard !Task.isCancelled else {
                         break
                     }
 
-                    await self?.refreshCachedChatMessages(eventID: eventID)
+                    let chatMessage = try insert.decodeRecord(
+                        as: ChatMessage.self,
+                        decoder: Self.supabaseRealtimeDecoder
+                    )
+
+                    guard await self?.isSubscribedChatEvent(chatMessage.eventID) == true else {
+                        continue
+                    }
+
+                    let messages = await self?.refreshCachedChatMessages(eventID: chatMessage.eventID) ?? []
+
+                    guard let latestMessage = messages.last else {
+                        continue
+                    }
+
+                    await MainActor.run {
+                        // Increment unread chat count if the incoming message is not from the current user and the chat room is not currently active
+                        self?.recordIncomingRealtimeChatMessage(latestMessage, eventID: chatMessage.eventID)
+                    }
                 }
             } catch is CancellationError {
-                // Expected when switching events, signing out, or deleting the account.
+                // Expected when signing out or deleting the account.
             } catch {
                 print("AppState: chat messages realtime subscription failed: \(error.localizedDescription)")
             }
@@ -284,13 +399,15 @@ final class AppState: ObservableObject {
     func stopChatMessagesRealtimeSubscription() {
         chatMessagesRealtimeTask?.cancel()
         chatMessagesRealtimeTask = nil
-        subscribedChatEventID = nil
+        subscribedChatEventIDs = []
 
         guard let chatMessagesRealtimeChannel else {
+            activeChatEventID = nil
             return
         }
 
         self.chatMessagesRealtimeChannel = nil
+        activeChatEventID = nil
 
         Task {
             await SupabaseClientProvider.shared.realtimeV2.removeChannel(chatMessagesRealtimeChannel)
@@ -314,6 +431,8 @@ final class AppState: ObservableObject {
         userProfile = nil
         cachedEventsByID = [:]
         cachedChatMessagesByEventID = [:]
+        unreadChatCountsByEventID = [:]
+        persistUnreadChatCounts()
         chatMessagesRevision += 1
         authenticationState = .signedOut
     }
@@ -332,6 +451,8 @@ final class AppState: ObservableObject {
         userProfile = nil
         cachedEventsByID = [:]
         cachedChatMessagesByEventID = [:]
+        unreadChatCountsByEventID = [:]
+        persistUnreadChatCounts()
         chatMessagesRevision += 1
         authenticationState = .signedOut
     }
@@ -340,9 +461,11 @@ final class AppState: ObservableObject {
         self.supabaseSession = supabaseSession
         self.userProfile = userProfile
         authenticationState = userProfile.skillLevel == nil || userProfile.gender == nil ? .needsSkillLevel : .signedIn
+        startChatMessagesRealtimeSubscriptions(eventIDs: Array(Set(userProfile.hostedEvents + userProfile.participatedEvents)))
     }
 
-    private func refreshCachedChatMessages(eventID: UUID) async {
+    @discardableResult
+    private func refreshCachedChatMessages(eventID: UUID) async -> [ChatRoomMessage] {
         // Refresh cached chat messages so chat page can be re-rendered with the new message
         do {
             let chatMessages = try await chatMessageService.fetchMessages(eventID: eventID)
@@ -363,8 +486,10 @@ final class AppState: ObservableObject {
 
             updateCachedChatMessages(messages, eventID: eventID)
             print("AppState: refreshed cached chat messages for event \(eventID).")
+            return messages
         } catch {
             print("AppState: failed to refresh cached chat messages: \(error.localizedDescription)")
+            return []
         }
     }
 
@@ -396,6 +521,30 @@ final class AppState: ObservableObject {
             print("AppState: saved APNs device token.")
         } catch {
             print("AppState: failed to save APNs device token: \(error.localizedDescription)")
+        }
+    }
+
+    private func persistUnreadChatCounts() {
+        let countsByID = unreadChatCountsByEventID.reduce(into: [String: Int]()) { result, item in
+            result[item.key.uuidString] = item.value
+        }
+
+        UserDefaults.standard.set(countsByID, forKey: Self.unreadChatCountsKey)
+    }
+
+    private static func loadUnreadChatCounts() -> [UUID: Int] {
+        guard let storedCounts = UserDefaults.standard.dictionary(forKey: unreadChatCountsKey) else {
+            return [:]
+        }
+
+        return storedCounts.reduce(into: [UUID: Int]()) { result, item in
+            let count = item.value as? Int ?? (item.value as? NSNumber)?.intValue ?? 0
+
+            guard let eventID = UUID(uuidString: item.key), count > 0 else {
+                return
+            }
+
+            result[eventID] = count
         }
     }
 }

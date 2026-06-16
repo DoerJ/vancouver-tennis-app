@@ -83,7 +83,10 @@ struct ChatRoomView: View {
             syncMessagesFromCache()
         }
         .onAppear {
-            appState.startChatMessagesRealtimeSubscription(eventID: event.id)
+            appState.openChat(eventID: event.id)
+        }
+        .onDisappear {
+            appState.closeChat(eventID: event.id)
         }
     }
 
