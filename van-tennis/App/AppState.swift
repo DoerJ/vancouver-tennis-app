@@ -10,6 +10,7 @@ final class AppState: ObservableObject {
     @Published var userProfile: UserProfile?
     @Published var eventsRevision = 0
     @Published private(set) var chatMessagesRevision = 0
+    @Published private(set) var cachedEventsByID: [UUID: TennisEvent] = [:]
     @Published private(set) var cachedChatMessagesByEventID: [UUID: [ChatRoomMessage]] = [:]
 
     private let profileService = ProfileService()
@@ -161,6 +162,9 @@ final class AppState: ObservableObject {
             return
         }
 
+        cachedEventsByID[eventID] = nil
+        cachedChatMessagesByEventID[eventID] = nil
+
         self.userProfile = userProfile.updatingEvents(
             hostedEvents: userProfile.hostedEvents.filter { $0 != eventID },
             participatedEvents: userProfile.participatedEvents.filter { $0 != eventID }
@@ -175,6 +179,24 @@ final class AppState: ObservableObject {
         self.userProfile = userProfile.updatingNotifications(
             userProfile.notifications.filter { $0 != notificationID }
         )
+    }
+
+    func cachedEvents(ids eventIDs: [UUID]) -> [TennisEvent] {
+        eventIDs.compactMap { cachedEventsByID[$0] }
+    }
+
+    func missingCachedEventIDs(ids eventIDs: [UUID]) -> [UUID] {
+        eventIDs.filter { cachedEventsByID[$0] == nil }
+    }
+
+    func updateCachedEvents(_ events: [TennisEvent]) {
+        guard !events.isEmpty else {
+            return
+        }
+
+        for event in events {
+            cachedEventsByID[event.id] = event
+        }
     }
 
     func cachedChatMessages(eventID: UUID) -> [ChatRoomMessage]? {
@@ -290,6 +312,7 @@ final class AppState: ObservableObject {
         googleSession = nil
         supabaseSession = nil
         userProfile = nil
+        cachedEventsByID = [:]
         cachedChatMessagesByEventID = [:]
         chatMessagesRevision += 1
         authenticationState = .signedOut
@@ -307,6 +330,7 @@ final class AppState: ObservableObject {
         googleSession = nil
         supabaseSession = nil
         userProfile = nil
+        cachedEventsByID = [:]
         cachedChatMessagesByEventID = [:]
         chatMessagesRevision += 1
         authenticationState = .signedOut

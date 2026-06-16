@@ -99,8 +99,25 @@ struct ChatView: View {
         errorMessage = nil
 
         do {
-            events = try await eventService.fetchEvents(ids: eventIDs)
-            await appState.preloadCachedChatMessages(eventIDs: events.map(\.id))
+            events = appState.cachedEvents(ids: eventIDs)
+                .sorted { $0.startTime < $1.startTime }
+
+            let missingEventIDs = appState.missingCachedEventIDs(ids: eventIDs)
+            if !missingEventIDs.isEmpty {
+                let fetchedEvents = try await eventService.fetchEvents(ids: missingEventIDs)
+                appState.updateCachedEvents(fetchedEvents)
+
+                events = appState.cachedEvents(ids: eventIDs)
+                    .sorted { $0.startTime < $1.startTime }
+            }
+
+            let uncachedMessageEventIDs = events
+                .map(\.id)
+                .filter { appState.cachedChatMessages(eventID: $0) == nil }
+
+            if !uncachedMessageEventIDs.isEmpty {
+                await appState.preloadCachedChatMessages(eventIDs: uncachedMessageEventIDs)
+            }
         } catch {
             errorMessage = error.localizedDescription
         }
