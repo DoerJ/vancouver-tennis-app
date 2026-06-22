@@ -46,9 +46,21 @@ final class CreateEventViewModel: ObservableObject {
         )
     }
 
+    var latestAllowedStartTime: Date {
+        Calendar.current.date(byAdding: .day, value: 3, to: Date()) ?? Date()
+    }
+
     func validate() -> Bool {
-        guard startTime > Date() else {
+        let now = Date()
+        let latestAllowedStartTime = Calendar.current.date(byAdding: .day, value: 3, to: now) ?? now
+
+        guard startTime > now else {
             errorMessage = "Start time must be in the future."
+            return false
+        }
+
+        guard startTime <= latestAllowedStartTime else {
+            errorMessage = "Start time must be within the next 3 days."
             return false
         }
 

@@ -235,6 +235,11 @@ final class AppState: ObservableObject {
         }
     }
 
+    func applyUpdatedEvent(_ event: TennisEvent) {
+        cachedEventsByID[event.id] = event
+        eventsRevision += 1
+    }
+
     var hasUnreadChats: Bool {
         unreadChatCountsByEventID.values.contains { $0 > 0 }
     }
@@ -245,6 +250,7 @@ final class AppState: ObservableObject {
 
     func openChat(eventID: UUID) {
         activeChatEventID = eventID
+        NotificationService.setActiveChatEventID(eventID)
         clearUnreadChatCount(eventID: eventID)
         startChatMessagesRealtimeSubscription(eventID: eventID)
     }
@@ -252,6 +258,7 @@ final class AppState: ObservableObject {
     func closeChat(eventID: UUID) {
         if activeChatEventID == eventID {
             activeChatEventID = nil
+            NotificationService.setActiveChatEventID(nil)
         }
     }
 
@@ -403,11 +410,13 @@ final class AppState: ObservableObject {
 
         guard let chatMessagesRealtimeChannel else {
             activeChatEventID = nil
+            NotificationService.setActiveChatEventID(nil)
             return
         }
 
         self.chatMessagesRealtimeChannel = nil
         activeChatEventID = nil
+        NotificationService.setActiveChatEventID(nil)
 
         Task {
             await SupabaseClientProvider.shared.realtimeV2.removeChannel(chatMessagesRealtimeChannel)

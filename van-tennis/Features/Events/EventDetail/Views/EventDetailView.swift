@@ -8,6 +8,7 @@ struct EventDetailView: View {
     @State private var event: TennisEvent
     @StateObject private var viewModel = EventDetailViewModel()
     @State private var isShowingCancelConfirmation = false
+    @State private var isShowingMaxPlayersEditor = false
     @State private var isShowingReportSheet = false
     @State private var isShowingReportSubmittedAlert = false
     @State private var isCancelling = false
@@ -31,6 +32,15 @@ struct EventDetailView: View {
                 LabeledContent("Type", value: event.eventType.displayName)
                 LabeledContent("Skill Level", value: event.skillLevel.rawValue)
                 LabeledContent("Max Players", value: maxPlayersText)
+
+                if !isEventEnded && isCurrentUserHost {
+                    Button {
+                        isShowingMaxPlayersEditor = true
+                    } label: {
+                        Label("Edit Max Players", systemImage: "person.2")
+                    }
+                    .disabled(isEventNotFound)
+                }
             }
 
             Section("Time") {
@@ -191,6 +201,19 @@ struct EventDetailView: View {
                 onSubmit: submitReport
             )
         }
+        .sheet(isPresented: $isShowingMaxPlayersEditor) {
+            EditMaxPlayersSheet(
+                currentPlayerCount: event.playerCount,
+                initialMaxPlayers: event.maxPlayers
+            ) { maxPlayers in
+                let updatedEvent = try await viewModel.updateMaxPlayers(
+                    maxPlayers,
+                    for: event
+                )
+                event = updatedEvent
+                appState.applyUpdatedEvent(updatedEvent)
+            }
+        }
         .alert("Report Received", isPresented: $isShowingReportSubmittedAlert) {
             Button("OK") {}
         } message: {
@@ -207,7 +230,9 @@ struct EventDetailView: View {
             return false
         }
 
-        return event.hostID != currentUserID && !event.participants.contains(currentUserID)
+        return event.hostID != currentUserID
+            && !event.participants.contains(currentUserID)
+            && !event.isFull
     }
 
     private var isCurrentUserParticipant: Bool {
@@ -347,6 +372,93 @@ struct EventDetailView: View {
         formatter.timeStyle = .short
         return formatter
     }()
+}
+
+private struct EditMaxPlayersSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var hasPlayerLimit: Bool
+    @State private var maxPlayers: Int
+    @State private var isSaving = false
+    @State private var errorMessage: String?
+
+    let currentPlayerCount: Int
+    let onSave: (Int?) async throws -> Void
+
+    init(
+        currentPlayerCount: Int,
+        initialMaxPlayers: Int?,
+        onSave: @escaping (Int?) async throws -> Void
+    ) {
+        self.currentPlayerCount = currentPlayerCount
+        self.onSave = onSave
+        _hasPlayerLimit = State(initialValue: initialMaxPlayers != nil)
+        _maxPlayers = State(initialValue: max(initialMaxPlayers ?? currentPlayerCount, currentPlayerCount))
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Player Limit") {
+                    Toggle("Limit players", isOn: $hasPlayerLimit)
+
+                    if hasPlayerLimit {
+                        Stepper(
+                            "Max players: \(maxPlayers)",
+                            value: $maxPlayers,
+                            in: currentPlayerCount...max(currentPlayerCount, 100)
+                        )
+
+                        Text("The event currently has \(currentPlayerCount) players including the host.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("This event will allow unlimited players.")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                if let errorMessage {
+                    Section {
+                        Text(errorMessage)
+                            .foregroundStyle(.red)
+                    }
+                }
+            }
+            .navigationTitle("Edit Max Players")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .disabled(isSaving)
+                }
+
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(isSaving ? "Saving..." : "Save") {
+                        Task {
+                            await save()
+                        }
+                    }
+                    .disabled(isSaving)
+                }
+            }
+        }
+    }
+
+    private func save() async {
+        isSaving = true
+        errorMessage = nil
+
+        do {
+            try await onSave(hasPlayerLimit ? maxPlayers : nil)
+            dismiss()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+
+        isSaving = false
+    }
 }
 
 private struct ReportEventSheet: View {

@@ -13,6 +13,11 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
     static let deviceTokenDidUpdateNotification = Notification.Name("DeviceTokenDidUpdateNotification")
     static let remoteNotificationDidArriveNotification = Notification.Name("RemoteNotificationDidArriveNotification")
     static private(set) var currentDeviceToken: String?
+    static private(set) var activeChatEventID: UUID?
+
+    static func setActiveChatEventID(_ eventID: UUID?) {
+        activeChatEventID = eventID
+    }
 
     func application(
         _ application: UIApplication,
@@ -62,6 +67,12 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
         willPresent notification: UNNotification
     ) async -> UNNotificationPresentationOptions {
         print("NotificationService: received foreground notification.")
+
+        if shouldSuppressChatNotification(notification) {
+            print("NotificationService: suppressed notification for active chat room.")
+            return []
+        }
+
         postRemoteNotificationDidArrive()
         return [.banner, .badge, .sound]
     }
@@ -94,5 +105,17 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
             name: Self.remoteNotificationDidArriveNotification,
             object: nil
         )
+    }
+
+    private func shouldSuppressChatNotification(_ notification: UNNotification) -> Bool {
+        let userInfo = notification.request.content.userInfo
+
+        guard userInfo["notification_type"] as? String == "chat_message_received",
+              let eventIDString = userInfo["related_event_id"] as? String,
+              let eventID = UUID(uuidString: eventIDString) else {
+            return false
+        }
+
+        return eventID == Self.activeChatEventID
     }
 }

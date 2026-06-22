@@ -8,6 +8,7 @@ final class EventDetailViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var isJoining = false
     @Published var isLeaving = false
+    @Published var isUpdatingMaxPlayers = false
     @Published var isSubmittingReport = false
     @Published var errorMessage: String?
 
@@ -67,7 +68,7 @@ final class EventDetailViewModel: ObservableObject {
             return
         }
 
-        if let maxPlayers = latestEvent.maxPlayers, latestEvent.participants.count >= maxPlayers {
+        if latestEvent.isFull {
             throw EventDetailViewModelError.eventIsFull
         }
 
@@ -118,6 +119,23 @@ final class EventDetailViewModel: ObservableObject {
         )
     }
 
+    func updateMaxPlayers(_ maxPlayers: Int?, for event: TennisEvent) async throws -> TennisEvent {
+        if let maxPlayers, maxPlayers < event.playerCount {
+            throw EventDetailViewModelError.maxPlayersBelowCurrentPlayerCount(event.playerCount)
+        }
+
+        isUpdatingMaxPlayers = true
+        errorMessage = nil
+        defer {
+            isUpdatingMaxPlayers = false
+        }
+
+        return try await eventService.updateMaxPlayers(
+            eventID: event.id,
+            maxPlayers: maxPlayers
+        )
+    }
+
     func submitReport(
         event: TennisEvent,
         reporter: UserProfile,
@@ -153,6 +171,7 @@ final class EventDetailViewModel: ObservableObject {
 enum EventDetailViewModelError: LocalizedError {
     case eventNotFound
     case eventIsFull
+    case maxPlayersBelowCurrentPlayerCount(Int)
 
     var errorDescription: String? {
         switch self {
@@ -160,6 +179,8 @@ enum EventDetailViewModelError: LocalizedError {
             return "This event is no longer available."
         case .eventIsFull:
             return "This event is already full."
+        case .maxPlayersBelowCurrentPlayerCount(let playerCount):
+            return "Maximum players cannot be less than the current player count of \(playerCount)."
         }
     }
 }

@@ -17,14 +17,26 @@ struct EventCardView: View {
 
                 Spacer()
 
-                TimelineView(.periodic(from: Date(), by: 60)) { context in
-                    Text(upcomingTimeText(now: context.date))
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(.thinMaterial)
-                        .clipShape(Capsule())
+                HStack(spacing: 6) {
+                    if event.isFull {
+                        Text("Full")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 5)
+                            .background(Color.red)
+                            .clipShape(Capsule())
+                    }
+
+                    TimelineView(.periodic(from: Date(), by: 60)) { context in
+                        Text(upcomingTimeText(now: context.date))
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(.thinMaterial)
+                            .clipShape(Capsule())
+                    }
                 }
             }
 

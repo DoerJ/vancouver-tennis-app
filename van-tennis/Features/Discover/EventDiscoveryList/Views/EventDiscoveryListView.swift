@@ -25,7 +25,7 @@ struct EventDiscoveryListView: View {
                     )
                 } else {
                     VStack(spacing: 0) {
-                        cityFilterPicker
+                        eventFilters
                             .padding([.horizontal, .top])
 
                         ScrollView {
@@ -115,6 +115,15 @@ struct EventDiscoveryListView: View {
                 await viewModel.loadEvents()
             }
         }
+        .onChange(of: viewModel.selectedSkillLevelFilter) {
+            guard !viewModel.consumeShouldSkipNextFilterReload() else {
+                return
+            }
+
+            Task {
+                await viewModel.loadEvents()
+            }
+        }
         .onChange(of: appState.eventsRevision) {
             Task {
                 await viewModel.loadEvents()
@@ -125,18 +134,60 @@ struct EventDiscoveryListView: View {
         }
     }
 
-    private var cityFilterPicker: some View {
-        Picker("City", selection: $viewModel.selectedCityFilter) {
-            ForEach(EventCityFilter.options) { filter in
-                Text(filter.displayName).tag(filter)
+    private var eventFilters: some View {
+        HStack(spacing: 8) {
+            Menu {
+                ForEach(EventCityFilter.options) { filter in
+                    Button {
+                        viewModel.selectedCityFilter = filter
+                    } label: {
+                        if filter == viewModel.selectedCityFilter {
+                            Label(filter.displayName, systemImage: "checkmark")
+                        } else {
+                            Text(filter.displayName)
+                        }
+                    }
+                }
+            } label: {
+                Label(viewModel.selectedCityFilter.displayName, systemImage: "mappin.and.ellipse")
+                    .lineLimit(1)
             }
+            .font(.subheadline)
+            .padding(.horizontal, 10)
+            .frame(height: 36)
+            .background(Color(.secondarySystemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+
+            Menu {
+                ForEach(EventSkillLevelFilter.options) { filter in
+                    Button {
+                        viewModel.selectedSkillLevelFilter = filter
+                    } label: {
+                        if filter == viewModel.selectedSkillLevelFilter {
+                            Label(filter.displayName, systemImage: "checkmark")
+                        } else {
+                            Text(filter.displayName)
+                        }
+                    }
+                }
+            } label: {
+                Label(viewModel.selectedSkillLevelFilter.displayName, systemImage: "figure.tennis")
+                    .lineLimit(1)
+            }
+            .font(.subheadline)
+            .padding(.horizontal, 10)
+            .frame(height: 36)
+            .background(Color(.secondarySystemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+
+            Spacer(minLength: 0)
         }
-        .pickerStyle(.segmented)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder
     private var emptyEventsView: some View {
-        if viewModel.selectedCityFilter == .all {
+        if viewModel.selectedCityFilter == .all && viewModel.selectedSkillLevelFilter == .all {
             ContentUnavailableView(
                 "No tennis events",
                 systemImage: "calendar.badge.exclamationmark",
@@ -144,9 +195,9 @@ struct EventDiscoveryListView: View {
             )
         } else {
             ContentUnavailableView(
-                "No events in \(viewModel.selectedCityFilter.displayName)",
+                "No matching events",
                 systemImage: "line.3.horizontal.decrease.circle",
-                description: Text("Try a different city filter.")
+                description: Text("Try different location or skill level filters.")
             )
         }
     }

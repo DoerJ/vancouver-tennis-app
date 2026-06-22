@@ -22,6 +22,7 @@ struct CreateEventView: View {
                 DatePicker(
                     "Start",
                     selection: $viewModel.startTime,
+                    in: Date()...viewModel.latestAllowedStartTime,
                     displayedComponents: [.date, .hourAndMinute]
                 )
 

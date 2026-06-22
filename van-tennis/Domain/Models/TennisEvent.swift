@@ -30,6 +30,18 @@ struct TennisEvent: Codable, Identifiable, Equatable, Hashable {
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
+
+    var playerCount: Int {
+        1 + participants.count
+    }
+
+    var isFull: Bool {
+        guard let maxPlayers else {
+            return false
+        }
+
+        return playerCount >= maxPlayers
+    }
 }
 
 struct TennisEventDraft: Equatable {

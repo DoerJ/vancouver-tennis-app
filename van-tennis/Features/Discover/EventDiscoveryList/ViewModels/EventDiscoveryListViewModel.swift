@@ -5,13 +5,14 @@ import Foundation
 final class EventDiscoveryListViewModel: ObservableObject {
     @Published var events: [TennisEvent] = []
     @Published var selectedCityFilter: EventCityFilter = .all
+    @Published var selectedSkillLevelFilter: EventSkillLevelFilter = .all
     @Published var isLoading = false
     @Published var isLoadingNextPage = false
     @Published var hasMoreEvents = true
     @Published var errorMessage: String?
 
     private(set) var hasLoadedInitialPage = false
-    private var shouldSkipNextFilterReload = false
+    private var skippedFilterReloadsRemaining = 0
     // The number of events to load per page when paginating
     private let pageSize = 10
     private let eventService = EventService()
@@ -37,9 +38,24 @@ final class EventDiscoveryListViewModel: ObservableObject {
     }
 
     func applyCreatedEvent(_ event: TennisEvent) {
+        var filtersToReset = 0
+
         if !selectedCityFilter.matches(event.city) {
-            shouldSkipNextFilterReload = true
+            filtersToReset += 1
+        }
+
+        if !selectedSkillLevelFilter.matches(event.skillLevel) {
+            filtersToReset += 1
+        }
+
+        skippedFilterReloadsRemaining += filtersToReset
+
+        if !selectedCityFilter.matches(event.city) {
             selectedCityFilter = .all
+        }
+
+        if !selectedSkillLevelFilter.matches(event.skillLevel) {
+            selectedSkillLevelFilter = .all
         }
 
         events.removeAll { $0.id == event.id }
@@ -48,11 +64,11 @@ final class EventDiscoveryListViewModel: ObservableObject {
     }
 
     func consumeShouldSkipNextFilterReload() -> Bool {
-        guard shouldSkipNextFilterReload else {
+        guard skippedFilterReloadsRemaining > 0 else {
             return false
         }
 
-        shouldSkipNextFilterReload = false
+        skippedFilterReloadsRemaining -= 1
         return true
     }
 
@@ -91,7 +107,8 @@ final class EventDiscoveryListViewModel: ObservableObject {
             let page = try await eventService.fetchEvents(
                 from: reset ? 0 : events.count,
                 limit: pageSize,
-                city: selectedCityFilter.city
+                city: selectedCityFilter.city,
+                skillLevel: selectedSkillLevelFilter.skillLevel
             )
 
             if reset {
@@ -158,5 +175,54 @@ enum EventCityFilter: Hashable, Identifiable {
         .all,
         .city(.richmond),
         .city(.burnaby)
+    ]
+}
+
+enum EventSkillLevelFilter: Hashable, Identifiable {
+    case all
+    case skillLevel(SkillLevel)
+
+    var id: String {
+        switch self {
+        case .all:
+            return "all"
+        case .skillLevel(let skillLevel):
+            return skillLevel.rawValue
+        }
+    }
+
+    var displayName: String {
+        switch self {
+        case .all:
+            return "All"
+        case .skillLevel(let skillLevel):
+            return skillLevel.rawValue
+        }
+    }
+
+    var skillLevel: SkillLevel? {
+        switch self {
+        case .all:
+            return nil
+        case .skillLevel(let skillLevel):
+            return skillLevel
+        }
+    }
+
+    func matches(_ skillLevel: SkillLevel) -> Bool {
+        switch self {
+        case .all:
+            return true
+        case .skillLevel(let selectedSkillLevel):
+            return selectedSkillLevel == skillLevel
+        }
+    }
+
+    static let options: [EventSkillLevelFilter] = [
+        .all,
+        .skillLevel(.one),
+        .skillLevel(.two),
+        .skillLevel(.three),
+        .skillLevel(.four)
     ]
 }

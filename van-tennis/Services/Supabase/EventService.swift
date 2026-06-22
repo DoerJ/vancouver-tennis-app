@@ -4,14 +4,42 @@ import Supabase
 struct EventService {
     private let client = SupabaseClientProvider.shared
 
-    func fetchEvents(from startIndex: Int, limit: Int, city: EventCity? = nil) async throws -> [TennisEvent] {
+    func fetchEvents(
+        from startIndex: Int,
+        limit: Int,
+        city: EventCity? = nil,
+        skillLevel: SkillLevel? = nil
+    ) async throws -> [TennisEvent] {
         let endIndex = startIndex + limit - 1
+        let currentTime = Self.supabaseTimestampFormatter.string(from: Date())
 
-        if let city {
+        if let city, let skillLevel {
             return try await client
                 .from("tennis_events")
                 .select()
                 .eq("location_city", value: city.rawValue)
+                .eq("skill_level", value: skillLevel.rawValue)
+                .gt("end_time", value: currentTime)
+                .order("start_time", ascending: true)
+                .range(from: startIndex, to: endIndex)
+                .execute()
+                .value
+        } else if let city {
+            return try await client
+                .from("tennis_events")
+                .select()
+                .eq("location_city", value: city.rawValue)
+                .gt("end_time", value: currentTime)
+                .order("start_time", ascending: true)
+                .range(from: startIndex, to: endIndex)
+                .execute()
+                .value
+        } else if let skillLevel {
+            return try await client
+                .from("tennis_events")
+                .select()
+                .eq("skill_level", value: skillLevel.rawValue)
+                .gt("end_time", value: currentTime)
                 .order("start_time", ascending: true)
                 .range(from: startIndex, to: endIndex)
                 .execute()
@@ -21,6 +49,7 @@ struct EventService {
         return try await client
             .from("tennis_events")
             .select()
+            .gt("end_time", value: currentTime)
             .order("start_time", ascending: true)
             .range(from: startIndex, to: endIndex)
             .execute()
@@ -90,6 +119,19 @@ struct EventService {
             .execute()
     }
 
+    func updateMaxPlayers(eventID: UUID, maxPlayers: Int?) async throws -> TennisEvent {
+        try await client
+            .rpc(
+                "update_event_max_players",
+                params: UpdateEventMaxPlayersParams(
+                    eventID: eventID,
+                    maxPlayers: maxPlayers
+                )
+            )
+            .execute()
+            .value
+    }
+
     func deleteExpiredEvents() async throws {
         try await client
             .rpc("delete_expired_events")
@@ -101,6 +143,12 @@ struct EventService {
             .rpc("cancel_hosted_events_for_account_deletion")
             .execute()
     }
+
+    private static let supabaseTimestampFormatter: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
+    }()
 }
 
 private struct LeaveEventParams: Encodable {
@@ -108,6 +156,27 @@ private struct LeaveEventParams: Encodable {
 
     enum CodingKeys: String, CodingKey {
         case eventID = "event_id"
+    }
+}
+
+private struct UpdateEventMaxPlayersParams: Encodable {
+    let eventID: UUID
+    let maxPlayers: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case eventID = "event_id"
+        case maxPlayers = "new_max_players"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(eventID, forKey: .eventID)
+
+        if let maxPlayers {
+            try container.encode(maxPlayers, forKey: .maxPlayers)
+        } else {
+            try container.encodeNil(forKey: .maxPlayers)
+        }
     }
 }
 
