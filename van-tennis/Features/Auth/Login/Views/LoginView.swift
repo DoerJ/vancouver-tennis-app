@@ -34,6 +34,7 @@ struct LoginView: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
+            .tint(viewModel.isSigningIn ? .gray : .accentColor)
             .disabled(viewModel.isSigningIn)
 
             if let errorMessage = viewModel.errorMessage {

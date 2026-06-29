@@ -6,6 +6,7 @@ final class EventDiscoveryListViewModel: ObservableObject {
     @Published var events: [TennisEvent] = []
     @Published var selectedCityFilter: EventCityFilter = .all
     @Published var selectedSkillLevelFilter: EventSkillLevelFilter = .all
+    @Published var selectedEventTypeFilter: EventTypeFilter = .all
     @Published var isLoading = false
     @Published var isLoadingNextPage = false
     @Published var hasMoreEvents = true
@@ -13,12 +14,10 @@ final class EventDiscoveryListViewModel: ObservableObject {
 
     private(set) var hasLoadedInitialPage = false
     private var skippedFilterReloadsRemaining = 0
-    // The number of events to load per page when paginating
-    private let pageSize = 10
     private let eventService = EventService()
 
     var filteredEvents: [TennisEvent] {
-        events
+        events.filter(Self.hasFutureEndTime)
     }
 
     func loadEvents() async {
@@ -48,6 +47,10 @@ final class EventDiscoveryListViewModel: ObservableObject {
             filtersToReset += 1
         }
 
+        if !selectedEventTypeFilter.matches(event.eventType) {
+            filtersToReset += 1
+        }
+
         skippedFilterReloadsRemaining += filtersToReset
 
         if !selectedCityFilter.matches(event.city) {
@@ -58,8 +61,14 @@ final class EventDiscoveryListViewModel: ObservableObject {
             selectedSkillLevelFilter = .all
         }
 
+        if !selectedEventTypeFilter.matches(event.eventType) {
+            selectedEventTypeFilter = .all
+        }
+
         events.removeAll { $0.id == event.id }
-        events.append(event)
+        if Self.hasFutureEndTime(event) {
+            events.append(event)
+        }
         events.sort { $0.startTime < $1.startTime }
     }
 
@@ -72,8 +81,34 @@ final class EventDiscoveryListViewModel: ObservableObject {
         return true
     }
 
+    func resetFilters() -> Bool {
+        var filtersToReset = 0
+
+        if selectedCityFilter != .all {
+            filtersToReset += 1
+        }
+
+        if selectedSkillLevelFilter != .all {
+            filtersToReset += 1
+        }
+
+        if selectedEventTypeFilter != .all {
+            filtersToReset += 1
+        }
+
+        guard filtersToReset > 0 else {
+            return false
+        }
+
+        skippedFilterReloadsRemaining += filtersToReset
+        selectedCityFilter = .all
+        selectedSkillLevelFilter = .all
+        selectedEventTypeFilter = .all
+        return true
+    }
+
     private func appendPage(_ page: [TennisEvent]) {
-        for event in page where !events.contains(where: { $0.id == event.id }) {
+        for event in page where Self.hasFutureEndTime(event) && !events.contains(where: { $0.id == event.id }) {
             events.append(event)
         }
 
@@ -106,19 +141,20 @@ final class EventDiscoveryListViewModel: ObservableObject {
 
             let page = try await eventService.fetchEvents(
                 from: reset ? 0 : events.count,
-                limit: pageSize,
+                limit: Constants.EventDiscovery.pageSize,
                 city: selectedCityFilter.city,
-                skillLevel: selectedSkillLevelFilter.skillLevel
+                skillLevel: selectedSkillLevelFilter.skillLevel,
+                eventType: selectedEventTypeFilter.eventType
             )
 
             if reset {
-                events = page
+                events = page.filter(Self.hasFutureEndTime)
                 hasLoadedInitialPage = true
             } else {
                 appendPage(page)
             }
 
-            hasMoreEvents = page.count == pageSize
+            hasMoreEvents = page.count == Constants.EventDiscovery.pageSize
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -129,6 +165,58 @@ final class EventDiscoveryListViewModel: ObservableObject {
             isLoadingNextPage = false
         }
     }
+
+    private static func hasFutureEndTime(_ event: TennisEvent) -> Bool {
+        event.endTime > Date()
+    }
+}
+
+enum EventTypeFilter: Hashable, Identifiable {
+    case all
+    case eventType(EventType)
+
+    var id: String {
+        switch self {
+        case .all:
+            return "all"
+        case .eventType(let eventType):
+            return eventType.rawValue
+        }
+    }
+
+    var displayName: String {
+        switch self {
+        case .all:
+            return "All"
+        case .eventType(let eventType):
+            return eventType.displayName
+        }
+    }
+
+    var eventType: EventType? {
+        switch self {
+        case .all:
+            return nil
+        case .eventType(let eventType):
+            return eventType
+        }
+    }
+
+    func matches(_ eventType: EventType) -> Bool {
+        switch self {
+        case .all:
+            return true
+        case .eventType(let selectedEventType):
+            return selectedEventType == eventType
+        }
+    }
+
+    static let options: [EventTypeFilter] = [
+        .all,
+        .eventType(.practice),
+        .eventType(.casual),
+        .eventType(.match)
+    ]
 }
 
 enum EventCityFilter: Hashable, Identifiable {

@@ -8,48 +8,29 @@ struct EventService {
         from startIndex: Int,
         limit: Int,
         city: EventCity? = nil,
-        skillLevel: SkillLevel? = nil
+        skillLevel: SkillLevel? = nil,
+        eventType: EventType? = nil
     ) async throws -> [TennisEvent] {
         let endIndex = startIndex + limit - 1
         let currentTime = Self.supabaseTimestampFormatter.string(from: Date())
-
-        if let city, let skillLevel {
-            return try await client
-                .from("tennis_events")
-                .select()
-                .eq("location_city", value: city.rawValue)
-                .eq("skill_level", value: skillLevel.rawValue)
-                .gt("end_time", value: currentTime)
-                .order("start_time", ascending: true)
-                .range(from: startIndex, to: endIndex)
-                .execute()
-                .value
-        } else if let city {
-            return try await client
-                .from("tennis_events")
-                .select()
-                .eq("location_city", value: city.rawValue)
-                .gt("end_time", value: currentTime)
-                .order("start_time", ascending: true)
-                .range(from: startIndex, to: endIndex)
-                .execute()
-                .value
-        } else if let skillLevel {
-            return try await client
-                .from("tennis_events")
-                .select()
-                .eq("skill_level", value: skillLevel.rawValue)
-                .gt("end_time", value: currentTime)
-                .order("start_time", ascending: true)
-                .range(from: startIndex, to: endIndex)
-                .execute()
-                .value
-        }
-
-        return try await client
+        var query = client
             .from("tennis_events")
             .select()
             .gt("end_time", value: currentTime)
+
+        if let city {
+            query = query.eq("location_city", value: city.rawValue)
+        }
+
+        if let skillLevel {
+            query = query.eq("skill_level", value: skillLevel.rawValue)
+        }
+
+        if let eventType {
+            query = query.eq("event_type", value: eventType.rawValue)
+        }
+
+        return try await query
             .order("start_time", ascending: true)
             .range(from: startIndex, to: endIndex)
             .execute()

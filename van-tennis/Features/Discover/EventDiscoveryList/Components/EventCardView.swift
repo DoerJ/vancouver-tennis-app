@@ -28,7 +28,12 @@ struct EventCardView: View {
                             .clipShape(Capsule())
                     }
 
-                    TimelineView(.periodic(from: Date(), by: 60)) { context in
+                    TimelineView(
+                        .periodic(
+                            from: Date(),
+                            by: Constants.EventDiscovery.cardTimelineRefreshInterval
+                        )
+                    ) { context in
                         Text(upcomingTimeText(now: context.date))
                             .font(.caption)
                             .fontWeight(.semibold)

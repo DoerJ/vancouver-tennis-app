@@ -26,8 +26,17 @@ final class CreateEventViewModel: ObservableObject {
         self.creatorSkillLevel = creatorSkillLevel
 
         let now = Date()
-        startTime = Calendar.current.date(byAdding: .hour, value: 1, to: now) ?? now
-        endTime = Calendar.current.date(byAdding: .hour, value: 2, to: now) ?? now
+        let defaultStartTime = Calendar.current.date(
+            byAdding: .hour,
+            value: Constants.Event.defaultStartOffsetHours,
+            to: now
+        ) ?? now
+        startTime = defaultStartTime
+        endTime = Calendar.current.date(
+            byAdding: .hour,
+            value: Constants.Event.defaultDurationHours,
+            to: defaultStartTime
+        ) ?? defaultStartTime
     }
 
     var draft: TennisEventDraft? {
@@ -47,30 +56,77 @@ final class CreateEventViewModel: ObservableObject {
     }
 
     var latestAllowedStartTime: Date {
-        Calendar.current.date(byAdding: .day, value: 3, to: Date()) ?? Date()
+        Calendar.current.date(
+            byAdding: .day,
+            value: Constants.Event.creationWindowDays,
+            to: Date()
+        ) ?? Date()
+    }
+
+    var earliestAllowedStartTime: Date {
+        Calendar.current.date(
+            byAdding: .hour,
+            value: Constants.Event.minimumStartOffsetHours,
+            to: Date()
+        ) ?? Date()
+    }
+
+    var earliestAllowedEndTime: Date {
+        Calendar.current.date(
+            byAdding: .minute,
+            value: Constants.Event.minimumDurationMinutes,
+            to: startTime
+        ) ?? startTime
+    }
+
+    var latestAllowedEndTime: Date {
+        Calendar.current.date(
+            byAdding: .hour,
+            value: Constants.Event.maximumDurationHours,
+            to: startTime
+        ) ?? startTime
     }
 
     func validate() -> Bool {
         let now = Date()
-        let latestAllowedStartTime = Calendar.current.date(byAdding: .day, value: 3, to: now) ?? now
+        let earliestAllowedStartTime = Calendar.current.date(
+            byAdding: .hour,
+            value: Constants.Event.minimumStartOffsetHours,
+            to: now
+        ) ?? now
+        let latestAllowedStartTime = Calendar.current.date(
+            byAdding: .day,
+            value: Constants.Event.creationWindowDays,
+            to: now
+        ) ?? now
 
-        guard startTime > now else {
-            errorMessage = "Start time must be in the future."
+        guard startTime >= earliestAllowedStartTime else {
+            errorMessage = "Start time must be at least \(Constants.Event.minimumStartOffsetHours) hour from now."
             return false
         }
 
         guard startTime <= latestAllowedStartTime else {
-            errorMessage = "Start time must be within the next 3 days."
+            errorMessage = "Start time must be within the next \(Constants.Event.creationWindowDays) days."
             return false
         }
 
-        guard endTime > startTime else {
-            errorMessage = "End time must be after start time."
+        guard endTime >= earliestAllowedEndTime else {
+            errorMessage = "End time must be at least \(Constants.Event.minimumDurationMinutes) minutes after start time."
             return false
         }
 
-        guard !hasPlayerLimit || maxPlayers > 0 else {
-            errorMessage = "Max players must be at least 1."
+        guard endTime <= latestAllowedEndTime else {
+            errorMessage = "End time must be within \(Constants.Event.maximumDurationHours) hours of start time."
+            return false
+        }
+
+        guard !hasPlayerLimit || maxPlayers >= Constants.Event.minimumPlayerLimit else {
+            errorMessage = "Max players must be at least \(Constants.Event.minimumPlayerLimit)."
+            return false
+        }
+
+        guard !hasPlayerLimit || maxPlayers <= Constants.Event.maximumPlayerLimit else {
+            errorMessage = "Max players cannot be more than \(Constants.Event.maximumPlayerLimit)."
             return false
         }
 
@@ -78,8 +134,13 @@ final class CreateEventViewModel: ObservableObject {
         return true
     }
 
-    func save() async -> TennisEvent? {
+    func save(activeHostedEvents: [TennisEvent]) async -> TennisEvent? {
         guard let draft else {
+            return nil
+        }
+
+        if activeHostedEvents.contains(where: { overlaps(draft: draft, existingEvent: $0) }) {
+            errorMessage = "This event overlaps with one of your hosted events."
             return nil
         }
 
@@ -95,5 +156,9 @@ final class CreateEventViewModel: ObservableObject {
             isSaving = false
             return nil
         }
+    }
+
+    private func overlaps(draft: TennisEventDraft, existingEvent: TennisEvent) -> Bool {
+        draft.startTime < existingEvent.endTime && existingEvent.startTime < draft.endTime
     }
 }

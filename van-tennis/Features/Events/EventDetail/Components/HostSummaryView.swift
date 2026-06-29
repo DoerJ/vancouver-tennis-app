@@ -20,13 +20,28 @@ struct ProfileSummaryRow: View {
     let fallbackTitle: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
             Text(profile.displayName.isEmpty ? fallbackTitle : profile.displayName)
                 .font(.body)
 
             Text("Skill level \(profile.skillLevel?.rawValue ?? "Not set")")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+
+            if !profile.socialTags.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(profile.socialTags, id: \.self) { tag in
+                            Text(tag)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(.secondary.opacity(0.12), in: Capsule())
+                        }
+                    }
+                }
+            }
         }
     }
 }

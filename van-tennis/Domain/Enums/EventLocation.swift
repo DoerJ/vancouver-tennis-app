@@ -16,12 +16,7 @@ enum EventCity: String, CaseIterable, Codable, Identifiable, Hashable {
     }
 
     var courts: [TennisCourt] {
-        switch self {
-        case .burnaby:
-            return [.bcitCourt, .centralParkCourt]
-        case .richmond:
-            return [.southarmCourt]
-        }
+        Constants.locationToCourts[self] ?? []
     }
 }
 

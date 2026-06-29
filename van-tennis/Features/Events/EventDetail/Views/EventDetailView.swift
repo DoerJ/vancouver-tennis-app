@@ -31,7 +31,7 @@ struct EventDetailView: View {
             Section("Event") {
                 LabeledContent("Type", value: event.eventType.displayName)
                 LabeledContent("Skill Level", value: event.skillLevel.rawValue)
-                LabeledContent("Max Players", value: maxPlayersText)
+                LabeledContent("Players", value: maxPlayersText)
 
                 if !isEventEnded && isCurrentUserHost {
                     Button {
@@ -276,10 +276,10 @@ struct EventDetailView: View {
 
     private var maxPlayersText: String {
         guard let maxPlayers = event.maxPlayers else {
-            return "Unlimited"
+            return "\(1 + event.participants.count) / Unlimited"
         }
 
-        return "\(maxPlayers)"
+        return "\(1 + event.participants.count) / \(maxPlayers)"
     }
 
     private func loadEventDetails() async {
@@ -405,7 +405,10 @@ private struct EditMaxPlayersSheet: View {
                         Stepper(
                             "Max players: \(maxPlayers)",
                             value: $maxPlayers,
-                            in: currentPlayerCount...max(currentPlayerCount, 100)
+                            in: currentPlayerCount...max(
+                                currentPlayerCount,
+                                Constants.Event.maximumPlayerLimit
+                            )
                         )
 
                         Text("The event currently has \(currentPlayerCount) players including the host.")

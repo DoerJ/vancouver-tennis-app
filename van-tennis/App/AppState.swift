@@ -25,8 +25,6 @@ final class AppState: ObservableObject {
     private var subscribedChatEventIDs: Set<UUID> = []
     private var activeChatEventID: UUID?
     private var lastSavedDeviceToken: String?
-    private static let unreadChatCountsKey = "van-tennis.unreadChatCountsByEventID"
-
     private static let supabaseRealtimeDecoder: JSONDecoder = {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .custom { decoder in
@@ -238,6 +236,26 @@ final class AppState: ObservableObject {
     func applyUpdatedEvent(_ event: TennisEvent) {
         cachedEventsByID[event.id] = event
         eventsRevision += 1
+    }
+
+    func activeHostedEventsForCurrentUser() async throws -> [TennisEvent] {
+        guard let userProfile else {
+            throw AppStateError.missingAuthenticatedUser
+        }
+
+        // If the hosted event has already been cached, read from cache
+        // Otherwise, the missing hosted events will be fetched from Supabase
+        let hostedEventIDs = userProfile.hostedEvents
+        let cachedEvents = cachedEvents(ids: hostedEventIDs)
+        let missingEventIDs = missingCachedEventIDs(ids: hostedEventIDs)
+        let fetchedEvents = try await eventService.fetchEvents(ids: missingEventIDs)
+
+        updateCachedEvents(fetchedEvents)
+
+        let now = Date()
+        return (cachedEvents + fetchedEvents)
+            .filter { $0.endTime > now }
+            .filter { $0.status != .cancelled && $0.status != .completed }
     }
 
     var hasUnreadChats: Bool {
@@ -538,11 +556,13 @@ final class AppState: ObservableObject {
             result[item.key.uuidString] = item.value
         }
 
-        UserDefaults.standard.set(countsByID, forKey: Self.unreadChatCountsKey)
+        UserDefaults.standard.set(countsByID, forKey: Constants.StorageKey.unreadChatCountsByEventID)
     }
 
     private static func loadUnreadChatCounts() -> [UUID: Int] {
-        guard let storedCounts = UserDefaults.standard.dictionary(forKey: unreadChatCountsKey) else {
+        guard let storedCounts = UserDefaults.standard.dictionary(
+            forKey: Constants.StorageKey.unreadChatCountsByEventID
+        ) else {
             return [:]
         }
 

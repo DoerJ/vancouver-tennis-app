@@ -21,6 +21,10 @@ final class LoginViewModel: ObservableObject {
     private let profileService = ProfileService()
 
     func continueWithGoogle(appState: AppState) async {
+        guard !isSigningIn else {
+            return
+        }
+
         isSigningIn = true
         errorMessage = nil
         appState.authenticationState = .signingIn
@@ -40,6 +44,11 @@ final class LoginViewModel: ObservableObject {
                 supabaseSession: supabaseSession,
                 userProfile: userProfile
             )
+        } catch GoogleAuthError.cancelled {
+            appState.googleSession = nil
+            appState.supabaseSession = nil
+            appState.userProfile = nil
+            appState.authenticationState = .signedOut
         } catch {
             appState.googleSession = nil
             appState.supabaseSession = nil

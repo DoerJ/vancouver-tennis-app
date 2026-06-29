@@ -8,8 +8,6 @@ struct OnboardingProfileView: View {
     @State private var isSaving = false
     @State private var errorMessage: String?
 
-    private let socialTagOptions = ["intj", "enfp", "software engineer"]
-
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
@@ -82,7 +80,7 @@ struct OnboardingProfileView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
 
                     HStack(spacing: 8) {
-                        ForEach(socialTagOptions, id: \.self) { tag in
+                        ForEach(Constants.SocialProfile.tagOptions, id: \.self) { tag in
                             Button {
                                 toggleSocialTag(tag)
                             } label: {
@@ -154,7 +152,7 @@ struct OnboardingProfileView: View {
             try await appState.updateProfile(
                 skillLevel: selectedLevel,
                 gender: selectedGender,
-                socialTags: socialTagOptions.filter { selectedSocialTags.contains($0) }
+                socialTags: Constants.SocialProfile.tagOptions.filter { selectedSocialTags.contains($0) }
             )
         } catch {
             errorMessage = error.localizedDescription

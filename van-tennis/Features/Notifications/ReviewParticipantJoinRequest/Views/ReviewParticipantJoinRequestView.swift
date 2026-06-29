@@ -37,9 +37,23 @@ struct ReviewParticipantJoinRequestView: View {
                     if let gender = profile.gender {
                         LabeledContent("Gender", value: gender.displayName)
                     }
+                }
 
-                    if let email = profile.email {
-                        LabeledContent("Email", value: email)
+                if !profile.socialTags.isEmpty {
+                    Section("Social Tags") {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(profile.socialTags, id: \.self) { tag in
+                                    Text(tag)
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 6)
+                                        .background(.secondary.opacity(0.12), in: Capsule())
+                                }
+                            }
+                            .padding(.vertical, 2)
+                        }
                     }
                 }
             }

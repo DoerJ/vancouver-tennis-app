@@ -4,6 +4,7 @@ struct CreateEventView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appState: AppState
     @StateObject private var viewModel: CreateEventViewModel
+    @State private var isPreparingToSave = false
     private let onEventCreated: (TennisEvent) -> Void
 
     init(
@@ -22,13 +23,14 @@ struct CreateEventView: View {
                 DatePicker(
                     "Start",
                     selection: $viewModel.startTime,
-                    in: Date()...viewModel.latestAllowedStartTime,
+                    in: viewModel.earliestAllowedStartTime...viewModel.latestAllowedStartTime,
                     displayedComponents: [.date, .hourAndMinute]
                 )
 
                 DatePicker(
                     "End",
                     selection: $viewModel.endTime,
+                    in: viewModel.earliestAllowedEndTime...viewModel.latestAllowedEndTime,
                     displayedComponents: [.date, .hourAndMinute]
                 )
             }
@@ -50,7 +52,7 @@ struct CreateEventView: View {
                     Stepper(
                         "Max players: \(viewModel.maxPlayers)",
                         value: $viewModel.maxPlayers,
-                        in: 1...20
+                        in: Constants.Event.minimumPlayerLimit...Constants.Event.maximumPlayerLimit
                     )
                 } else {
                     Text("Unlimited players")
@@ -80,28 +82,67 @@ struct CreateEventView: View {
             }
         }
         .navigationTitle("Create Event")
+        .onChange(of: viewModel.startTime) { newStartTime in
+            let earliestEndTime = Calendar.current.date(
+                byAdding: .minute,
+                value: Constants.Event.minimumDurationMinutes,
+                to: newStartTime
+            ) ?? newStartTime
+
+            if viewModel.endTime < earliestEndTime {
+                viewModel.endTime = earliestEndTime
+            }
+
+            let latestEndTime = Calendar.current.date(
+                byAdding: .hour,
+                value: Constants.Event.maximumDurationHours,
+                to: newStartTime
+            ) ?? newStartTime
+
+            if viewModel.endTime > latestEndTime {
+                viewModel.endTime = latestEndTime
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button(viewModel.isSaving ? "Saving..." : "Save") {
+                Button(isSaving ? "Saving..." : "Save") {
                     Task {
+                        guard !isSaving else {
+                            return
+                        }
+
                         guard appState.supabaseSession != nil else {
                             return
                         }
 
-                        if let event = await viewModel.save() {
-                            do {
-                                try await appState.appendHostedEvent(event.id)
-                                onEventCreated(event)
-                                dismiss()
-                            } catch {
-                                viewModel.errorMessage = error.localizedDescription
+                        isPreparingToSave = true
+                        defer {
+                            isPreparingToSave = false
+                        }
+
+                        do {
+                            let activeHostedEvents = try await appState.activeHostedEventsForCurrentUser()
+
+                            guard let event = await viewModel.save(activeHostedEvents: activeHostedEvents) else {
+                                return
                             }
+
+                            appState.updateCachedEvents([event])
+                            try await appState.appendHostedEvent(event.id)
+                            onEventCreated(event)
+                            dismiss()
+                        } catch {
+                            viewModel.errorMessage = error.localizedDescription
                         }
                     }
                 }
-                .disabled(viewModel.isSaving)
+                .disabled(isSaving)
             }
         }
+    }
+
+    private var isSaving: Bool {
+        isPreparingToSave || viewModel.isSaving
     }
 }
 

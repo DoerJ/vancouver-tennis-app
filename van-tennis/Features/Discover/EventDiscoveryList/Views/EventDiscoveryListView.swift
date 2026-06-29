@@ -54,7 +54,9 @@ struct EventDiscoveryListView: View {
                         .onScrollGeometryChange(for: Bool.self) { geometry in
                             let distanceToBottom = geometry.contentSize.height - geometry.containerSize.height - geometry.contentOffset.y
                             let canScroll = geometry.contentSize.height > geometry.containerSize.height
-                            return canScroll && geometry.contentOffset.y > 0 && distanceToBottom < 80
+                            return canScroll
+                                && geometry.contentOffset.y > 0
+                                && distanceToBottom < Constants.EventDiscovery.paginationTriggerDistance
                         } action: { wasNearBottom, isNearBottom in
                             guard !wasNearBottom, isNearBottom else {
                                 return
@@ -124,6 +126,15 @@ struct EventDiscoveryListView: View {
                 await viewModel.loadEvents()
             }
         }
+        .onChange(of: viewModel.selectedEventTypeFilter) {
+            guard !viewModel.consumeShouldSkipNextFilterReload() else {
+                return
+            }
+
+            Task {
+                await viewModel.loadEvents()
+            }
+        }
         .onChange(of: appState.eventsRevision) {
             Task {
                 await viewModel.loadEvents()
@@ -180,14 +191,63 @@ struct EventDiscoveryListView: View {
             .background(Color(.secondarySystemBackground))
             .clipShape(RoundedRectangle(cornerRadius: 8))
 
+            Menu {
+                ForEach(EventTypeFilter.options) { filter in
+                    Button {
+                        viewModel.selectedEventTypeFilter = filter
+                    } label: {
+                        if filter == viewModel.selectedEventTypeFilter {
+                            Label(filter.displayName, systemImage: "checkmark")
+                        } else {
+                            Text(filter.displayName)
+                        }
+                    }
+                }
+            } label: {
+                Label(viewModel.selectedEventTypeFilter.displayName, systemImage: "tennisball")
+                    .lineLimit(1)
+            }
+            .font(.subheadline)
+            .padding(.horizontal, 10)
+            .frame(height: 36)
+            .background(Color(.secondarySystemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+
+            Button {
+                guard viewModel.resetFilters() else {
+                    return
+                }
+
+                Task {
+                    await viewModel.loadEvents()
+                }
+            } label: {
+                Image(systemName: "arrow.counterclockwise")
+                    .frame(width: 36, height: 36)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(hasActiveFilters ? .primary : .secondary)
+            .background(Color(.secondarySystemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .disabled(!hasActiveFilters)
+            .accessibilityLabel("Reset filters")
+
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    private var hasActiveFilters: Bool {
+        viewModel.selectedCityFilter != .all
+            || viewModel.selectedSkillLevelFilter != .all
+            || viewModel.selectedEventTypeFilter != .all
+    }
+
     @ViewBuilder
     private var emptyEventsView: some View {
-        if viewModel.selectedCityFilter == .all && viewModel.selectedSkillLevelFilter == .all {
+        if viewModel.selectedCityFilter == .all
+            && viewModel.selectedSkillLevelFilter == .all
+            && viewModel.selectedEventTypeFilter == .all {
             ContentUnavailableView(
                 "No tennis events",
                 systemImage: "calendar.badge.exclamationmark",
@@ -197,7 +257,7 @@ struct EventDiscoveryListView: View {
             ContentUnavailableView(
                 "No matching events",
                 systemImage: "line.3.horizontal.decrease.circle",
-                description: Text("Try different location or skill level filters.")
+                description: Text("Try different location, skill level, or type filters.")
             )
         }
     }

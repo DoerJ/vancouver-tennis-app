@@ -27,6 +27,11 @@ final class GoogleAuthService: NSObject {
                 self?.currentSession = nil
 
                 if let error {
+                    if Self.isUserCancelledAuthentication(error) {
+                        continuation.resume(throwing: GoogleAuthError.cancelled)
+                        return
+                    }
+
                     continuation.resume(throwing: error)
                     return
                 }
@@ -53,6 +58,16 @@ final class GoogleAuthService: NSObject {
             redirectURI: redirectURI
         )
     }
+
+    private static func isUserCancelledAuthentication(_ error: Error) -> Bool {
+        if let authError = error as? ASWebAuthenticationSessionError {
+            return authError.code == .canceledLogin
+        }
+
+        let nsError = error as NSError
+        return nsError.domain == ASWebAuthenticationSessionError.errorDomain
+            && nsError.code == ASWebAuthenticationSessionError.Code.canceledLogin.rawValue
+    }
 }
 
 struct GoogleAuthSession {
@@ -64,6 +79,7 @@ struct GoogleAuthSession {
 }
 
 enum GoogleAuthError: LocalizedError {
+    case cancelled
     case missingClientID
     case missingCallbackURL
     case invalidCallback
@@ -73,6 +89,8 @@ enum GoogleAuthError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
+        case .cancelled:
+            return nil
         case .missingClientID:
             return "Add your Google iOS client ID before signing in."
         case .missingCallbackURL:

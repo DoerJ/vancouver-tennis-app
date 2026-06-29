@@ -158,7 +158,11 @@ private struct ChatConversationCard: View {
                 Spacer(minLength: 8)
 
                 if preview.unreadCount > 0 {
-                    Text(preview.unreadCount > 99 ? "99+" : "\(preview.unreadCount)")
+                    Text(
+                        preview.unreadCount > Constants.Chat.maximumDisplayedUnreadCount
+                            ? Constants.Chat.maximumDisplayedUnreadText
+                            : "\(preview.unreadCount)"
+                    )
                         .font(.caption2.weight(.semibold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 7)

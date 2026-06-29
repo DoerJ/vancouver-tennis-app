@@ -4,18 +4,23 @@ struct EditProfileView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appState: AppState
 
+    private let originalDisplayName: String
+    private let originalSkillLevel: SkillLevel
+    private let originalSocialTags: Set<String>
+
     @State private var displayName: String
     @State private var skillLevel: SkillLevel
     @State private var selectedSocialTags: Set<String>
     @State private var isSaving = false
     @State private var errorMessage: String?
 
-    private let socialTagOptions = ["intj", "enfp", "software engineer"]
-
     init(profile: UserProfile) {
+        originalDisplayName = profile.displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        originalSkillLevel = profile.skillLevel ?? .one
+        originalSocialTags = Set(profile.socialTags)
         _displayName = State(initialValue: profile.displayName)
-        _skillLevel = State(initialValue: profile.skillLevel ?? .one)
-        _selectedSocialTags = State(initialValue: Set(profile.socialTags))
+        _skillLevel = State(initialValue: originalSkillLevel)
+        _selectedSocialTags = State(initialValue: originalSocialTags)
     }
 
     var body: some View {
@@ -34,7 +39,7 @@ struct EditProfileView: View {
             Section("Social Tags") {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
-                        ForEach(socialTagOptions, id: \.self) { tag in
+                        ForEach(Constants.SocialProfile.tagOptions, id: \.self) { tag in
                             Button {
                                 toggleSocialTag(tag)
                             } label: {
@@ -73,9 +78,19 @@ struct EditProfileView: View {
                         await save()
                     }
                 }
-                .disabled(isSaving || displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .disabled(isSaving || !hasProfileChanges || trimmedDisplayName.isEmpty)
             }
         }
+    }
+
+    private var trimmedDisplayName: String {
+        displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var hasProfileChanges: Bool {
+        trimmedDisplayName != originalDisplayName
+            || skillLevel != originalSkillLevel
+            || selectedSocialTags != originalSocialTags
     }
 
     private func toggleSocialTag(_ tag: String) {
@@ -87,8 +102,6 @@ struct EditProfileView: View {
     }
 
     private func save() async {
-        let trimmedDisplayName = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
-
         guard !trimmedDisplayName.isEmpty else {
             errorMessage = "Display name is required."
             return
@@ -101,7 +114,7 @@ struct EditProfileView: View {
             try await appState.updateProfile(
                 displayName: trimmedDisplayName,
                 skillLevel: skillLevel,
-                socialTags: socialTagOptions.filter { selectedSocialTags.contains($0) }
+                socialTags: Constants.SocialProfile.tagOptions.filter { selectedSocialTags.contains($0) }
             )
             dismiss()
         } catch {
