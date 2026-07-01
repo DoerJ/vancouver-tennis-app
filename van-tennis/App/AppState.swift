@@ -132,6 +132,17 @@ final class AppState: ObservableObject {
         applyAuthenticatedState(supabaseSession: supabaseSession, userProfile: updatedProfile)
     }
 
+    func isDisplayNameTaken(_ displayName: String) async throws -> Bool {
+        guard let supabaseSession else {
+            throw AppStateError.missingAuthenticatedUser
+        }
+
+        return try await profileService.isDisplayNameTaken(
+            displayName,
+            excluding: supabaseSession.user.id
+        )
+    }
+
     func appendHostedEvent(_ eventID: UUID) async throws {
         guard let supabaseSession else {
             throw AppStateError.missingAuthenticatedUser

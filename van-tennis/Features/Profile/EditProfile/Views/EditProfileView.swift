@@ -111,6 +111,13 @@ struct EditProfileView: View {
         errorMessage = nil
 
         do {
+            if trimmedDisplayName != originalDisplayName,
+               try await appState.isDisplayNameTaken(trimmedDisplayName) {
+                errorMessage = "This profile name has been taken. Choose another one."
+                isSaving = false
+                return
+            }
+
             try await appState.updateProfile(
                 displayName: trimmedDisplayName,
                 skillLevel: skillLevel,

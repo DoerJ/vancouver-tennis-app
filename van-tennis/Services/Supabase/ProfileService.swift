@@ -48,6 +48,19 @@ struct ProfileService {
         return profiles.first
     }
 
+    func isDisplayNameTaken(_ displayName: String, excluding userID: UUID) async throws -> Bool {
+        let profiles: [UserProfile] = try await client
+            .from("profiles")
+            .select()
+            .eq("display_name", value: displayName)
+            .neq("id", value: userID.uuidString)
+            .limit(1)
+            .execute()
+            .value
+
+        return !profiles.isEmpty
+    }
+
     func fetchProfiles(userIDs: [UUID]) async throws -> [UserProfile] {
         guard !userIDs.isEmpty else {
             return []
