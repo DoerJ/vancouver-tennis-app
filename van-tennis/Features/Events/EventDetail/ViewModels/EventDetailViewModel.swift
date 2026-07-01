@@ -107,16 +107,23 @@ final class EventDetailViewModel: ObservableObject {
 
         try await eventService.leaveEvent(eventID: latestEvent.id)
 
-        _ = try await notificationEventService.createNotification(
-            NewNotificationEvent(
-                sender: currentUser.id,
-                recipients: [latestEvent.hostID],
-                notificationType: .eventLeft,
-                title: "Player left your event",
-                body: "\(currentUser.displayName) left your event at \(latestEvent.court.displayName).",
-                relatedEventID: latestEvent.id
-            )
+        let recipients = Array(
+            Set([latestEvent.hostID] + latestEvent.participants)
+                .subtracting([currentUser.id])
         )
+
+        if !recipients.isEmpty {
+            _ = try await notificationEventService.createNotification(
+                NewNotificationEvent(
+                    sender: currentUser.id,
+                    recipients: recipients,
+                    notificationType: .eventLeft,
+                    title: "Player left the event",
+                    body: "\(currentUser.displayName) left the event at \(latestEvent.court.displayName).",
+                    relatedEventID: latestEvent.id
+                )
+            )
+        }
     }
 
     func updateMaxPlayers(_ maxPlayers: Int?, for event: TennisEvent) async throws -> TennisEvent {

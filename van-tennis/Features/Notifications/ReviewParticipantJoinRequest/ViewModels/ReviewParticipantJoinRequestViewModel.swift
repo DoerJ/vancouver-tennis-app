@@ -4,6 +4,7 @@ import Foundation
 @MainActor
 final class ReviewParticipantJoinRequestViewModel: ObservableObject {
     @Published var senderProfile: UserProfile?
+    @Published var relatedEvent: TennisEvent?
     @Published var isLoading = false
     @Published var isApproving = false
     @Published var isDisapproving = false
@@ -11,16 +12,31 @@ final class ReviewParticipantJoinRequestViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     private let profileService = ProfileService()
+    private let eventService = EventService()
     private let notificationEventService = NotificationEventService()
 
-    func loadSenderProfile(senderID: UUID) async {
+    func loadReviewDetails(notification: NotificationEvent) async {
         isLoading = true
         errorMessage = nil
 
         do {
-            senderProfile = try await profileService.findProfile(userID: senderID)
+            if let senderID = notification.sender {
+                senderProfile = try await profileService.findProfile(userID: senderID)
 
-            if senderProfile == nil {
+                if senderProfile == nil {
+                    errorMessage = "Player profile was not found."
+                }
+            }
+
+            if let relatedEventID = notification.relatedEventID {
+                relatedEvent = try await eventService.fetchEventDetails(id: relatedEventID)
+            }
+
+            if let reviewUnavailableMessage {
+                errorMessage = reviewUnavailableMessage
+            }
+
+            if notification.sender == nil {
                 errorMessage = "Player profile was not found."
             }
         } catch {
@@ -31,6 +47,11 @@ final class ReviewParticipantJoinRequestViewModel: ObservableObject {
     }
 
     func approveJoinRequest(notification: NotificationEvent, currentUser: UserProfile?) async -> Bool {
+        guard canReviewJoinRequest else {
+            errorMessage = reviewUnavailableMessage
+            return false
+        }
+
         guard let currentUser else {
             errorMessage = "No authenticated user was found."
             return false
@@ -79,6 +100,11 @@ final class ReviewParticipantJoinRequestViewModel: ObservableObject {
     }
 
     func rejectJoinRequest(notification: NotificationEvent, currentUser: UserProfile?) async -> Bool {
+        guard canReviewJoinRequest else {
+            errorMessage = reviewUnavailableMessage
+            return false
+        }
+
         guard let currentUser else {
             errorMessage = "No authenticated user was found."
             return false
@@ -122,5 +148,25 @@ final class ReviewParticipantJoinRequestViewModel: ObservableObject {
             errorMessage = error.localizedDescription
             return false
         }
+    }
+
+    var canReviewJoinRequest: Bool {
+        guard let relatedEvent else {
+            return false
+        }
+
+        return relatedEvent.endTime > Date()
+    }
+
+    private var reviewUnavailableMessage: String? {
+        guard let relatedEvent else {
+            return "This event is no longer available."
+        }
+
+        guard relatedEvent.endTime > Date() else {
+            return "This event has already ended. Join requests can no longer be reviewed."
+        }
+
+        return nil
     }
 }

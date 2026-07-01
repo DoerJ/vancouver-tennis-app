@@ -115,14 +115,15 @@ struct ReviewParticipantJoinRequestView: View {
         .navigationTitle("Join Request")
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            if let senderID = notification.sender {
-                await viewModel.loadSenderProfile(senderID: senderID)
-            }
+            await viewModel.loadReviewDetails(notification: notification)
         }
     }
 
     private var actionButtonsAreDisabled: Bool {
-        viewModel.isApproving || viewModel.isDisapproving || viewModel.hasCompletedReview
+        viewModel.isApproving
+            || viewModel.isDisapproving
+            || viewModel.hasCompletedReview
+            || !viewModel.canReviewJoinRequest
     }
 }
 
