@@ -38,9 +38,11 @@ struct NotificationCardView: View {
                 .accessibilityLabel("Delete notification")
             }
 
-            Label(createdAtText, systemImage: "clock")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            TimelineView(.periodic(from: Date(), by: 60)) { context in
+                Label(createdAtText(now: context.date), systemImage: "clock")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
         }
         .padding()
         .background(Color(.secondarySystemGroupedBackground))
@@ -51,20 +53,19 @@ struct NotificationCardView: View {
         }
     }
 
-    private var createdAtText: String {
+    private func createdAtText(now: Date) -> String {
         guard let createdAt = notification.createdAt else {
             return "Unknown time"
         }
 
         let calendar = Calendar.current
-        let now = Date()
 
         if calendar.isDateInYesterday(createdAt) {
             return "Yesterday"
         }
 
         let components = calendar.dateComponents(
-            [.year, .month, .weekOfYear, .day, .hour],
+            [.year, .month, .weekOfYear, .day, .hour, .minute],
             from: createdAt,
             to: now
         )
@@ -87,6 +88,10 @@ struct NotificationCardView: View {
 
         if let hours = components.hour, hours > 0 {
             return "\(hours) \(hours == 1 ? "hour" : "hours") ago"
+        }
+
+        if let minutes = components.minute, minutes > 0 {
+            return "\(minutes) \(minutes == 1 ? "minute" : "minutes") ago"
         }
 
         return "Just now"
