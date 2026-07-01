@@ -135,10 +135,6 @@ final class EventDiscoveryListViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            if reset {
-                try await eventService.deleteExpiredEvents()
-            }
-
             let page = try await eventService.fetchEvents(
                 from: reset ? 0 : events.count,
                 limit: Constants.EventDiscovery.pageSize,

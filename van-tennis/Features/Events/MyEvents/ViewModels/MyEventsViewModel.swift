@@ -4,6 +4,7 @@ import Foundation
 @MainActor
 final class MyEventsViewModel: ObservableObject {
     @Published var events: [TennisEvent] = []
+    @Published var archivingEventIDs: Set<UUID> = []
     @Published var isLoading = false
     @Published var errorMessage: String?
 
@@ -78,6 +79,32 @@ final class MyEventsViewModel: ObservableObject {
 
     func removeEvent(id: UUID) {
         events.removeAll { $0.id == id }
+    }
+
+    func archiveEndedEvent(_ event: TennisEvent) async -> Bool {
+        guard event.endTime <= Date() else {
+            errorMessage = "Only ended events can be archived."
+            return false
+        }
+
+        guard !archivingEventIDs.contains(event.id) else {
+            return false
+        }
+
+        archivingEventIDs.insert(event.id)
+        errorMessage = nil
+        defer {
+            archivingEventIDs.remove(event.id)
+        }
+
+        do {
+            try await eventService.archiveEndedEvent(eventID: event.id)
+            removeEvent(id: event.id)
+            return true
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
     }
 }
 

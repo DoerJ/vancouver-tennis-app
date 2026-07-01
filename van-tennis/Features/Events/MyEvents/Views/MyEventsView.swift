@@ -33,15 +33,42 @@ struct MyEventsView: View {
                                 .padding(.top, 80)
                             } else {
                                 ForEach(viewModel.events) { event in
-                                    NavigationLink {
-                                        EventDetailView(event: event) { eventID in
-                                            viewModel.removeEvent(id: eventID)
-                                            appState.removeCachedEvent(eventID)
+                                    VStack(spacing: 8) {
+                                        NavigationLink {
+                                            EventDetailView(event: event) { eventID in
+                                                viewModel.removeEvent(id: eventID)
+                                                appState.removeCachedEvent(eventID)
+                                            }
+                                        } label: {
+                                            EventCardView(event: event)
                                         }
-                                    } label: {
-                                        EventCardView(event: event)
+                                        .buttonStyle(.plain)
+
+                                        if event.endTime <= Date() {
+                                            Button(role: .destructive) {
+                                                Task {
+                                                    let didArchive = await viewModel.archiveEndedEvent(event)
+
+                                                    if didArchive {
+                                                        appState.removeCachedEvent(event.id)
+                                                    }
+                                                }
+                                            } label: {
+                                                if viewModel.archivingEventIDs.contains(event.id) {
+                                                    HStack {
+                                                        Spacer()
+                                                        ProgressView()
+                                                        Spacer()
+                                                    }
+                                                } else {
+                                                    Label("Archive", systemImage: "archivebox")
+                                                        .frame(maxWidth: .infinity)
+                                                }
+                                            }
+                                            .buttonStyle(.bordered)
+                                            .disabled(viewModel.archivingEventIDs.contains(event.id))
+                                        }
                                     }
-                                    .buttonStyle(.plain)
                                 }
                             }
                         }

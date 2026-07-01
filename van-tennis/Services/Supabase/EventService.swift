@@ -125,6 +125,15 @@ struct EventService {
             .execute()
     }
 
+    func archiveEndedEvent(eventID: UUID) async throws {
+        try await client
+            .rpc(
+                "archive_ended_event",
+                params: ArchiveEndedEventParams(eventID: eventID)
+            )
+            .execute()
+    }
+
     private static let supabaseTimestampFormatter: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -133,6 +142,14 @@ struct EventService {
 }
 
 private struct LeaveEventParams: Encodable {
+    let eventID: UUID
+
+    enum CodingKeys: String, CodingKey {
+        case eventID = "event_id"
+    }
+}
+
+private struct ArchiveEndedEventParams: Encodable {
     let eventID: UUID
 
     enum CodingKeys: String, CodingKey {

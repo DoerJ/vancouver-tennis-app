@@ -64,8 +64,12 @@ struct EventCardView: View {
     private func upcomingTimeText(now: Date) -> String {
         let calendar = Calendar.current
 
-        if event.startTime <= now {
-            return event.endTime > now ? "In progress" : "Ended"
+        if event.startTime <= now && now < event.endTime {
+            return "In progress"
+        }
+
+        if event.endTime <= now {
+            return "Ended"
         }
 
         if calendar.isDateInTomorrow(event.startTime) {
