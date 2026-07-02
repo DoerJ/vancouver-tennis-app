@@ -54,7 +54,10 @@ struct EventDetailView: View {
             }
 
             HostSummaryView(host: viewModel.hostProfile)
-            ParticipantListView(participants: viewModel.participantProfiles)
+            ParticipantListView(
+                participants: viewModel.participantProfiles,
+                currentUserID: appState.userProfile?.id
+            )
 
             if viewModel.isLoading {
                 Section {

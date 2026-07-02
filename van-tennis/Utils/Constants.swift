@@ -30,6 +30,24 @@ enum Constants {
     enum Chat {
         static let maximumDisplayedUnreadCount = 99
         static let maximumDisplayedUnreadText = "99+"
+        static let maximumMessageLength = 1000
+        static let systemMessagePrefix = "__van_tennis_system__ "
+
+        static func eventLeftSystemMessage(displayName: String) -> String {
+            "\(systemMessagePrefix)\(displayName) has left the room."
+        }
+
+        static func displayBody(for messageBody: String) -> String {
+            guard messageBody.hasPrefix(systemMessagePrefix) else {
+                return messageBody
+            }
+
+            return String(messageBody.dropFirst(systemMessagePrefix.count))
+        }
+
+        static func isSystemMessage(_ messageBody: String) -> Bool {
+            messageBody.hasPrefix(systemMessagePrefix)
+        }
     }
 
     enum StorageKey {

@@ -59,6 +59,15 @@ struct ChatRoomView: View {
                     .padding(.top, 8)
             }
 
+            if draftMessageExceedsLimit {
+                Text("Message must be no more than \(Constants.Chat.maximumMessageLength) characters.")
+                    .font(.footnote)
+                    .foregroundStyle(.red)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal)
+                    .padding(.top, errorMessage == nil ? 8 : 2)
+            }
+
             HStack(alignment: .bottom, spacing: 8) {
                 TextField("Message", text: $draftMessage, axis: .vertical)
                     .textFieldStyle(.roundedBorder)
@@ -70,7 +79,7 @@ struct ChatRoomView: View {
                     }
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(isSending || draftMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .disabled(isSending || trimmedDraftMessage.isEmpty || draftMessageExceedsLimit)
             }
             .padding()
         }
@@ -111,27 +120,44 @@ struct ChatRoomView: View {
         print("ChatRoomView: synced \(messages.count) cached messages for event \(event.id).")
     }
 
+    @ViewBuilder
     private func messageRow(_ message: ChatRoomMessage) -> some View {
-        let isCurrentUser = message.senderID == appState.userProfile?.id
+        if Constants.Chat.isSystemMessage(message.body) {
+            systemMessageRow(message)
+        } else {
+            let isCurrentUser = message.senderID == appState.userProfile?.id
 
-        return VStack(alignment: isCurrentUser ? .trailing : .leading, spacing: 4) {
-            Text(message.senderDisplayName)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            VStack(alignment: isCurrentUser ? .trailing : .leading, spacing: 4) {
+                Text(message.senderDisplayName)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
 
-            Text(message.body)
-                .font(.body)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .foregroundStyle(isCurrentUser ? .white : .primary)
-                .background(isCurrentUser ? Color.accentColor : Color(.secondarySystemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                Text(Constants.Chat.displayBody(for: message.body))
+                    .font(.body)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .foregroundStyle(isCurrentUser ? .white : .primary)
+                    .background(isCurrentUser ? Color.accentColor : Color(.secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
 
-            Text(Self.sentTimeFormatter.string(from: message.sentAt))
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+                Text(Self.sentTimeFormatter.string(from: message.sentAt))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: isCurrentUser ? .trailing : .leading)
         }
-        .frame(maxWidth: .infinity, alignment: isCurrentUser ? .trailing : .leading)
+    }
+
+    private func systemMessageRow(_ message: ChatRoomMessage) -> some View {
+        Text(Constants.Chat.displayBody(for: message.body))
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(Color(.tertiarySystemGroupedBackground))
+            .clipShape(Capsule())
+            .frame(maxWidth: .infinity, alignment: .center)
     }
 
     private func loadMessagesIfNeeded() async {
@@ -174,9 +200,14 @@ struct ChatRoomView: View {
     }
 
     private func sendMessage() async {
-        let trimmedMessage = draftMessage.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedMessage = trimmedDraftMessage
 
         guard !trimmedMessage.isEmpty else {
+            return
+        }
+
+        guard !draftMessageExceedsLimit else {
+            errorMessage = "Message must be no more than \(Constants.Chat.maximumMessageLength) characters."
             return
         }
 
@@ -212,6 +243,14 @@ struct ChatRoomView: View {
         }
 
         isSending = false
+    }
+
+    private var trimmedDraftMessage: String {
+        draftMessage.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var draftMessageExceedsLimit: Bool {
+        draftMessage.count > Constants.Chat.maximumMessageLength
     }
 
     private static let sentTimeFormatter: DateFormatter = {

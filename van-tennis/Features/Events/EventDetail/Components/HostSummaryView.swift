@@ -18,10 +18,17 @@ struct HostSummaryView: View {
 struct ProfileSummaryRow: View {
     let profile: UserProfile
     let fallbackTitle: String
+    let titleSuffix: String?
+
+    init(profile: UserProfile, fallbackTitle: String, titleSuffix: String? = nil) {
+        self.profile = profile
+        self.fallbackTitle = fallbackTitle
+        self.titleSuffix = titleSuffix
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(profile.displayName.isEmpty ? fallbackTitle : profile.displayName)
+            Text(displayTitle)
                 .font(.body)
 
             Text("Skill level \(profile.skillLevel?.rawValue ?? "Not set")")
@@ -43,5 +50,15 @@ struct ProfileSummaryRow: View {
                 }
             }
         }
+    }
+
+    private var displayTitle: String {
+        let title = profile.displayName.isEmpty ? fallbackTitle : profile.displayName
+
+        guard let titleSuffix else {
+            return title
+        }
+
+        return "\(title) \(titleSuffix)"
     }
 }

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ParticipantListView: View {
     let participants: [UserProfile]
+    let currentUserID: UUID?
 
     var body: some View {
         Section("Participants") {
@@ -12,7 +13,8 @@ struct ParticipantListView: View {
                 ForEach(participants) { participant in
                     ProfileSummaryRow(
                         profile: participant,
-                        fallbackTitle: "Participant"
+                        fallbackTitle: "Participant",
+                        titleSuffix: participant.id == currentUserID ? "(You)" : nil
                     )
                 }
             }

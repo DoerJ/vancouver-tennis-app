@@ -176,7 +176,7 @@ private struct ChatConversationCard: View {
                     .foregroundStyle(.secondary)
             }
 
-            Text("\(preview.latestMessage.senderDisplayName): \(preview.latestMessage.body)")
+            Text(latestMessagePreviewText)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .lineLimit(2)
@@ -192,6 +192,16 @@ private struct ChatConversationCard: View {
         formatter.timeStyle = .short
         return formatter
     }()
+
+    private var latestMessagePreviewText: String {
+        let body = Constants.Chat.displayBody(for: preview.latestMessage.body)
+
+        if Constants.Chat.isSystemMessage(preview.latestMessage.body) {
+            return body
+        }
+
+        return "\(preview.latestMessage.senderDisplayName): \(body)"
+    }
 }
 
 #Preview {
