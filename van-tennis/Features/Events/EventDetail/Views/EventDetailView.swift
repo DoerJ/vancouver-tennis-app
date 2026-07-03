@@ -363,6 +363,7 @@ struct EventDetailView: View {
 
         do {
             try await viewModel.leaveEvent(event, currentUser: currentUser)
+            appState.removeCachedEvent(event.id)
             dismiss()
         } catch {
             viewModel.errorMessage = error.localizedDescription
@@ -507,9 +508,19 @@ private struct ReportEventSheet: View {
                     }
                 }
 
-                Section("Details") {
+                Section {
                     TextEditor(text: $reportDescription)
                         .frame(minHeight: 120)
+                } header: {
+                    HStack {
+                        Text("Details")
+
+                        Spacer()
+
+                        Text("Optional")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
                 if let errorMessage {
@@ -535,7 +546,7 @@ private struct ReportEventSheet: View {
                             await onSubmit()
                         }
                     }
-                    .disabled(isSubmitting || selectedReportedUserIDs.isEmpty || reportDescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .disabled(isSubmitting || selectedReportedUserIDs.isEmpty)
                 }
             }
         }

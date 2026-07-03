@@ -197,6 +197,7 @@ final class AppState: ObservableObject {
             hostedEvents: hostedEvents,
             participatedEvents: participatedEvents
         )
+        pruneUnreadChatCounts(validEventIDs: Set(hostedEvents + participatedEvents))
         startChatMessagesRealtimeSubscriptions(eventIDs: Array(Set(hostedEvents + participatedEvents)))
     }
 
@@ -270,7 +271,14 @@ final class AppState: ObservableObject {
     }
 
     var hasUnreadChats: Bool {
-        unreadChatCountsByEventID.values.contains { $0 > 0 }
+        guard let userProfile else {
+            return false
+        }
+
+        let chatEventIDs = Set(userProfile.hostedEvents + userProfile.participatedEvents)
+        return unreadChatCountsByEventID.contains { eventID, count in
+            chatEventIDs.contains(eventID) && count > 0
+        }
     }
 
     func unreadChatCount(eventID: UUID) -> Int {
@@ -340,6 +348,19 @@ final class AppState: ObservableObject {
         }
 
         unreadChatCountsByEventID[eventID] = nil
+        persistUnreadChatCounts()
+    }
+
+    private func pruneUnreadChatCounts(validEventIDs: Set<UUID>) {
+        let prunedCounts = unreadChatCountsByEventID.filter { eventID, count in
+            validEventIDs.contains(eventID) && count > 0
+        }
+
+        guard prunedCounts != unreadChatCountsByEventID else {
+            return
+        }
+
+        unreadChatCountsByEventID = prunedCounts
         persistUnreadChatCounts()
     }
 
@@ -498,6 +519,7 @@ final class AppState: ObservableObject {
     private func applyAuthenticatedState(supabaseSession: Session, userProfile: UserProfile) {
         self.supabaseSession = supabaseSession
         self.userProfile = userProfile
+        pruneUnreadChatCounts(validEventIDs: Set(userProfile.hostedEvents + userProfile.participatedEvents))
         authenticationState = userProfile.skillLevel == nil || userProfile.gender == nil ? .needsSkillLevel : .signedIn
         startChatMessagesRealtimeSubscriptions(eventIDs: Array(Set(userProfile.hostedEvents + userProfile.participatedEvents)))
     }
