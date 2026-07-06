@@ -4,11 +4,11 @@ struct HostSummaryView: View {
     let host: UserProfile?
 
     var body: some View {
-        Section("Host") {
+        Section(AppContent.string("events.host.title")) {
             if let host {
-                ProfileSummaryRow(profile: host, fallbackTitle: "Host")
+                ProfileSummaryRow(profile: host, fallbackTitle: AppContent.string("events.host.fallback"))
             } else {
-                Label("Host profile unavailable", systemImage: "person.crop.circle.badge.questionmark")
+                Label(AppContent.string("events.host.unavailable"), systemImage: "person.crop.circle.badge.questionmark")
                     .foregroundStyle(.secondary)
             }
         }
@@ -31,7 +31,12 @@ struct ProfileSummaryRow: View {
             Text(displayTitle)
                 .font(.body)
 
-            Text("Skill level \(profile.skillLevel?.rawValue ?? "Not set")")
+            Text(
+                AppContent.string(
+                    "events.host.skillLevel",
+                    profile.skillLevel?.rawValue ?? AppContent.string("events.host.skillNotSet")
+                )
+            )
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 

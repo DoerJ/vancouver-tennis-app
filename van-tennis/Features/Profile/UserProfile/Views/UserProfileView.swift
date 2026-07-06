@@ -12,18 +12,18 @@ struct UserProfileView: View {
         NavigationStack {
             VStack(spacing: 24) {
                 VStack(spacing: 8) {
-                    Text(appState.userProfile?.displayName ?? "Your tennis profile")
+                    Text(appState.userProfile?.displayName ?? AppContent.string("profile.fallbackTitle"))
                         .font(.title2)
                         .fontWeight(.semibold)
 
                     if let skillLevel = appState.userProfile?.skillLevel {
-                        Text("Skill level: \(skillLevel.rawValue)")
+                        Text(AppContent.string("profile.skillLevelValue", skillLevel.rawValue))
                             .font(.body)
                             .foregroundStyle(.secondary)
                     }
 
                     if let gender = appState.userProfile?.gender {
-                        Text("Gender: \(gender.displayName)")
+                        Text(AppContent.string("profile.genderValue", gender.displayName))
                             .font(.body)
                             .foregroundStyle(.secondary)
                     }
@@ -46,7 +46,7 @@ struct UserProfileView: View {
                     NavigationLink {
                         EditProfileView(profile: profile)
                     } label: {
-                        Text("Edit Profile")
+                        Text(AppContent.string("profile.edit"))
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
@@ -66,7 +66,7 @@ struct UserProfileView: View {
                         isSigningOut = false
                     }
                 } label: {
-                    Text(isSigningOut ? "Signing out..." : "Log Out")
+                    Text(isSigningOut ? AppContent.string("common.signingOut") : AppContent.string("common.logOut"))
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
@@ -75,35 +75,35 @@ struct UserProfileView: View {
                 Button(role: .destructive) {
                     isShowingDeleteAccountConfirmation = true
                 } label: {
-                    Text(isDeletingAccount ? "Deleting account..." : "Delete Account")
+                    Text(isDeletingAccount ? AppContent.string("profile.deletingAccount") : AppContent.string("profile.deleteAccount"))
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
                 .disabled(isDeletingAccount)
             }
             .padding()
-            .navigationTitle("Profile")
+            .navigationTitle(AppContent.string("profile.title"))
             .confirmationDialog(
-                "Delete your account?",
+                AppContent.string("profile.deleteAccountTitle"),
                 isPresented: $isShowingDeleteAccountConfirmation,
                 titleVisibility: .visible
             ) {
-                Button("Delete Account", role: .destructive) {
+                Button(AppContent.string("profile.deleteAccount"), role: .destructive) {
                     Task {
                         await prepareAccountDeletion()
                     }
                 }
 
-                Button("Cancel", role: .cancel) {}
+                Button(AppContent.string("common.cancel"), role: .cancel) {}
             } message: {
-                Text("This action cannot be undone.")
+                Text(AppContent.string("profile.deleteConfirmation"))
             }
-            .alert("Account Deleted", isPresented: $isShowingAccountDeletedAlert) {
-                Button("OK") {
+            .alert(AppContent.string("profile.accountDeletedTitle"), isPresented: $isShowingAccountDeletedAlert) {
+                Button(AppContent.string("common.ok")) {
                     appState.finishDeletedAccountFlow()
                 }
             } message: {
-                Text("Your account has been successfully deleted.")
+                Text(AppContent.string("profile.accountDeletedMessage"))
             }
         }
     }

@@ -4,7 +4,6 @@ import Foundation
 @MainActor
 final class MyEventsViewModel: ObservableObject {
     @Published var events: [TennisEvent] = []
-    @Published var archivingEventIDs: Set<UUID> = []
     @Published var isLoading = false
     @Published var errorMessage: String?
 
@@ -40,7 +39,7 @@ final class MyEventsViewModel: ObservableObject {
 
         guard let currentUserID else {
             events = []
-            errorMessage = "No authenticated user was found."
+            errorMessage = AppContent.string("errors.noAuthenticatedUser")
             return MyEventsProfileEventIDs(hostedEvents: [], participatedEvents: [])
         }
 
@@ -58,15 +57,22 @@ final class MyEventsViewModel: ObservableObject {
         do {
             guard let profile = try await profileService.findProfile(userID: currentUserID) else {
                 events = []
-                errorMessage = "User profile was not found."
+                errorMessage = AppContent.string("errors.userProfileNotFound")
                 return MyEventsProfileEventIDs(hostedEvents: [], participatedEvents: [])
             }
 
             let eventIDs = Array(Set(profile.hostedEvents + profile.participatedEvents))
+            let now = Date()
             events = try await eventService.fetchEvents(ids: eventIDs)
+                .filter { $0.endTime > now }
+
             return MyEventsProfileEventIDs(
-                hostedEvents: profile.hostedEvents,
-                participatedEvents: profile.participatedEvents
+                hostedEvents: events
+                    .filter { $0.hostID == currentUserID }
+                    .map(\.id),
+                participatedEvents: events
+                    .filter { $0.participants.contains(currentUserID) }
+                    .map(\.id)
             )
         } catch is CancellationError {
             print("MyEventsViewModel: events load was cancelled.")
@@ -81,31 +87,6 @@ final class MyEventsViewModel: ObservableObject {
         events.removeAll { $0.id == id }
     }
 
-    func archiveEndedEvent(_ event: TennisEvent) async -> Bool {
-        guard event.endTime <= Date() else {
-            errorMessage = "Only ended events can be archived."
-            return false
-        }
-
-        guard !archivingEventIDs.contains(event.id) else {
-            return false
-        }
-
-        archivingEventIDs.insert(event.id)
-        errorMessage = nil
-        defer {
-            archivingEventIDs.remove(event.id)
-        }
-
-        do {
-            try await eventService.archiveEndedEvent(eventID: event.id)
-            removeEvent(id: event.id)
-            return true
-        } catch {
-            errorMessage = error.localizedDescription
-            return false
-        }
-    }
 }
 
 struct MyEventsProfileEventIDs {

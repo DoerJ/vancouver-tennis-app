@@ -1,0 +1,290 @@
+{
+  "app": {
+    "name": "Van Tennis"
+  },
+  "tabs": {
+    "find": "Find",
+    "myEvents": "My Events",
+    "notifications": "Notifications",
+    "chat": "Chat"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "continue": "Continue",
+    "ok": "OK",
+    "profile": "Profile",
+    "save": "Save",
+    "saving": "Saving...",
+    "signingOut": "Signing out...",
+    "logOut": "Log Out",
+    "loadingEvents": "Loading events",
+    "unableToLoadEvents": "Unable to load events"
+  },
+  "auth": {
+    "login": {
+      "subtitle": "Sign in to find and manage tennis matches.",
+      "continueWithGoogle": "Continue with Google",
+      "signingIn": "Signing in...",
+      "missingGoogleClientID": "Add your Google iOS client ID before signing in.",
+      "missingCallbackURL": "Google did not return an authentication callback.",
+      "invalidCallback": "Google returned an invalid authentication callback.",
+      "invalidState": "The Google sign in response could not be verified.",
+      "missingAuthorizationCode": "Google did not return an authorization code.",
+      "tokenExchangeFailed": "Google sign in failed while exchanging the authorization code.",
+      "missingSupabaseConfiguration": "Add your Supabase project URL and anon key before signing in.",
+      "missingGoogleIDToken": "Google sign in did not return an ID token for Supabase."
+    },
+    "onboarding": {
+      "title": "Complete your profile",
+      "subtitle": "Choose the tennis skill level, gender, and tags that best match you.",
+      "skillLevel": "Skill Level",
+      "gender": "Gender",
+      "socialTags": "Social Tags"
+    }
+  },
+  "discover": {
+    "title": "Find Events",
+    "createEvent": "Create Event",
+    "resetFilters": "Reset filters",
+    "empty": {
+      "title": "No events yet",
+      "description": "Created events will appear here."
+    },
+    "emptyFiltered": {
+      "title": "No events match your filters",
+      "description": "Try different location, skill level, or type filters."
+    }
+  },
+  "myEvents": {
+    "title": "My Events",
+    "empty": {
+      "title": "No events yet",
+      "description": "Events you host or join will appear here."
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "loading": "Loading notifications",
+    "unableToLoad": "Unable to load notifications",
+    "empty": {
+      "title": "No notifications yet",
+      "description": "Event updates and match activity will appear here."
+    },
+    "types": {
+      "eventJoined": "Event Joined",
+      "eventCancelled": "Event Cancelled",
+      "eventUpdated": "Event Updated",
+      "eventLeft": "Event Left",
+      "joinRequestApproved": "Join Request Approved",
+      "joinRequestRejected": "Join Request Rejected"
+    },
+    "deleteAccessibility": "Delete notification",
+    "unknownTime": "Unknown time",
+    "yesterday": "Yesterday",
+    "justNow": "Just now",
+    "relativeTime": {
+      "year": "%d year ago",
+      "years": "%d years ago",
+      "month": "%d month ago",
+      "months": "%d months ago",
+      "week": "%d week ago",
+      "weeks": "%d weeks ago",
+      "day": "%d day ago",
+      "days": "%d days ago",
+      "hour": "%d hour ago",
+      "hours": "%d hours ago",
+      "minute": "%d minute ago",
+      "minutes": "%d minutes ago"
+    }
+  },
+  "chat": {
+    "title": "Chat",
+    "loadingList": "Loading chats...",
+    "emptyList": {
+      "title": "No chats yet",
+      "description": "Your conversations will appear here."
+    },
+    "loadingMessages": "Loading messages",
+    "emptyRoom": {
+      "title": "No messages yet",
+      "description": "Event chat messages will appear here."
+    },
+    "messagePlaceholder": "Message",
+    "send": "Send",
+    "sending": "Sending...",
+    "messageLengthError": "Message must be no more than %d characters.",
+    "unreadAccessibility": "%d unread messages",
+    "unableToLoad": "Unable to load chats",
+    "unknownPlayer": "Unknown Player"
+  },
+  "events": {
+    "filters": {
+      "all": "All"
+    },
+    "types": {
+      "practice": "Practice",
+      "casual": "Casual",
+      "match": "Match"
+    },
+    "status": {
+      "upcoming": "Upcoming",
+      "inProgress": "In Progress",
+      "completed": "Completed",
+      "full": "Full",
+      "cancelled": "Cancelled"
+    },
+    "locations": {
+      "burnaby": "Burnaby",
+      "richmond": "Richmond",
+      "bcitCourt": "BCIT Court",
+      "centralParkCourt": "Central Park Court",
+      "southarmCourt": "Southarm Court"
+    },
+    "card": {
+      "full": "Full",
+      "skillLevel": "Skill level %@",
+      "inProgress": "In progress",
+      "ended": "Ended",
+      "tomorrow": "Tomorrow",
+      "inHour": "In %d hour",
+      "inHours": "In %d hours",
+      "inDay": "In %d day",
+      "inDays": "In %d days"
+    },
+    "create": {
+      "title": "Create Event",
+      "time": "Time",
+      "start": "Start",
+      "end": "End",
+      "event": "Event",
+      "type": "Type",
+      "skillLevel": "Skill Level",
+      "players": "Players",
+      "limitPlayers": "Limit players",
+      "maxPlayers": "Max players: %d",
+      "unlimitedPlayers": "Unlimited players",
+      "location": "Location",
+      "city": "City",
+      "court": "Court",
+      "startTooSoon": "Start time must be at least %d hour from now.",
+      "startTooFar": "Start time must be within the next %d days.",
+      "endTooSoon": "End time must be at least %d minutes after start time.",
+      "endTooFar": "End time must be within %d hours of start time.",
+      "maxPlayersTooLow": "Max players must be at least %d.",
+      "maxPlayersTooHigh": "Max players cannot be more than %d.",
+      "overlap": "This event overlaps with one of your hosted events."
+    },
+    "detail": {
+      "title": "Event Detail",
+      "event": "Event",
+      "type": "Type",
+      "time": "Time",
+      "start": "Start",
+      "end": "End",
+      "location": "Location",
+      "city": "City",
+      "court": "Court",
+      "players": "Players",
+      "editMaxPlayers": "Edit Max Players",
+      "chat": "Chat",
+      "cancelEventTitle": "Cancel this event?",
+      "cancelEvent": "Cancel Event",
+      "keepEvent": "Keep Event",
+      "cancelConfirmation": "This will delete the event and remove it from your hosted events.",
+      "joinEvent": "Join Event",
+      "waitingApproval": "Waiting for host to approve",
+      "leaveEvent": "Leave Event",
+      "reportEvent": "Report Event",
+      "reportReceivedTitle": "Report Received",
+      "reportReceivedMessage": "We have received your report and will review it. We will notify you of the results.",
+      "editMaxPlayersInfo": "The event currently has %d players including the host.",
+      "unlimitedPlayersInfo": "This event will allow unlimited players.",
+      "noReportablePlayers": "No players available",
+      "reportReason": "Reason",
+      "reportWho": "Who to Report",
+      "reportDetails": "Details",
+      "optional": "Optional",
+      "submit": "Submit",
+      "submitting": "Submitting..."
+    },
+    "participants": {
+      "title": "Participants",
+      "fallback": "Participant",
+      "you": "(You)",
+      "none": "No participants yet"
+    },
+    "host": {
+      "title": "Host",
+      "fallback": "Host",
+      "unavailable": "Host profile unavailable",
+      "skillLevel": "Skill level %@",
+      "skillNotSet": "Not set"
+    },
+    "notifications": {
+      "joinRequestTitle": "Player wants to join your event",
+      "joinRequestBody": "%@ wants to join your event at %@.",
+      "leftTitle": "Player left the event",
+      "leftBody": "%@ left the event at %@."
+    },
+    "errors": {
+      "maxPlayersBelowCurrentCount": "Maximum players cannot be less than the current player count of %d."
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "fallbackTitle": "Your tennis profile",
+    "defaultDisplayName": "Tennis Player",
+    "edit": "Edit Profile",
+    "editTitle": "Edit Profile",
+    "displayName": "Display name",
+    "skillLevel": "Skill Level",
+    "skillLevelValue": "Skill level: %@",
+    "genderValue": "Gender: %@",
+    "deleteAccount": "Delete Account",
+    "deletingAccount": "Deleting account...",
+    "deleteAccountTitle": "Delete your account?",
+    "deleteConfirmation": "This action cannot be undone.",
+    "accountDeletedTitle": "Account Deleted",
+    "accountDeletedMessage": "Your account has been successfully deleted.",
+    "displayNameRequired": "Display name is required.",
+    "displayNameTaken": "This profile name has been taken. Choose another one."
+  },
+  "joinRequest": {
+    "title": "Join Request",
+    "player": "Player",
+    "name": "Name",
+    "gender": "Gender",
+    "socialTags": "Social Tags",
+    "request": "Request",
+    "approve": "Approve",
+    "disapprove": "Disapprove",
+    "profileNotFound": "Player profile was not found.",
+    "missingEvent": "This join request is missing an event.",
+    "missingPlayer": "This join request is missing a player.",
+    "eventUnavailable": "This event is no longer available.",
+    "eventEnded": "This event has already ended. Join requests can no longer be reviewed.",
+    "approvedTitle": "Join request approved",
+    "approvedBody": "%@ approved your request to join the event.",
+    "declinedTitle": "Join request declined",
+    "declinedBody": "%@ declined your request to join the event."
+  },
+  "gender": {
+    "male": "Male",
+    "female": "Female",
+    "nonBinary": "Non-binary",
+    "preferNotToSay": "Prefer not to say"
+  },
+  "reports": {
+    "reasons": {
+      "harassment": "Harassment",
+      "languageAbuse": "Language Abuse"
+    }
+  },
+  "errors": {
+    "noAuthenticatedUser": "No authenticated user was found.",
+    "userProfileNotFound": "User profile was not found.",
+    "eventNotFound": "This event is no longer available.",
+    "eventFull": "This event is already full.",
+    "onlyHostCanCancel": "Only the host can cancel this event."
+  }
+}

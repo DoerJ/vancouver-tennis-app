@@ -9,11 +9,11 @@ struct LoginView: View {
             Spacer()
 
             VStack(spacing: 8) {
-                Text("Van Tennis")
+                Text(AppContent.string("app.name"))
                     .font(.largeTitle)
                     .fontWeight(.semibold)
 
-                Text("Sign in to find and manage tennis matches.")
+                Text(AppContent.string("auth.login.subtitle"))
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -28,7 +28,11 @@ struct LoginView: View {
             } label: {
                 HStack(spacing: 10) {
                     Image(systemName: "person.crop.circle.badge.checkmark")
-                    Text(viewModel.isSigningIn ? "Signing in..." : "Continue with Google")
+                    Text(
+                        viewModel.isSigningIn
+                            ? AppContent.string("auth.login.signingIn")
+                            : AppContent.string("auth.login.continueWithGoogle")
+                    )
                 }
                 .frame(maxWidth: .infinity)
             }

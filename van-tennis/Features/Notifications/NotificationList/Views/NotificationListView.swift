@@ -14,10 +14,10 @@ struct NotificationListView: View {
         NavigationStack {
             Group {
                 if viewModel.isLoading && viewModel.notifications.isEmpty {
-                    ProgressView("Loading notifications")
+                    ProgressView(AppContent.string("notifications.loading"))
                 } else if let errorMessage = viewModel.errorMessage, viewModel.notifications.isEmpty {
                     ContentUnavailableView(
-                        "Unable to load notifications",
+                        AppContent.string("notifications.unableToLoad"),
                         systemImage: "exclamationmark.triangle",
                         description: Text(errorMessage)
                     )
@@ -27,9 +27,9 @@ struct NotificationListView: View {
                             LazyVStack(spacing: 12) {
                                 if viewModel.notifications.isEmpty {
                                     ContentUnavailableView(
-                                        "No notifications",
+                                        AppContent.string("notifications.empty.title"),
                                         systemImage: "bell",
-                                        description: Text("Event updates and match activity will appear here.")
+                                        description: Text(AppContent.string("notifications.empty.description"))
                                     )
                                     .frame(maxWidth: .infinity)
                                     .padding(.top, 80)
@@ -64,7 +64,7 @@ struct NotificationListView: View {
                     }
                 }
             }
-            .navigationTitle("Notifications")
+            .navigationTitle(AppContent.string("notifications.title"))
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -72,7 +72,7 @@ struct NotificationListView: View {
                     } label: {
                         Image(systemName: "person.circle")
                     }
-                    .accessibilityLabel("Profile")
+                    .accessibilityLabel(AppContent.string("common.profile"))
                 }
             }
             .navigationDestination(item: $selectedJoinRequest) { notification in

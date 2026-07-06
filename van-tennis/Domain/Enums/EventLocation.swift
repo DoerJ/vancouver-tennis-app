@@ -9,9 +9,9 @@ enum EventCity: String, CaseIterable, Codable, Identifiable, Hashable {
     var displayName: String {
         switch self {
         case .burnaby:
-            return "Burnaby"
+            return AppContent.string("events.locations.burnaby")
         case .richmond:
-            return "Richmond"
+            return AppContent.string("events.locations.richmond")
         }
     }
 
@@ -32,11 +32,11 @@ enum TennisCourt: String, CaseIterable, Codable, Identifiable, Hashable {
     var displayName: String {
         switch self {
         case .bcitCourt:
-            return "BCIT Court"
+            return AppContent.string("events.locations.bcitCourt")
         case .centralParkCourt:
-            return "Central Park Court"
+            return AppContent.string("events.locations.centralParkCourt")
         case .southarmCourt:
-            return "Southarm Court"
+            return AppContent.string("events.locations.southarmCourt")
         }
     }
 }

@@ -13,13 +13,13 @@ enum Gender: String, CaseIterable, Codable, Identifiable {
     var displayName: String {
         switch self {
         case .male:
-            return "Male"
+            return AppContent.string("gender.male")
         case .female:
-            return "Female"
+            return AppContent.string("gender.female")
         case .nonBinary:
-            return "Non-binary"
+            return AppContent.string("gender.nonBinary")
         case .preferNotToSay:
-            return "Prefer not to say"
+            return AppContent.string("gender.preferNotToSay")
         }
     }
 }

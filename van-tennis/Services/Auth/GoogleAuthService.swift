@@ -92,17 +92,17 @@ enum GoogleAuthError: LocalizedError {
         case .cancelled:
             return nil
         case .missingClientID:
-            return "Add your Google iOS client ID before signing in."
+            return AppContent.string("auth.login.missingGoogleClientID")
         case .missingCallbackURL:
-            return "Google did not return an authentication callback."
+            return AppContent.string("auth.login.missingCallbackURL")
         case .invalidCallback:
-            return "Google returned an invalid authentication callback."
+            return AppContent.string("auth.login.invalidCallback")
         case .invalidState:
-            return "The Google sign in response could not be verified."
+            return AppContent.string("auth.login.invalidState")
         case .missingAuthorizationCode:
-            return "Google did not return an authorization code."
+            return AppContent.string("auth.login.missingAuthorizationCode")
         case .tokenExchangeFailed:
-            return "Google sign in failed while exchanging the authorization code."
+            return AppContent.string("auth.login.tokenExchangeFailed")
         }
     }
 }

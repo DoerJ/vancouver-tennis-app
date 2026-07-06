@@ -27,20 +27,20 @@ struct ReviewParticipantJoinRequestView: View {
             }
 
             if let profile = viewModel.senderProfile {
-                Section("Player") {
-                    LabeledContent("Name", value: profile.displayName)
+                Section(AppContent.string("joinRequest.player")) {
+                    LabeledContent(AppContent.string("joinRequest.name"), value: profile.displayName)
 
                     if let skillLevel = profile.skillLevel {
-                        LabeledContent("Skill Level", value: skillLevel.rawValue)
+                        LabeledContent(AppContent.string("profile.skillLevel"), value: skillLevel.rawValue)
                     }
 
                     if let gender = profile.gender {
-                        LabeledContent("Gender", value: gender.displayName)
+                        LabeledContent(AppContent.string("joinRequest.gender"), value: gender.displayName)
                     }
                 }
 
                 if !profile.socialTags.isEmpty {
-                    Section("Social Tags") {
+                    Section(AppContent.string("joinRequest.socialTags")) {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 8) {
                                 ForEach(profile.socialTags, id: \.self) { tag in
@@ -58,7 +58,7 @@ struct ReviewParticipantJoinRequestView: View {
                 }
             }
 
-            Section("Request") {
+            Section(AppContent.string("joinRequest.request")) {
                 Text(notification.body)
 
                 Button {
@@ -80,7 +80,7 @@ struct ReviewParticipantJoinRequestView: View {
                             Spacer()
                         }
                     } else {
-                        Text("Approve")
+                        Text(AppContent.string("joinRequest.approve"))
                     }
                 }
                 .disabled(actionButtonsAreDisabled)
@@ -105,14 +105,14 @@ struct ReviewParticipantJoinRequestView: View {
                             Spacer()
                         }
                     } else {
-                        Text("Disapprove")
+                        Text(AppContent.string("joinRequest.disapprove"))
                     }
                 }
                 .disabled(actionButtonsAreDisabled)
                 .buttonStyle(.bordered)
             }
         }
-        .navigationTitle("Join Request")
+        .navigationTitle(AppContent.string("joinRequest.title"))
         .navigationBarTitleDisplayMode(.inline)
         .task {
             await viewModel.loadReviewDetails(notification: notification)

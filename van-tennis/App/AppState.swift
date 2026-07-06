@@ -538,7 +538,7 @@ final class AppState: ObservableObject {
                 ChatRoomMessage(
                     id: message.id,
                     senderID: message.senderID,
-                    senderDisplayName: profilesByID[message.senderID]?.displayName ?? "Unknown Player",
+                    senderDisplayName: profilesByID[message.senderID]?.displayName ?? AppContent.string("chat.unknownPlayer"),
                     body: message.body,
                     sentAt: message.createdAt
                 )
@@ -625,9 +625,9 @@ enum AppStateError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .missingAuthenticatedUser:
-            return "No authenticated user was found."
+            return AppContent.string("errors.noAuthenticatedUser")
         case .notEventHost:
-            return "Only the host can cancel this event."
+            return AppContent.string("errors.onlyHostCanCancel")
         }
     }
 }

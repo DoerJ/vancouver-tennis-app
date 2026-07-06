@@ -83,8 +83,12 @@ final class EventDetailViewModel: ObservableObject {
                 sender: currentUser.id,
                 recipients: [latestEvent.hostID],
                 notificationType: .eventJoined,
-                title: "Player wants to join your event",
-                body: "\(currentUser.displayName) wants to join your event at \(latestEvent.court.displayName).",
+                title: AppContent.string("events.notifications.joinRequestTitle"),
+                body: AppContent.string(
+                    "events.notifications.joinRequestBody",
+                    currentUser.displayName,
+                    latestEvent.court.displayName
+                ),
                 relatedEventID: latestEvent.id
             )
         )
@@ -118,8 +122,12 @@ final class EventDetailViewModel: ObservableObject {
                     sender: currentUser.id,
                     recipients: recipients,
                     notificationType: .eventLeft,
-                    title: "Player left the event",
-                    body: "\(currentUser.displayName) left the event at \(latestEvent.court.displayName).",
+                    title: AppContent.string("events.notifications.leftTitle"),
+                    body: AppContent.string(
+                        "events.notifications.leftBody",
+                        currentUser.displayName,
+                        latestEvent.court.displayName
+                    ),
                     relatedEventID: latestEvent.id
                 )
             )
@@ -183,11 +191,11 @@ enum EventDetailViewModelError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .eventNotFound:
-            return "This event is no longer available."
+            return AppContent.string("errors.eventNotFound")
         case .eventIsFull:
-            return "This event is already full."
+            return AppContent.string("errors.eventFull")
         case .maxPlayersBelowCurrentPlayerCount(let playerCount):
-            return "Maximum players cannot be less than the current player count of \(playerCount)."
+            return AppContent.string("events.errors.maxPlayersBelowCurrentCount", playerCount)
         }
     }
 }

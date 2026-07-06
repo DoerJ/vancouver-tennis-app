@@ -16,10 +16,10 @@ struct EventDiscoveryListView: View {
         NavigationStack(path: $navigationPath) {
             Group {
                 if viewModel.isLoading && viewModel.events.isEmpty {
-                    ProgressView("Loading events")
+                    ProgressView(AppContent.string("common.loadingEvents"))
                 } else if let errorMessage = viewModel.errorMessage, viewModel.events.isEmpty {
                     ContentUnavailableView(
-                        "Unable to load events",
+                        AppContent.string("common.unableToLoadEvents"),
                         systemImage: "exclamationmark.triangle",
                         description: Text(errorMessage)
                     )
@@ -72,7 +72,7 @@ struct EventDiscoveryListView: View {
                     }
                 }
             }
-            .navigationTitle("Find Events")
+            .navigationTitle(AppContent.string("discover.title"))
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack {
@@ -80,7 +80,7 @@ struct EventDiscoveryListView: View {
                             NavigationLink(value: EventDiscoveryRoute.createEvent(skillLevel)) {
                                 Image(systemName: "plus")
                             }
-                            .accessibilityLabel("Create Event")
+                            .accessibilityLabel(AppContent.string("discover.createEvent"))
                         }
 
                         Button {
@@ -88,7 +88,7 @@ struct EventDiscoveryListView: View {
                         } label: {
                             Image(systemName: "person.circle")
                         }
-                        .accessibilityLabel("Profile")
+                        .accessibilityLabel(AppContent.string("common.profile"))
                     }
                 }
             }
@@ -230,7 +230,7 @@ struct EventDiscoveryListView: View {
             .background(Color(.secondarySystemBackground))
             .clipShape(RoundedRectangle(cornerRadius: 8))
             .disabled(!hasActiveFilters)
-            .accessibilityLabel("Reset filters")
+            .accessibilityLabel(AppContent.string("discover.resetFilters"))
 
             Spacer(minLength: 0)
         }
@@ -249,15 +249,15 @@ struct EventDiscoveryListView: View {
             && viewModel.selectedSkillLevelFilter == .all
             && viewModel.selectedEventTypeFilter == .all {
             ContentUnavailableView(
-                "No tennis events",
+                AppContent.string("discover.empty.title"),
                 systemImage: "calendar.badge.exclamationmark",
-                description: Text("Created events will appear here.")
+                description: Text(AppContent.string("discover.empty.description"))
             )
         } else {
             ContentUnavailableView(
-                "No matching events",
+                AppContent.string("discover.emptyFiltered.title"),
                 systemImage: "line.3.horizontal.decrease.circle",
-                description: Text("Try different location, skill level, or type filters.")
+                description: Text(AppContent.string("discover.emptyFiltered.description"))
             )
         }
     }

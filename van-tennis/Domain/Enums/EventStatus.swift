@@ -12,15 +12,15 @@ enum EventStatus: String, Codable, Identifiable, Hashable {
     var displayName: String {
         switch self {
         case .upcoming:
-            return "Upcoming"
+            return AppContent.string("events.status.upcoming")
         case .inProgress:
-            return "In Progress"
+            return AppContent.string("events.status.inProgress")
         case .completed:
-            return "Completed"
+            return AppContent.string("events.status.completed")
         case .full:
-            return "Full"
+            return AppContent.string("events.status.full")
         case .cancelled:
-            return "Cancelled"
+            return AppContent.string("events.status.cancelled")
         }
     }
 }

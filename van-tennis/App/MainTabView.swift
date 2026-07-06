@@ -12,7 +12,7 @@ struct MainTabView: View {
                 isShowingProfile = true
             }
                 .tabItem {
-                    Label("Find", systemImage: "magnifyingglass")
+                    Label(AppContent.string("tabs.find"), systemImage: "magnifyingglass")
                 }
                 .tag(MainTab.find)
 
@@ -20,7 +20,7 @@ struct MainTabView: View {
                 isShowingProfile = true
             }
                 .tabItem {
-                    Label("My Events", systemImage: "calendar")
+                    Label(AppContent.string("tabs.myEvents"), systemImage: "calendar")
                 }
                 .badge(hasMyEvents ? "" : nil)
                 .tag(MainTab.myEvents)
@@ -29,7 +29,7 @@ struct MainTabView: View {
                 isShowingProfile = true
             }
                 .tabItem {
-                    Label("Notifications", systemImage: "bell")
+                    Label(AppContent.string("tabs.notifications"), systemImage: "bell")
                 }
                 .badge(hasNotifications ? "" : nil)
                 .tag(MainTab.notifications)
@@ -38,7 +38,7 @@ struct MainTabView: View {
                 isShowingProfile = true
             }
                 .tabItem {
-                    Label("Chat", systemImage: "message")
+                    Label(AppContent.string("tabs.chat"), systemImage: "message")
                 }
                 .badge(appState.hasUnreadChats ? "" : nil)
                 .tag(MainTab.chat)

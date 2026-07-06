@@ -13,21 +13,28 @@ struct MyEventsView: View {
         NavigationStack {
             Group {
                 if viewModel.isLoading && viewModel.events.isEmpty {
-                    ProgressView("Loading events")
+                    ProgressView(AppContent.string("common.loadingEvents"))
                 } else if let errorMessage = viewModel.errorMessage, viewModel.events.isEmpty {
                     ContentUnavailableView(
-                        "Unable to load events",
+                        AppContent.string("common.unableToLoadEvents"),
                         systemImage: "exclamationmark.triangle",
                         description: Text(errorMessage)
                     )
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 12) {
+                            if let errorMessage = viewModel.errorMessage {
+                                Text(errorMessage)
+                                    .font(.footnote)
+                                    .foregroundStyle(.red)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+
                             if viewModel.events.isEmpty {
                                 ContentUnavailableView(
-                                    "No events yet",
+                                    AppContent.string("myEvents.empty.title"),
                                     systemImage: "calendar.badge.exclamationmark",
-                                    description: Text("Events you host or join will appear here.")
+                                    description: Text(AppContent.string("myEvents.empty.description"))
                                 )
                                 .frame(maxWidth: .infinity)
                                 .padding(.top, 80)
@@ -44,30 +51,6 @@ struct MyEventsView: View {
                                         }
                                         .buttonStyle(.plain)
 
-                                        if event.endTime <= Date() {
-                                            Button(role: .destructive) {
-                                                Task {
-                                                    let didArchive = await viewModel.archiveEndedEvent(event)
-
-                                                    if didArchive {
-                                                        appState.removeCachedEvent(event.id)
-                                                    }
-                                                }
-                                            } label: {
-                                                if viewModel.archivingEventIDs.contains(event.id) {
-                                                    HStack {
-                                                        Spacer()
-                                                        ProgressView()
-                                                        Spacer()
-                                                    }
-                                                } else {
-                                                    Label("Archive", systemImage: "archivebox")
-                                                        .frame(maxWidth: .infinity)
-                                                }
-                                            }
-                                            .buttonStyle(.bordered)
-                                            .disabled(viewModel.archivingEventIDs.contains(event.id))
-                                        }
                                     }
                                 }
                             }
@@ -86,7 +69,7 @@ struct MyEventsView: View {
                     await loadMyEvents(showsLoading: true)
                 }
             }
-            .navigationTitle("My Events")
+            .navigationTitle(AppContent.string("myEvents.title"))
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -94,7 +77,7 @@ struct MyEventsView: View {
                     } label: {
                         Image(systemName: "person.circle")
                     }
-                    .accessibilityLabel("Profile")
+                    .accessibilityLabel(AppContent.string("common.profile"))
                 }
             }
         }

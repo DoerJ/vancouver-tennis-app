@@ -33,9 +33,9 @@ enum SupabaseAuthError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .missingSupabaseConfiguration:
-            return "Add your Supabase project URL and anon key before signing in."
+            return AppContent.string("auth.login.missingSupabaseConfiguration")
         case .missingGoogleIDToken:
-            return "Google sign in did not return an ID token for Supabase."
+            return AppContent.string("auth.login.missingGoogleIDToken")
         }
     }
 }

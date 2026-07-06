@@ -149,7 +149,7 @@ struct ProfileService {
         }
 
         guard let email = user.email, let username = email.split(separator: "@").first else {
-            return "Tennis Player"
+            return AppContent.string("profile.defaultDisplayName")
         }
 
         return String(username)
@@ -190,7 +190,7 @@ enum ProfileServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .profileNotFound:
-            return "User profile was not found."
+            return AppContent.string("errors.userProfileNotFound")
         }
     }
 }

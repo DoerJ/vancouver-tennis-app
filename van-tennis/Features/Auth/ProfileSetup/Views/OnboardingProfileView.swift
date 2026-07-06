@@ -12,18 +12,18 @@ struct OnboardingProfileView: View {
         ScrollView {
             VStack(spacing: 24) {
                 VStack(spacing: 8) {
-                    Text("Complete your profile")
+                    Text(AppContent.string("auth.onboarding.title"))
                         .font(.largeTitle)
                         .fontWeight(.semibold)
 
-                    Text("Choose the tennis skill level, gender, and tags that best match you.")
+                    Text(AppContent.string("auth.onboarding.subtitle"))
                         .font(.body)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                 }
 
                 VStack(spacing: 12) {
-                    Text("Skill Level")
+                    Text(AppContent.string("auth.onboarding.skillLevel"))
                         .font(.headline)
                         .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -49,7 +49,7 @@ struct OnboardingProfileView: View {
                 }
 
                 VStack(spacing: 12) {
-                    Text("Gender")
+                    Text(AppContent.string("auth.onboarding.gender"))
                         .font(.headline)
                         .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -75,7 +75,7 @@ struct OnboardingProfileView: View {
                 }
 
                 VStack(spacing: 12) {
-                    Text("Social Tags")
+                    Text(AppContent.string("auth.onboarding.socialTags"))
                         .font(.headline)
                         .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -115,7 +115,7 @@ struct OnboardingProfileView: View {
                         await saveProfile()
                     }
                 } label: {
-                    Text(isSaving ? "Saving..." : "Continue")
+                    Text(isSaving ? AppContent.string("common.saving") : AppContent.string("common.continue"))
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)

@@ -19,7 +19,7 @@ struct EventCardView: View {
 
                 HStack(spacing: 6) {
                     if event.isFull {
-                        Text("Full")
+                        Text(AppContent.string("events.card.full"))
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 9)
@@ -46,7 +46,7 @@ struct EventCardView: View {
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                Label("Skill level \(event.skillLevel.rawValue)", systemImage: "figure.tennis")
+                Label(AppContent.string("events.card.skillLevel", event.skillLevel.rawValue), systemImage: "figure.tennis")
                 Label(timeRangeText, systemImage: "clock")
             }
             .font(.subheadline)
@@ -65,22 +65,22 @@ struct EventCardView: View {
         let calendar = Calendar.current
 
         if event.startTime <= now && now < event.endTime {
-            return "In progress"
+            return AppContent.string("events.card.inProgress")
         }
 
         if event.endTime <= now {
-            return "Ended"
+            return AppContent.string("events.card.ended")
         }
 
         if calendar.isDateInTomorrow(event.startTime) {
-            return "Tomorrow"
+            return AppContent.string("events.card.tomorrow")
         }
 
         let secondsUntilStart = event.startTime.timeIntervalSince(now)
         let hoursUntilStart = Int(ceil(secondsUntilStart / 3_600))
 
         if hoursUntilStart < 24 {
-            return "In \(hoursUntilStart) \(hoursUntilStart == 1 ? "hour" : "hours")"
+            return AppContent.string(hoursUntilStart == 1 ? "events.card.inHour" : "events.card.inHours", hoursUntilStart)
         }
 
         let startOfToday = calendar.startOfDay(for: now)
@@ -88,7 +88,7 @@ struct EventCardView: View {
         let daysUntilStart = calendar.dateComponents([.day], from: startOfToday, to: startOfEventDay).day ?? 1
         let displayDays = max(daysUntilStart, 1)
 
-        return "In \(displayDays) \(displayDays == 1 ? "day" : "days")"
+        return AppContent.string(displayDays == 1 ? "events.card.inDay" : "events.card.inDays", displayDays)
     }
 
     private static let dateFormatter: DateFormatter = {

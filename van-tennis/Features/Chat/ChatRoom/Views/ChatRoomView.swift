@@ -18,13 +18,13 @@ struct ChatRoomView: View {
                 ScrollView {
                     LazyVStack(spacing: 12) {
                         if isLoading && messages.isEmpty {
-                            ProgressView("Loading messages")
+                            ProgressView(AppContent.string("chat.loadingMessages"))
                                 .padding(.top, 80)
                         } else if messages.isEmpty {
                             ContentUnavailableView(
-                                "No messages yet",
+                                AppContent.string("chat.emptyRoom.title"),
                                 systemImage: "message",
-                                description: Text("Event chat messages will appear here.")
+                                description: Text(AppContent.string("chat.emptyRoom.description"))
                             )
                             .padding(.top, 80)
                         } else {
@@ -60,7 +60,7 @@ struct ChatRoomView: View {
             }
 
             if draftMessageExceedsLimit {
-                Text("Message must be no more than \(Constants.Chat.maximumMessageLength) characters.")
+                Text(AppContent.string("chat.messageLengthError", Constants.Chat.maximumMessageLength))
                     .font(.footnote)
                     .foregroundStyle(.red)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -69,11 +69,11 @@ struct ChatRoomView: View {
             }
 
             HStack(alignment: .bottom, spacing: 8) {
-                TextField("Message", text: $draftMessage, axis: .vertical)
+                TextField(AppContent.string("chat.messagePlaceholder"), text: $draftMessage, axis: .vertical)
                     .textFieldStyle(.roundedBorder)
                     .lineLimit(1...4)
 
-                Button(isSending ? "Sending..." : "Send") {
+                Button(isSending ? AppContent.string("chat.sending") : AppContent.string("chat.send")) {
                     Task {
                         await sendMessage()
                     }
@@ -186,7 +186,7 @@ struct ChatRoomView: View {
                 ChatRoomMessage(
                     id: message.id,
                     senderID: message.senderID,
-                    senderDisplayName: profilesByID[message.senderID]?.displayName ?? "Unknown Player",
+                    senderDisplayName: profilesByID[message.senderID]?.displayName ?? AppContent.string("chat.unknownPlayer"),
                     body: message.body,
                     sentAt: message.createdAt
                 )
@@ -207,12 +207,12 @@ struct ChatRoomView: View {
         }
 
         guard !draftMessageExceedsLimit else {
-            errorMessage = "Message must be no more than \(Constants.Chat.maximumMessageLength) characters."
+            errorMessage = AppContent.string("chat.messageLengthError", Constants.Chat.maximumMessageLength)
             return
         }
 
         guard let currentUser = appState.userProfile else {
-            errorMessage = "No authenticated user was found."
+            errorMessage = AppContent.string("errors.noAuthenticatedUser")
             return
         }
 

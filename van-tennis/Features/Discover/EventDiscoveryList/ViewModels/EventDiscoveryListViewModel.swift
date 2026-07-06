@@ -183,7 +183,7 @@ enum EventTypeFilter: Hashable, Identifiable {
     var displayName: String {
         switch self {
         case .all:
-            return "All"
+            return AppContent.string("events.filters.all")
         case .eventType(let eventType):
             return eventType.displayName
         }
@@ -231,7 +231,7 @@ enum EventCityFilter: Hashable, Identifiable {
     var displayName: String {
         switch self {
         case .all:
-            return "All"
+            return AppContent.string("events.filters.all")
         case .city(let city):
             return city.displayName
         }
@@ -278,7 +278,7 @@ enum EventSkillLevelFilter: Hashable, Identifiable {
     var displayName: String {
         switch self {
         case .all:
-            return "All"
+            return AppContent.string("events.filters.all")
         case .skillLevel(let skillLevel):
             return skillLevel.rawValue
         }

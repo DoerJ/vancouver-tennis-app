@@ -28,29 +28,29 @@ struct EventDetailView: View {
 
     var body: some View {
         Form {
-            Section("Event") {
-                LabeledContent("Type", value: event.eventType.displayName)
-                LabeledContent("Skill Level", value: event.skillLevel.rawValue)
-                LabeledContent("Players", value: maxPlayersText)
+            Section(AppContent.string("events.detail.event")) {
+                LabeledContent(AppContent.string("events.detail.type"), value: event.eventType.displayName)
+                LabeledContent(AppContent.string("events.create.skillLevel"), value: event.skillLevel.rawValue)
+                LabeledContent(AppContent.string("events.detail.players"), value: maxPlayersText)
 
                 if !isEventEnded && isCurrentUserHost {
                     Button {
                         isShowingMaxPlayersEditor = true
                     } label: {
-                        Label("Edit Max Players", systemImage: "person.2")
+                        Label(AppContent.string("events.detail.editMaxPlayers"), systemImage: "person.2")
                     }
                     .disabled(isEventNotFound)
                 }
             }
 
-            Section("Time") {
-                LabeledContent("Start", value: Self.dateTimeFormatter.string(from: event.startTime))
-                LabeledContent("End", value: Self.dateTimeFormatter.string(from: event.endTime))
+            Section(AppContent.string("events.detail.time")) {
+                LabeledContent(AppContent.string("events.detail.start"), value: Self.dateTimeFormatter.string(from: event.startTime))
+                LabeledContent(AppContent.string("events.detail.end"), value: Self.dateTimeFormatter.string(from: event.endTime))
             }
 
-            Section("Location") {
-                LabeledContent("City", value: event.city.displayName)
-                LabeledContent("Court", value: event.court.displayName)
+            Section(AppContent.string("events.detail.location")) {
+                LabeledContent(AppContent.string("events.detail.city"), value: event.city.displayName)
+                LabeledContent(AppContent.string("events.detail.court"), value: event.court.displayName)
             }
 
             HostSummaryView(host: viewModel.hostProfile)
@@ -81,7 +81,7 @@ struct EventDetailView: View {
                     NavigationLink {
                         ChatRoomView(event: event)
                     } label: {
-                        Label("Chat", systemImage: "message")
+                        Label(AppContent.string("events.detail.chat"), systemImage: "message")
                             .frame(maxWidth: .infinity)
                     }
                     .disabled(isEventNotFound)
@@ -100,7 +100,7 @@ struct EventDetailView: View {
                                 Spacer()
                             }
                         } else {
-                            Text("Cancel Event")
+                            Text(AppContent.string("events.detail.cancelEvent"))
                         }
                     }
                     .disabled(isCancelling || isEventNotFound)
@@ -121,9 +121,9 @@ struct EventDetailView: View {
                                 Spacer()
                             }
                         } else if hasRequestedToJoin {
-                            Text("Waiting for host to approve")
+                            Text(AppContent.string("events.detail.waitingApproval"))
                         } else {
-                            Text("Join Event")
+                            Text(AppContent.string("events.detail.joinEvent"))
                         }
                     }
                     .frame(maxWidth: .infinity)
@@ -146,7 +146,7 @@ struct EventDetailView: View {
                                 Spacer()
                             }
                         } else {
-                            Text("Leave Event")
+                            Text(AppContent.string("events.detail.leaveEvent"))
                         }
                     }
                     .frame(maxWidth: .infinity)
@@ -160,7 +160,7 @@ struct EventDetailView: View {
                     Button(role: .destructive) {
                         prepareReportSheet()
                     } label: {
-                        Text("Report Event")
+                        Text(AppContent.string("events.detail.reportEvent"))
                     }
                     .frame(maxWidth: .infinity)
                     .buttonStyle(.bordered)
@@ -168,23 +168,23 @@ struct EventDetailView: View {
                 }
             }
         }
-        .navigationTitle("Event Detail")
+        .navigationTitle(AppContent.string("events.detail.title"))
         .navigationBarTitleDisplayMode(.inline)
         .confirmationDialog(
-            "Cancel this event?",
+            AppContent.string("events.detail.cancelEventTitle"),
             isPresented: $isShowingCancelConfirmation,
             titleVisibility: .visible
         ) {
-            Button("Cancel Event", role: .destructive) {
+            Button(AppContent.string("events.detail.cancelEvent"), role: .destructive) {
                 Task {
                     await cancelEvent()
                 }
             }
             .disabled(isEventNotFound || isEventEnded)
 
-            Button("Keep Event", role: .cancel) {}
+            Button(AppContent.string("events.detail.keepEvent"), role: .cancel) {}
         } message: {
-            Text("This will delete the event and remove it from your hosted events.")
+            Text(AppContent.string("events.detail.cancelConfirmation"))
         }
         .task {
             await loadEventDetails()
@@ -217,10 +217,10 @@ struct EventDetailView: View {
                 appState.applyUpdatedEvent(updatedEvent)
             }
         }
-        .alert("Report Received", isPresented: $isShowingReportSubmittedAlert) {
-            Button("OK") {}
+        .alert(AppContent.string("events.detail.reportReceivedTitle"), isPresented: $isShowingReportSubmittedAlert) {
+            Button(AppContent.string("common.ok")) {}
         } message: {
-            Text("We have received your report and will review it. We will notify you of the results.")
+            Text(AppContent.string("events.detail.reportReceivedMessage"))
         }
     }
 
@@ -307,7 +307,7 @@ struct EventDetailView: View {
 
     private func submitReport() async {
         guard let currentUser = appState.userProfile else {
-            reportErrorMessage = "No authenticated user was found."
+            reportErrorMessage = AppContent.string("errors.noAuthenticatedUser")
             return
         }
 
@@ -343,7 +343,7 @@ struct EventDetailView: View {
 
     private func joinEvent() async {
         guard let currentUser = appState.userProfile else {
-            viewModel.errorMessage = "No authenticated user was found."
+            viewModel.errorMessage = AppContent.string("errors.noAuthenticatedUser")
             return
         }
 
@@ -357,7 +357,7 @@ struct EventDetailView: View {
 
     private func leaveEvent() async {
         guard let currentUser = appState.userProfile else {
-            viewModel.errorMessage = "No authenticated user was found."
+            viewModel.errorMessage = AppContent.string("errors.noAuthenticatedUser")
             return
         }
 
@@ -402,12 +402,12 @@ private struct EditMaxPlayersSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Player Limit") {
-                    Toggle("Limit players", isOn: $hasPlayerLimit)
+                Section(AppContent.string("events.create.players")) {
+                    Toggle(AppContent.string("events.create.limitPlayers"), isOn: $hasPlayerLimit)
 
                     if hasPlayerLimit {
                         Stepper(
-                            "Max players: \(maxPlayers)",
+                            AppContent.string("events.create.maxPlayers", maxPlayers),
                             value: $maxPlayers,
                             in: currentPlayerCount...max(
                                 currentPlayerCount,
@@ -415,11 +415,11 @@ private struct EditMaxPlayersSheet: View {
                             )
                         )
 
-                        Text("The event currently has \(currentPlayerCount) players including the host.")
+                        Text(AppContent.string("events.detail.editMaxPlayersInfo", currentPlayerCount))
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                     } else {
-                        Text("This event will allow unlimited players.")
+                        Text(AppContent.string("events.detail.unlimitedPlayersInfo"))
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -431,18 +431,18 @@ private struct EditMaxPlayersSheet: View {
                     }
                 }
             }
-            .navigationTitle("Edit Max Players")
+            .navigationTitle(AppContent.string("events.detail.editMaxPlayers"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button(AppContent.string("common.cancel")) {
                         dismiss()
                     }
                     .disabled(isSaving)
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(isSaving ? "Saving..." : "Save") {
+                    Button(isSaving ? AppContent.string("common.saving") : AppContent.string("common.save")) {
                         Task {
                             await save()
                         }
@@ -483,8 +483,8 @@ private struct ReportEventSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Reason") {
-                    Picker("Reason", selection: $selectedReason) {
+                Section(AppContent.string("events.detail.reportReason")) {
+                    Picker(AppContent.string("events.detail.reportReason"), selection: $selectedReason) {
                         ForEach(ReportReason.allCases) { reason in
                             Text(reason.displayName).tag(reason)
                         }
@@ -492,9 +492,9 @@ private struct ReportEventSheet: View {
                     .pickerStyle(.segmented)
                 }
 
-                Section("Who to Report") {
+                Section(AppContent.string("events.detail.reportWho")) {
                     if reportableProfiles.isEmpty {
-                        Text("No players available")
+                        Text(AppContent.string("events.detail.noReportablePlayers"))
                             .foregroundStyle(.secondary)
                     } else {
                         ScrollView(.horizontal, showsIndicators: false) {
@@ -513,11 +513,11 @@ private struct ReportEventSheet: View {
                         .frame(minHeight: 120)
                 } header: {
                     HStack {
-                        Text("Details")
+                        Text(AppContent.string("events.detail.reportDetails"))
 
                         Spacer()
 
-                        Text("Optional")
+                        Text(AppContent.string("events.detail.optional"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -530,18 +530,18 @@ private struct ReportEventSheet: View {
                     }
                 }
             }
-            .navigationTitle("Report Event")
+            .navigationTitle(AppContent.string("events.detail.reportEvent"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
+                    Button(AppContent.string("common.cancel")) {
                         dismiss()
                     }
                     .disabled(isSubmitting)
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(isSubmitting ? "Submitting..." : "Submit") {
+                    Button(isSubmitting ? AppContent.string("events.detail.submitting") : AppContent.string("events.detail.submit")) {
                         Task {
                             await onSubmit()
                         }

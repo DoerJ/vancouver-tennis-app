@@ -19,55 +19,55 @@ struct CreateEventView: View {
 
     var body: some View {
         Form {
-            Section("Time") {
+            Section(AppContent.string("events.create.time")) {
                 DatePicker(
-                    "Start",
+                    AppContent.string("events.create.start"),
                     selection: $viewModel.startTime,
                     in: viewModel.earliestAllowedStartTime...viewModel.latestAllowedStartTime,
                     displayedComponents: [.date, .hourAndMinute]
                 )
 
                 DatePicker(
-                    "End",
+                    AppContent.string("events.create.end"),
                     selection: $viewModel.endTime,
                     in: viewModel.earliestAllowedEndTime...viewModel.latestAllowedEndTime,
                     displayedComponents: [.date, .hourAndMinute]
                 )
             }
 
-            Section("Event") {
-                Picker("Type", selection: $viewModel.eventType) {
+            Section(AppContent.string("events.create.event")) {
+                Picker(AppContent.string("events.create.type"), selection: $viewModel.eventType) {
                     ForEach(EventType.allCases) { type in
                         Text(type.displayName).tag(type)
                     }
                 }
 
-                LabeledContent("Skill Level", value: viewModel.creatorSkillLevel.rawValue)
+                LabeledContent(AppContent.string("events.create.skillLevel"), value: viewModel.creatorSkillLevel.rawValue)
             }
 
-            Section("Players") {
-                Toggle("Limit players", isOn: $viewModel.hasPlayerLimit)
+            Section(AppContent.string("events.create.players")) {
+                Toggle(AppContent.string("events.create.limitPlayers"), isOn: $viewModel.hasPlayerLimit)
 
                 if viewModel.hasPlayerLimit {
                     Stepper(
-                        "Max players: \(viewModel.maxPlayers)",
+                        AppContent.string("events.create.maxPlayers", viewModel.maxPlayers),
                         value: $viewModel.maxPlayers,
                         in: Constants.Event.minimumPlayerLimit...Constants.Event.maximumPlayerLimit
                     )
                 } else {
-                    Text("Unlimited players")
+                    Text(AppContent.string("events.create.unlimitedPlayers"))
                         .foregroundStyle(.secondary)
                 }
             }
 
-            Section("Location") {
-                Picker("City", selection: $viewModel.city) {
+            Section(AppContent.string("events.create.location")) {
+                Picker(AppContent.string("events.create.city"), selection: $viewModel.city) {
                     ForEach(EventCity.allCases) { city in
                         Text(city.displayName).tag(city)
                     }
                 }
 
-                Picker("Court", selection: $viewModel.court) {
+                Picker(AppContent.string("events.create.court"), selection: $viewModel.court) {
                     ForEach(viewModel.city.courts) { court in
                         Text(court.displayName).tag(court)
                     }
@@ -81,7 +81,7 @@ struct CreateEventView: View {
                 }
             }
         }
-        .navigationTitle("Create Event")
+        .navigationTitle(AppContent.string("events.create.title"))
         .onChange(of: viewModel.startTime) { newStartTime in
             let earliestEndTime = Calendar.current.date(
                 byAdding: .minute,
@@ -105,7 +105,7 @@ struct CreateEventView: View {
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button(isSaving ? "Saving..." : "Save") {
+                Button(isSaving ? AppContent.string("common.saving") : AppContent.string("common.save")) {
                     Task {
                         guard !isSaving else {
                             return

@@ -24,7 +24,7 @@ final class ReviewParticipantJoinRequestViewModel: ObservableObject {
                 senderProfile = try await profileService.findProfile(userID: senderID)
 
                 if senderProfile == nil {
-                    errorMessage = "Player profile was not found."
+                    errorMessage = AppContent.string("joinRequest.profileNotFound")
                 }
             }
 
@@ -37,7 +37,7 @@ final class ReviewParticipantJoinRequestViewModel: ObservableObject {
             }
 
             if notification.sender == nil {
-                errorMessage = "Player profile was not found."
+                errorMessage = AppContent.string("joinRequest.profileNotFound")
             }
         } catch {
             errorMessage = error.localizedDescription
@@ -53,17 +53,17 @@ final class ReviewParticipantJoinRequestViewModel: ObservableObject {
         }
 
         guard let currentUser else {
-            errorMessage = "No authenticated user was found."
+            errorMessage = AppContent.string("errors.noAuthenticatedUser")
             return false
         }
 
         guard let relatedEventID = notification.relatedEventID else {
-            errorMessage = "This join request is missing an event."
+            errorMessage = AppContent.string("joinRequest.missingEvent")
             return false
         }
 
         guard let requesterID = notification.sender else {
-            errorMessage = "This join request is missing a player."
+            errorMessage = AppContent.string("joinRequest.missingPlayer")
             return false
         }
 
@@ -81,8 +81,8 @@ final class ReviewParticipantJoinRequestViewModel: ObservableObject {
                     sender: currentUser.id,
                     recipients: [requesterID],
                     notificationType: .approveJoinRequest,
-                    title: "Join request approved",
-                    body: "\(currentUser.displayName) approved your request to join the event.",
+                    title: AppContent.string("joinRequest.approvedTitle"),
+                    body: AppContent.string("joinRequest.approvedBody", currentUser.displayName),
                     relatedEventID: relatedEventID
                 )
             )
@@ -106,17 +106,17 @@ final class ReviewParticipantJoinRequestViewModel: ObservableObject {
         }
 
         guard let currentUser else {
-            errorMessage = "No authenticated user was found."
+            errorMessage = AppContent.string("errors.noAuthenticatedUser")
             return false
         }
 
         guard let relatedEventID = notification.relatedEventID else {
-            errorMessage = "This join request is missing an event."
+            errorMessage = AppContent.string("joinRequest.missingEvent")
             return false
         }
 
         guard let requesterID = notification.sender else {
-            errorMessage = "This join request is missing a player."
+            errorMessage = AppContent.string("joinRequest.missingPlayer")
             return false
         }
 
@@ -132,8 +132,8 @@ final class ReviewParticipantJoinRequestViewModel: ObservableObject {
                     sender: currentUser.id,
                     recipients: [requesterID],
                     notificationType: .rejectJoinRequest,
-                    title: "Join request declined",
-                    body: "\(currentUser.displayName) declined your request to join the event.",
+                    title: AppContent.string("joinRequest.declinedTitle"),
+                    body: AppContent.string("joinRequest.declinedBody", currentUser.displayName),
                     relatedEventID: relatedEventID
                 )
             )
@@ -160,11 +160,11 @@ final class ReviewParticipantJoinRequestViewModel: ObservableObject {
 
     private var reviewUnavailableMessage: String? {
         guard let relatedEvent else {
-            return "This event is no longer available."
+            return AppContent.string("joinRequest.eventUnavailable")
         }
 
         guard relatedEvent.endTime > Date() else {
-            return "This event has already ended. Join requests can no longer be reviewed."
+            return AppContent.string("joinRequest.eventEnded")
         }
 
         return nil

@@ -40,7 +40,7 @@ final class NotificationListViewModel: ObservableObject {
 
         guard let currentUserID else {
             notifications = []
-            errorMessage = "No authenticated user was found."
+            errorMessage = AppContent.string("errors.noAuthenticatedUser")
             return []
         }
 
@@ -58,7 +58,7 @@ final class NotificationListViewModel: ObservableObject {
         do {
             guard let profile = try await profileService.findProfile(userID: currentUserID) else {
                 notifications = []
-                errorMessage = "User profile was not found."
+                errorMessage = AppContent.string("errors.userProfileNotFound")
                 return []
             }
 
@@ -79,7 +79,7 @@ final class NotificationListViewModel: ObservableObject {
 
     func deleteNotification(_ notification: NotificationEvent, currentUserID: UUID?) async -> Bool {
         guard currentUserID != nil else {
-            errorMessage = "No authenticated user was found."
+            errorMessage = AppContent.string("errors.noAuthenticatedUser")
             return false
         }
 

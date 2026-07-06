@@ -101,32 +101,32 @@ final class CreateEventViewModel: ObservableObject {
         ) ?? now
 
         guard startTime >= earliestAllowedStartTime else {
-            errorMessage = "Start time must be at least \(Constants.Event.minimumStartOffsetHours) hour from now."
+            errorMessage = AppContent.string("events.create.startTooSoon", Constants.Event.minimumStartOffsetHours)
             return false
         }
 
         guard startTime <= latestAllowedStartTime else {
-            errorMessage = "Start time must be within the next \(Constants.Event.creationWindowDays) days."
+            errorMessage = AppContent.string("events.create.startTooFar", Constants.Event.creationWindowDays)
             return false
         }
 
         guard endTime >= earliestAllowedEndTime else {
-            errorMessage = "End time must be at least \(Constants.Event.minimumDurationMinutes) minutes after start time."
+            errorMessage = AppContent.string("events.create.endTooSoon", Constants.Event.minimumDurationMinutes)
             return false
         }
 
         guard endTime <= latestAllowedEndTime else {
-            errorMessage = "End time must be within \(Constants.Event.maximumDurationHours) hours of start time."
+            errorMessage = AppContent.string("events.create.endTooFar", Constants.Event.maximumDurationHours)
             return false
         }
 
         guard !hasPlayerLimit || maxPlayers >= Constants.Event.minimumPlayerLimit else {
-            errorMessage = "Max players must be at least \(Constants.Event.minimumPlayerLimit)."
+            errorMessage = AppContent.string("events.create.maxPlayersTooLow", Constants.Event.minimumPlayerLimit)
             return false
         }
 
         guard !hasPlayerLimit || maxPlayers <= Constants.Event.maximumPlayerLimit else {
-            errorMessage = "Max players cannot be more than \(Constants.Event.maximumPlayerLimit)."
+            errorMessage = AppContent.string("events.create.maxPlayersTooHigh", Constants.Event.maximumPlayerLimit)
             return false
         }
 
@@ -140,7 +140,7 @@ final class CreateEventViewModel: ObservableObject {
         }
 
         if activeHostedEvents.contains(where: { overlaps(draft: draft, existingEvent: $0) }) {
-            errorMessage = "This event overlaps with one of your hosted events."
+            errorMessage = AppContent.string("events.create.overlap")
             return nil
         }
 

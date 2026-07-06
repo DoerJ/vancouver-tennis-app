@@ -10,11 +10,11 @@ enum EventType: String, CaseIterable, Codable, Identifiable, Hashable {
     var displayName: String {
         switch self {
         case .practice:
-            return "Practice"
+            return AppContent.string("events.types.practice")
         case .casual:
-            return "Casual"
+            return AppContent.string("events.types.casual")
         case .match:
-            return "Match"
+            return AppContent.string("events.types.match")
         }
     }
 }

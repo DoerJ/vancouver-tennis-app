@@ -17,18 +17,18 @@ struct ChatView: View {
         NavigationStack {
             Group {
                 if isLoading {
-                    ProgressView("Loading chats...")
+                    ProgressView(AppContent.string("chat.loadingList"))
                 } else if let errorMessage {
                     ContentUnavailableView(
-                        "Unable to load chats",
+                        AppContent.string("chat.unableToLoad"),
                         systemImage: "exclamationmark.triangle",
                         description: Text(errorMessage)
                     )
                 } else if conversationPreviews.isEmpty {
                     ContentUnavailableView(
-                        "No chats yet",
+                        AppContent.string("chat.emptyList.title"),
                         systemImage: "message",
-                        description: Text("Your conversations will appear here.")
+                        description: Text(AppContent.string("chat.emptyList.description"))
                     )
                 } else {
                     List(conversationPreviews) { preview in
@@ -41,7 +41,7 @@ struct ChatView: View {
                     .listStyle(.plain)
                 }
             }
-            .navigationTitle("Chat")
+            .navigationTitle(AppContent.string("chat.title"))
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -49,7 +49,7 @@ struct ChatView: View {
                     } label: {
                         Image(systemName: "person.circle")
                     }
-                    .accessibilityLabel("Profile")
+                    .accessibilityLabel(AppContent.string("common.profile"))
                 }
             }
             .task {
@@ -168,7 +168,7 @@ private struct ChatConversationCard: View {
                         .padding(.horizontal, 7)
                         .padding(.vertical, 3)
                         .background(Color.red, in: Capsule())
-                        .accessibilityLabel("\(preview.unreadCount) unread messages")
+                        .accessibilityLabel(AppContent.string("chat.unreadAccessibility", preview.unreadCount))
                 }
 
                 Text(Self.timestampFormatter.string(from: preview.latestMessage.sentAt))

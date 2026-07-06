@@ -11,9 +11,9 @@ enum ReportReason: String, CaseIterable, Codable, Identifiable {
     var displayName: String {
         switch self {
         case .harassment:
-            return "Harassment"
+            return AppContent.string("reports.reasons.harassment")
         case .languageAbuse:
-            return "Language Abuse"
+            return AppContent.string("reports.reasons.languageAbuse")
         }
     }
 }

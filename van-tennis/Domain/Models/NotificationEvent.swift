@@ -15,17 +15,17 @@ enum NotificationType: String, CaseIterable, Codable, Identifiable {
     var displayName: String {
         switch self {
         case .eventJoined:
-            return "Event Joined"
+            return AppContent.string("notifications.types.eventJoined")
         case .eventCancelled:
-            return "Event Cancelled"
+            return AppContent.string("notifications.types.eventCancelled")
         case .eventUpdated:
-            return "Event Updated"
+            return AppContent.string("notifications.types.eventUpdated")
         case .eventLeft:
-            return "Event Left"
+            return AppContent.string("notifications.types.eventLeft")
         case .approveJoinRequest:
-            return "Join Request Approved"
+            return AppContent.string("notifications.types.joinRequestApproved")
         case .rejectJoinRequest:
-            return "Join Request Rejected"
+            return AppContent.string("notifications.types.joinRequestRejected")
         }
     }
 }

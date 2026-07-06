@@ -25,18 +25,18 @@ struct EditProfileView: View {
 
     var body: some View {
         Form {
-            Section("Profile") {
-                TextField("Display name", text: $displayName)
+            Section(AppContent.string("profile.title")) {
+                TextField(AppContent.string("profile.displayName"), text: $displayName)
                     .textInputAutocapitalization(.words)
 
-                Picker("Skill Level", selection: $skillLevel) {
+                Picker(AppContent.string("profile.skillLevel"), selection: $skillLevel) {
                     ForEach(SkillLevel.allCases) { level in
                         Text(level.rawValue).tag(level)
                     }
                 }
             }
 
-            Section("Social Tags") {
+            Section(AppContent.string("auth.onboarding.socialTags")) {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
                         ForEach(Constants.SocialProfile.tagOptions, id: \.self) { tag in
@@ -70,10 +70,10 @@ struct EditProfileView: View {
                 }
             }
         }
-        .navigationTitle("Edit Profile")
+        .navigationTitle(AppContent.string("profile.editTitle"))
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button(isSaving ? "Saving..." : "Save") {
+                Button(isSaving ? AppContent.string("common.saving") : AppContent.string("common.save")) {
                     Task {
                         await save()
                     }
@@ -103,7 +103,7 @@ struct EditProfileView: View {
 
     private func save() async {
         guard !trimmedDisplayName.isEmpty else {
-            errorMessage = "Display name is required."
+            errorMessage = AppContent.string("profile.displayNameRequired")
             return
         }
 
@@ -113,7 +113,7 @@ struct EditProfileView: View {
         do {
             if trimmedDisplayName != originalDisplayName,
                try await appState.isDisplayNameTaken(trimmedDisplayName) {
-                errorMessage = "This profile name has been taken. Choose another one."
+                errorMessage = AppContent.string("profile.displayNameTaken")
                 isSaving = false
                 return
             }
