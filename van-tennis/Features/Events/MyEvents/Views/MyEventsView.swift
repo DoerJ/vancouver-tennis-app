@@ -11,7 +11,10 @@ struct MyEventsView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
+            ZStack {
+                RallyDiscoverStyle.surface
+                    .ignoresSafeArea()
+
                 if viewModel.isLoading && viewModel.events.isEmpty {
                     ProgressView(AppContent.string("common.loadingEvents"))
                 } else if let errorMessage = viewModel.errorMessage, viewModel.events.isEmpty {
@@ -21,46 +24,58 @@ struct MyEventsView: View {
                         description: Text(errorMessage)
                     )
                 } else {
-                    ScrollView {
-                        LazyVStack(spacing: 12) {
-                            if let errorMessage = viewModel.errorMessage {
-                                Text(errorMessage)
-                                    .font(.footnote)
-                                    .foregroundStyle(.red)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                            }
+                    VStack(spacing: 0) {
+                        myEventsHeader
+                            .padding(.horizontal, 28)
+                            .padding(.top, 18)
 
-                            if viewModel.events.isEmpty {
-                                ContentUnavailableView(
-                                    AppContent.string("myEvents.empty.title"),
-                                    systemImage: "calendar.badge.exclamationmark",
-                                    description: Text(AppContent.string("myEvents.empty.description"))
-                                )
-                                .frame(maxWidth: .infinity)
-                                .padding(.top, 80)
-                            } else {
-                                ForEach(viewModel.events) { event in
-                                    VStack(spacing: 8) {
-                                        NavigationLink {
-                                            EventDetailView(event: event) { eventID in
-                                                viewModel.removeEvent(id: eventID)
-                                                appState.removeCachedEvent(eventID)
+                        ScrollView {
+                            LazyVStack(spacing: 28) {
+                                if let errorMessage = viewModel.errorMessage {
+                                    Text(errorMessage)
+                                        .font(.footnote)
+                                        .foregroundStyle(.red)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                }
+
+                                if viewModel.events.isEmpty {
+                                    ContentUnavailableView(
+                                        AppContent.string("myEvents.empty.title"),
+                                        systemImage: "calendar.badge.exclamationmark",
+                                        description: Text(AppContent.string("myEvents.empty.description"))
+                                    )
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.top, 80)
+                                } else {
+                                    ForEach(viewModel.events) { event in
+                                        VStack(spacing: 8) {
+                                            NavigationLink {
+                                                EventDetailView(event: event) { eventID in
+                                                    viewModel.removeEvent(id: eventID)
+                                                    appState.removeCachedEvent(eventID)
+                                                }
+                                            } label: {
+                                                EventCardView(
+                                                    event: event,
+                                                    hostProfile: hostProfile(for: event),
+                                                    hostDisplayNameOverride: hostDisplayNameOverride(for: event),
+                                                    showsHostSocialTags: !isHostedByCurrentUser(event)
+                                                )
                                             }
-                                        } label: {
-                                            EventCardView(event: event)
+                                            .buttonStyle(.plain)
                                         }
-                                        .buttonStyle(.plain)
-
                                     }
                                 }
                             }
+                            .padding(.horizontal, 13)
+                            .padding(.top, 48)
+                            .padding(.bottom, 24)
+                            .frame(maxWidth: .infinity)
                         }
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                    }
-                    .scrollBounceBehavior(.always)
-                    .refreshable {
-                        refreshMyEvents(showsLoading: viewModel.events.isEmpty)
+                        .scrollBounceBehavior(.always)
+                        .refreshable {
+                            refreshMyEvents(showsLoading: viewModel.events.isEmpty)
+                        }
                     }
                 }
             }
@@ -69,17 +84,31 @@ struct MyEventsView: View {
                     await loadMyEvents(showsLoading: true)
                 }
             }
-            .navigationTitle(AppContent.string("myEvents.title"))
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        onOpenProfile()
-                    } label: {
-                        Image(systemName: "person.circle")
-                    }
-                    .accessibilityLabel(AppContent.string("common.profile"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .navigationBar)
+        }
+    }
+
+    private var myEventsHeader: some View {
+        VStack(alignment: .leading, spacing: 34) {
+            HStack {
+                Button {
+                    onOpenProfile()
+                } label: {
+                    Image("profile")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 40, height: 40)
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel(AppContent.string("common.profile"))
+
+                Spacer()
             }
+
+            Text(AppContent.string("myEvents.title"))
+                .font(.system(size: 32, weight: .bold))
+                .foregroundStyle(RallyDiscoverStyle.ink)
         }
     }
 
@@ -107,6 +136,22 @@ struct MyEventsView: View {
                 )
             }
         }
+    }
+
+    private func isHostedByCurrentUser(_ event: TennisEvent) -> Bool {
+        event.hostID == appState.userProfile?.id
+    }
+
+    private func hostDisplayNameOverride(for event: TennisEvent) -> String? {
+        isHostedByCurrentUser(event) ? AppContent.string("events.card.hostYou") : nil
+    }
+
+    private func hostProfile(for event: TennisEvent) -> UserProfile? {
+        if isHostedByCurrentUser(event) {
+            return viewModel.currentUserProfile ?? appState.userProfile
+        }
+
+        return viewModel.hostProfilesByID[event.hostID]
     }
 }
 

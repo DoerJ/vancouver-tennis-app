@@ -6,7 +6,6 @@ final class CreateEventViewModel: ObservableObject {
     @Published var startTime: Date
     @Published var endTime: Date
     @Published var eventType: EventType = .practice
-    @Published var hasPlayerLimit = true
     @Published var maxPlayers = 2
     @Published var city: EventCity = .burnaby {
         didSet {
@@ -48,7 +47,7 @@ final class CreateEventViewModel: ObservableObject {
             startTime: startTime,
             endTime: endTime,
             eventType: eventType,
-            maxPlayers: hasPlayerLimit ? maxPlayers : nil,
+            maxPlayers: maxPlayers,
             city: city,
             court: court,
             skillLevel: creatorSkillLevel
@@ -120,12 +119,12 @@ final class CreateEventViewModel: ObservableObject {
             return false
         }
 
-        guard !hasPlayerLimit || maxPlayers >= Constants.Event.minimumPlayerLimit else {
+        guard maxPlayers >= Constants.Event.minimumPlayerLimit else {
             errorMessage = AppContent.string("events.create.maxPlayersTooLow", Constants.Event.minimumPlayerLimit)
             return false
         }
 
-        guard !hasPlayerLimit || maxPlayers <= Constants.Event.maximumPlayerLimit else {
+        guard maxPlayers <= Constants.Event.maximumPlayerLimit else {
             errorMessage = AppContent.string("events.create.maxPlayersTooHigh", Constants.Event.maximumPlayerLimit)
             return false
         }

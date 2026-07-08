@@ -149,6 +149,7 @@
       "full": "Full",
       "levelLabel": "Level:",
       "hostLabel": "Host: %@",
+      "hostYou": "You",
       "hostFallback": "Host",
       "timeLabel": "Time: %@",
       "skillLevel": "Skill level %@",
@@ -161,12 +162,12 @@
       "inDays": "In %d days"
     },
     "create": {
-      "title": "Create Event",
+      "title": "Create your\nevent",
       "time": "Time",
       "start": "Start",
       "end": "End",
-      "event": "Event",
-      "type": "Type",
+      "event": "Event type",
+      "type": "Mode",
       "skillLevel": "Skill Level",
       "players": "Players",
       "limitPlayers": "Limit players",

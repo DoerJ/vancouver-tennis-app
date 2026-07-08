@@ -4,6 +4,8 @@ import Foundation
 @MainActor
 final class MyEventsViewModel: ObservableObject {
     @Published var events: [TennisEvent] = []
+    @Published var currentUserProfile: UserProfile?
+    @Published var hostProfilesByID: [UUID: UserProfile] = [:]
     @Published var isLoading = false
     @Published var errorMessage: String?
 
@@ -57,14 +59,20 @@ final class MyEventsViewModel: ObservableObject {
         do {
             guard let profile = try await profileService.findProfile(userID: currentUserID) else {
                 events = []
+                currentUserProfile = nil
                 errorMessage = AppContent.string("errors.userProfileNotFound")
                 return MyEventsProfileEventIDs(hostedEvents: [], participatedEvents: [])
             }
+
+            currentUserProfile = profile
+            hostProfilesByID[profile.id] = profile
 
             let eventIDs = Array(Set(profile.hostedEvents + profile.participatedEvents))
             let now = Date()
             events = try await eventService.fetchEvents(ids: eventIDs)
                 .filter { $0.endTime > now }
+
+            await loadMissingHostProfiles(for: events, currentUserID: currentUserID)
 
             return MyEventsProfileEventIDs(
                 hostedEvents: events
@@ -87,6 +95,27 @@ final class MyEventsViewModel: ObservableObject {
         events.removeAll { $0.id == id }
     }
 
+    private func loadMissingHostProfiles(for events: [TennisEvent], currentUserID: UUID) async {
+        let missingHostIDs = Array(
+            Set(events.map(\.hostID))
+                .filter { $0 != currentUserID }
+                .filter { hostProfilesByID[$0] == nil }
+        )
+
+        guard !missingHostIDs.isEmpty else {
+            return
+        }
+
+        do {
+            let hostProfiles = try await profileService.fetchProfiles(userIDs: missingHostIDs)
+
+            for profile in hostProfiles {
+                hostProfilesByID[profile.id] = profile
+            }
+        } catch {
+            print("MyEventsViewModel: failed to load host profiles: \(error.localizedDescription)")
+        }
+    }
 }
 
 struct MyEventsProfileEventIDs {

@@ -3,10 +3,19 @@ import SwiftUI
 struct EventCardView: View {
     let event: TennisEvent
     let hostProfile: UserProfile?
+    let hostDisplayNameOverride: String?
+    let showsHostSocialTags: Bool
 
-    init(event: TennisEvent, hostProfile: UserProfile? = nil) {
+    init(
+        event: TennisEvent,
+        hostProfile: UserProfile? = nil,
+        hostDisplayNameOverride: String? = nil,
+        showsHostSocialTags: Bool = true
+    ) {
         self.event = event
         self.hostProfile = hostProfile
+        self.hostDisplayNameOverride = hostDisplayNameOverride
+        self.showsHostSocialTags = showsHostSocialTags
     }
 
     var body: some View {
@@ -85,7 +94,7 @@ struct EventCardView: View {
                         .font(.system(size: 15, weight: .medium))
                         .foregroundStyle(RallyDiscoverStyle.mutedText)
 
-                    if let hostProfile, !hostProfile.socialTags.isEmpty {
+                    if showsHostSocialTags, let hostProfile, !hostProfile.socialTags.isEmpty {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 6) {
                                 ForEach(hostProfile.socialTags, id: \.self) { tag in
@@ -123,6 +132,10 @@ struct EventCardView: View {
     }
 
     private var hostLabel: String {
+        if let hostDisplayNameOverride {
+            return AppContent.string("events.card.hostLabel", hostDisplayNameOverride)
+        }
+
         if let hostProfile {
             return AppContent.string("events.card.hostLabel", hostProfile.displayName)
         }
