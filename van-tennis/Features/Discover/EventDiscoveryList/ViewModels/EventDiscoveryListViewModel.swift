@@ -4,6 +4,7 @@ import Foundation
 @MainActor
 final class EventDiscoveryListViewModel: ObservableObject {
     @Published var events: [TennisEvent] = []
+    @Published var hostProfilesByID: [UUID: UserProfile] = [:]
     @Published var selectedCityFilter: EventCityFilter = .all
     @Published var selectedSkillLevelFilter: EventSkillLevelFilter = .all
     @Published var selectedEventTypeFilter: EventTypeFilter = .all
@@ -15,6 +16,7 @@ final class EventDiscoveryListViewModel: ObservableObject {
     private(set) var hasLoadedInitialPage = false
     private var skippedFilterReloadsRemaining = 0
     private let eventService = EventService()
+    private let profileService = ProfileService()
 
     var filteredEvents: [TennisEvent] {
         events.filter(Self.hasFutureEndTime)
@@ -70,6 +72,14 @@ final class EventDiscoveryListViewModel: ObservableObject {
             events.append(event)
         }
         events.sort { $0.startTime < $1.startTime }
+    }
+
+    func cacheHostProfile(_ profile: UserProfile?) {
+        guard let profile else {
+            return
+        }
+
+        hostProfilesByID[profile.id] = profile
     }
 
     func consumeShouldSkipNextFilterReload() -> Bool {
@@ -150,6 +160,7 @@ final class EventDiscoveryListViewModel: ObservableObject {
                 appendPage(page)
             }
 
+            await loadMissingHostProfiles(for: page)
             hasMoreEvents = page.count == Constants.EventDiscovery.pageSize
         } catch {
             errorMessage = error.localizedDescription
@@ -164,6 +175,27 @@ final class EventDiscoveryListViewModel: ObservableObject {
 
     private static func hasFutureEndTime(_ event: TennisEvent) -> Bool {
         event.endTime > Date()
+    }
+
+    private func loadMissingHostProfiles(for events: [TennisEvent]) async {
+        let missingHostIDs = Array(
+            Set(events.map(\.hostID))
+                .filter { hostProfilesByID[$0] == nil }
+        )
+
+        guard !missingHostIDs.isEmpty else {
+            return
+        }
+
+        do {
+            let hostProfiles = try await profileService.fetchProfiles(userIDs: missingHostIDs)
+
+            for profile in hostProfiles {
+                hostProfilesByID[profile.id] = profile
+            }
+        } catch {
+            print("EventDiscoveryListViewModel: failed to load host profiles: \(error.localizedDescription)")
+        }
     }
 }
 

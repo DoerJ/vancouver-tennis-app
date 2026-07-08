@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "RallyUp"
+    "name": "RallyGo"
   },
   "tabs": {
     "find": "Find",
@@ -43,9 +43,14 @@
     }
   },
   "discover": {
-    "title": "Find Events",
+    "title": "Discover",
     "createEvent": "Create Event",
     "resetFilters": "Reset filters",
+    "filters": {
+      "location": "Location",
+      "level": "Level",
+      "type": "Type"
+    },
     "empty": {
       "title": "No events yet",
       "description": "Created events will appear here."
@@ -142,6 +147,10 @@
     },
     "card": {
       "full": "Full",
+      "levelLabel": "Level:",
+      "hostLabel": "Host: %@",
+      "hostFallback": "Host",
+      "timeLabel": "Time: %@",
       "skillLevel": "Skill level %@",
       "inProgress": "In progress",
       "ended": "Ended",
