@@ -11,6 +11,7 @@
   "common": {
     "cancel": "Cancel",
     "continue": "Continue",
+    "back": "Back",
     "ok": "OK",
     "profile": "Profile",
     "save": "Save",
@@ -155,6 +156,7 @@
       "skillLevel": "Skill level %@",
       "inProgress": "In progress",
       "ended": "Ended",
+      "today": "Today",
       "tomorrow": "Tomorrow",
       "inHour": "In %d hour",
       "inHours": "In %d hours",

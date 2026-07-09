@@ -165,7 +165,8 @@ struct CreateEventView: View {
                 datePicker: .endDate,
                 timePicker: .endTime,
                 dateRange: viewModel.earliestAllowedEndTime...viewModel.latestAllowedEndTime,
-                color: RallyDiscoverStyle.primaryGreen
+                color: RallyDiscoverStyle.primaryGreen,
+                systemImage: "clock.badge.checkmark"
             )
         }
     }
@@ -352,10 +353,11 @@ struct CreateEventView: View {
         datePicker: CreateEventTimePicker,
         timePicker: CreateEventTimePicker,
         dateRange: ClosedRange<Date>,
-        color: Color
+        color: Color,
+        systemImage: String = "clock"
     ) -> some View {
         HStack(spacing: 10) {
-            Image(systemName: "clock")
+            Image(systemName: systemImage)
                 .font(.system(size: 21, weight: .regular))
                 .foregroundStyle(RallyDiscoverStyle.ink)
                 .frame(width: 28)

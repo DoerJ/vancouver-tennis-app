@@ -8,7 +8,6 @@ struct EventDetailView: View {
     @State private var event: TennisEvent
     @StateObject private var viewModel = EventDetailViewModel()
     @State private var isShowingCancelConfirmation = false
-    @State private var isShowingMaxPlayersEditor = false
     @State private var isShowingReportSheet = false
     @State private var isShowingReportSubmittedAlert = false
     @State private var isCancelling = false
@@ -27,149 +26,25 @@ struct EventDetailView: View {
     }
 
     var body: some View {
-        Form {
-            Section(AppContent.string("events.detail.event")) {
-                LabeledContent(AppContent.string("events.detail.type"), value: event.eventType.displayName)
-                LabeledContent(AppContent.string("events.create.skillLevel"), value: event.skillLevel.rawValue)
-                LabeledContent(AppContent.string("events.detail.players"), value: maxPlayersText)
+        ZStack {
+            RallyDiscoverStyle.surface
+                .ignoresSafeArea()
 
-                if !isEventEnded && isCurrentUserHost {
-                    Button {
-                        isShowingMaxPlayersEditor = true
-                    } label: {
-                        Label(AppContent.string("events.detail.editMaxPlayers"), systemImage: "person.2")
-                    }
-                    .disabled(isEventNotFound)
+            ScrollView {
+                VStack(spacing: 0) {
+                    eventHero
+
+                    detailSheet
+                        .padding(.top, -34)
                 }
+                .padding(.bottom, 118)
             }
-
-            Section(AppContent.string("events.detail.time")) {
-                LabeledContent(AppContent.string("events.detail.start"), value: Self.dateTimeFormatter.string(from: event.startTime))
-                LabeledContent(AppContent.string("events.detail.end"), value: Self.dateTimeFormatter.string(from: event.endTime))
-            }
-
-            Section(AppContent.string("events.detail.location")) {
-                LabeledContent(AppContent.string("events.detail.city"), value: event.city.displayName)
-                LabeledContent(AppContent.string("events.detail.court"), value: event.court.displayName)
-            }
-
-            HostSummaryView(host: viewModel.hostProfile)
-            ParticipantListView(
-                participants: viewModel.participantProfiles,
-                currentUserID: appState.userProfile?.id
-            )
-
-            if viewModel.isLoading {
-                Section {
-                    HStack {
-                        Spacer()
-                        ProgressView()
-                        Spacer()
-                    }
-                }
-            }
-
-            if let errorMessage = viewModel.errorMessage {
-                Section {
-                    Text(errorMessage)
-                        .foregroundStyle(.red)
-                }
-            }
-
-            if !isEventEnded && canOpenChat {
-                Section {
-                    NavigationLink {
-                        ChatRoomView(event: event)
-                    } label: {
-                        Label(AppContent.string("events.detail.chat"), systemImage: "message")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .disabled(isEventNotFound)
-                }
-            }
-
-            if !isEventEnded && isCurrentUserHost {
-                Section {
-                    Button(role: .destructive) {
-                        isShowingCancelConfirmation = true
-                    } label: {
-                        if isCancelling {
-                            HStack {
-                                Spacer()
-                                ProgressView()
-                                Spacer()
-                            }
-                        } else {
-                            Text(AppContent.string("events.detail.cancelEvent"))
-                        }
-                    }
-                    .disabled(isCancelling || isEventNotFound)
-                }
-            }
-
-            if !isEventEnded && canJoinEvent {
-                Section {
-                    Button {
-                        Task {
-                            await joinEvent()
-                        }
-                    } label: {
-                        if viewModel.isJoining {
-                            HStack {
-                                Spacer()
-                                ProgressView()
-                                Spacer()
-                            }
-                        } else if hasRequestedToJoin {
-                            Text(AppContent.string("events.detail.waitingApproval"))
-                        } else {
-                            Text(AppContent.string("events.detail.joinEvent"))
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .buttonStyle(.borderedProminent)
-                    .disabled(viewModel.isJoining || hasRequestedToJoin || isEventNotFound)
-                }
-            }
-
-            if !isEventEnded && isCurrentUserParticipant {
-                Section {
-                    Button(role: .destructive) {
-                        Task {
-                            await leaveEvent()
-                        }
-                    } label: {
-                        if viewModel.isLeaving {
-                            HStack {
-                                Spacer()
-                                ProgressView()
-                                Spacer()
-                            }
-                        } else {
-                            Text(AppContent.string("events.detail.leaveEvent"))
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .buttonStyle(.bordered)
-                    .disabled(viewModel.isLeaving || isEventNotFound)
-                }
-            }
-
-            if !isEventEnded && canReportEvent {
-                Section {
-                    Button(role: .destructive) {
-                        prepareReportSheet()
-                    } label: {
-                        Text(AppContent.string("events.detail.reportEvent"))
-                    }
-                    .frame(maxWidth: .infinity)
-                    .buttonStyle(.bordered)
-                    .disabled(isEventNotFound)
-                }
+            .refreshable {
+                await loadEventDetails()
             }
         }
-        .navigationTitle(AppContent.string("events.detail.title"))
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
         .confirmationDialog(
             AppContent.string("events.detail.cancelEventTitle"),
             isPresented: $isShowingCancelConfirmation,
@@ -189,9 +64,6 @@ struct EventDetailView: View {
         .task {
             await loadEventDetails()
         }
-        .refreshable {
-            await loadEventDetails()
-        }
         .sheet(isPresented: $isShowingReportSheet) {
             ReportEventSheet(
                 selectedReason: $selectedReportReason,
@@ -204,23 +76,263 @@ struct EventDetailView: View {
                 onSubmit: submitReport
             )
         }
-        .sheet(isPresented: $isShowingMaxPlayersEditor) {
-            EditMaxPlayersSheet(
-                currentPlayerCount: event.playerCount,
-                initialMaxPlayers: event.maxPlayers
-            ) { maxPlayers in
-                let updatedEvent = try await viewModel.updateMaxPlayers(
-                    maxPlayers,
-                    for: event
-                )
-                event = updatedEvent
-                appState.applyUpdatedEvent(updatedEvent)
-            }
-        }
         .alert(AppContent.string("events.detail.reportReceivedTitle"), isPresented: $isShowingReportSubmittedAlert) {
             Button(AppContent.string("common.ok")) {}
         } message: {
             Text(AppContent.string("events.detail.reportReceivedMessage"))
+        }
+    }
+
+    private var eventHero: some View {
+        EventDetailHeroView {
+            dismiss()
+        }
+        .frame(height: 430)
+    }
+
+    private var detailSheet: some View {
+        VStack(alignment: .leading, spacing: 28) {
+            RoundedRectangle(cornerRadius: 3)
+                .fill(Color.black.opacity(0.18))
+                .frame(width: 58, height: 5)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 18)
+
+            detailHeader
+
+            EventDetailSpecGrid(
+                specs: eventDetailSpecs,
+                playersSpec: EventDetailSpec(
+                    title: AppContent.string("events.detail.players"),
+                    value: maxPlayersText,
+                    systemImage: "person.2"
+                ),
+                canEditPlayers: !isEventEnded && isCurrentUserHost && !isEventNotFound,
+                playerCount: event.playerCount,
+                maxPlayers: event.maxPlayers,
+                isUpdatingPlayers: viewModel.isUpdatingMaxPlayers,
+                onSelectMaxPlayers: updateMaxPlayers
+            )
+
+            VStack(alignment: .leading, spacing: 14) {
+                detailInfoRow(
+                    title: AppContent.string("events.detail.start"),
+                    value: Self.dateTimeFormatter.string(from: event.startTime),
+                    systemImage: "clock"
+                )
+
+                detailInfoRow(
+                    title: AppContent.string("events.detail.end"),
+                    value: Self.dateTimeFormatter.string(from: event.endTime),
+                    systemImage: "clock.badge.checkmark"
+                )
+
+                detailInfoRow(
+                    title: AppContent.string("events.detail.city"),
+                    value: event.city.displayName,
+                    imageName: "pin_drop"
+                )
+            }
+
+            playerSection
+
+            stateSection
+
+            actionSection
+        }
+        .padding(.horizontal, 30)
+        .padding(.bottom, 34)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 34, style: .continuous)
+                .fill(Color.white)
+                .shadow(color: RallyDiscoverStyle.shadow.opacity(0.34), radius: 18, x: 0, y: -4)
+        )
+    }
+
+    private var detailHeader: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                Text(event.court.displayName)
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundStyle(RallyDiscoverStyle.ink)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Spacer(minLength: 10)
+
+                Text(event.skillLevel.rawValue)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(minWidth: 71)
+                    .padding(.horizontal, 8)
+                    .frame(height: 22)
+                    .background(skillLevelBadgeColor, in: Capsule())
+            }
+
+            Text(detailSummaryText)
+                .font(.system(size: 17, weight: .medium))
+                .foregroundStyle(RallyDiscoverStyle.mutedText)
+                .lineSpacing(3)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var playerSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            EventDetailSectionTitle(AppContent.string("events.host.title"))
+
+            if let hostProfile = viewModel.hostProfile {
+                EventDetailProfileCard(
+                    profile: hostProfile,
+                    fallbackTitle: AppContent.string("events.host.fallback"),
+                    titleSuffix: isCurrentUserHost ? AppContent.string("events.participants.you") : nil
+                )
+            } else {
+                EventDetailUnavailableProfileCard(text: AppContent.string("events.host.unavailable"))
+            }
+
+            EventDetailSectionTitle(AppContent.string("events.participants.title"))
+                .padding(.top, 8)
+
+            if viewModel.participantProfiles.isEmpty {
+                Text(AppContent.string("events.participants.none"))
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(RallyDiscoverStyle.mutedText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(16)
+                    .background(RallyDiscoverStyle.surface, in: RoundedRectangle(cornerRadius: 16))
+            } else {
+                VStack(spacing: 10) {
+                    ForEach(viewModel.participantProfiles, id: \.id) { participant in
+                        EventDetailProfileCard(
+                            profile: participant,
+                            fallbackTitle: AppContent.string("events.participants.fallback"),
+                            titleSuffix: participant.id == appState.userProfile?.id ? AppContent.string("events.participants.you") : nil
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var stateSection: some View {
+        if viewModel.isLoading {
+            HStack {
+                Spacer()
+                ProgressView()
+                Spacer()
+            }
+            .padding(.vertical, 8)
+        }
+
+        if let errorMessage = viewModel.errorMessage {
+            Text(errorMessage)
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.red)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(12)
+                .background(Color.red.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
+        }
+    }
+
+    private var actionSection: some View {
+        VStack(spacing: 12) {
+            if !isEventEnded && canOpenChat {
+                NavigationLink {
+                    ChatRoomView(event: event)
+                } label: {
+                    HStack(spacing: 8) {
+                        Image("chat_filled")
+                            .resizable()
+                            .renderingMode(.template)
+                            .scaledToFit()
+                            .frame(width: 24, height: 24)
+
+                        Text(AppContent.string("events.detail.chat"))
+                    }
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(EventDetailChatButtonStyle())
+                .disabled(isEventNotFound)
+            }
+
+            if !isEventEnded && canJoinEvent {
+                Button {
+                    Task {
+                        await joinEvent()
+                    }
+                } label: {
+                    if viewModel.isJoining {
+                        ProgressView()
+                            .tint(.white)
+                            .frame(maxWidth: .infinity)
+                    } else if hasRequestedToJoin {
+                        Text(AppContent.string("events.detail.waitingApproval"))
+                            .frame(maxWidth: .infinity)
+                    } else {
+                        Text(AppContent.string("events.detail.joinEvent"))
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+                .buttonStyle(EventDetailPrimaryButtonStyle())
+                .disabled(viewModel.isJoining || hasRequestedToJoin || isEventNotFound)
+            }
+
+            if !isEventEnded && isCurrentUserHost {
+                Button(role: .destructive) {
+                    isShowingCancelConfirmation = true
+                } label: {
+                    if isCancelling {
+                        ProgressView()
+                            .tint(.white)
+                            .frame(maxWidth: .infinity)
+                    } else {
+                        HStack(spacing: 8) {
+                            Image("disabled_by_default")
+                                .resizable()
+                                .renderingMode(.template)
+                                .scaledToFit()
+                                .frame(width: 22, height: 22)
+
+                            Text(AppContent.string("events.detail.cancelEvent"))
+                        }
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+                .buttonStyle(EventDetailCancelButtonStyle())
+                .disabled(isCancelling || isEventNotFound)
+            }
+
+            if !isEventEnded && isCurrentUserParticipant {
+                Button(role: .destructive) {
+                    Task {
+                        await leaveEvent()
+                    }
+                } label: {
+                    if viewModel.isLeaving {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                    } else {
+                        Text(AppContent.string("events.detail.leaveEvent"))
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+                .buttonStyle(EventDetailDestructiveButtonStyle())
+                .disabled(viewModel.isLeaving || isEventNotFound)
+            }
+
+            if !isEventEnded && canReportEvent {
+                Button(role: .destructive) {
+                    prepareReportSheet()
+                } label: {
+                    Text(AppContent.string("events.detail.reportEvent"))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(EventDetailSecondaryButtonStyle())
+                .disabled(isEventNotFound)
+            }
         }
     }
 
@@ -283,6 +395,100 @@ struct EventDetailView: View {
         }
 
         return "\(1 + event.participants.count) / \(maxPlayers)"
+    }
+
+    private var eventDetailSpecs: [EventDetailSpec] {
+        [
+            EventDetailSpec(
+                title: detailDateTitle,
+                value: detailStartTimeText,
+                systemImage: "calendar"
+            ),
+            EventDetailSpec(
+                title: AppContent.string("events.detail.court"),
+                value: event.court.displayName,
+                systemImage: "sportscourt"
+            ),
+            EventDetailSpec(
+                title: AppContent.string("events.detail.type"),
+                value: event.eventType.displayName,
+                imageName: "playing_tennis"
+            )
+        ]
+    }
+
+    private var detailSummaryText: String {
+        AppContent.string(
+            "events.card.hostLabel",
+            viewModel.hostProfile?.displayName ?? AppContent.string("events.card.hostFallback")
+        )
+    }
+
+    private var detailDateTitle: String {
+        let calendar = Calendar.current
+
+        if calendar.isDateInToday(event.startTime) {
+            return AppContent.string("events.card.today")
+        }
+
+        if calendar.isDateInTomorrow(event.startTime) {
+            return AppContent.string("events.card.tomorrow")
+        }
+
+        return Self.shortDateFormatter.string(from: event.startTime)
+    }
+
+    private var detailStartTimeText: String {
+        Self.timeFormatter.string(from: event.startTime)
+    }
+
+    private var skillLevelBadgeColor: Color {
+        switch event.skillLevel {
+        case .one:
+            return RallyDiscoverStyle.primaryGreen
+        case .two:
+            return RallyDiscoverStyle.orangeBadge
+        case .three:
+            return RallyDiscoverStyle.redBadge
+        case .four:
+            return RallyDiscoverStyle.accentGreen
+        }
+    }
+
+    private func detailInfoRow(title: String, value: String, systemImage: String? = nil, imageName: String? = nil) -> some View {
+        HStack(spacing: 12) {
+            detailInfoIcon(systemImage: systemImage, imageName: imageName)
+
+            Text(title)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(RallyDiscoverStyle.mutedText)
+
+            Spacer(minLength: 10)
+
+            Text(value)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(RallyDiscoverStyle.ink)
+                .multilineTextAlignment(.trailing)
+        }
+        .padding(.vertical, 2)
+    }
+
+    @ViewBuilder
+    private func detailInfoIcon(systemImage: String?, imageName: String?) -> some View {
+        if let imageName {
+            Image(imageName)
+                .resizable()
+                .renderingMode(.template)
+                .scaledToFit()
+                .foregroundStyle(.black)
+                .frame(width: 26, height: 26)
+                .accessibilityHidden(true)
+        } else if let systemImage {
+            Image(systemName: systemImage)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(.black)
+                .frame(width: 26)
+        }
     }
 
     private func loadEventDetails() async {
@@ -370,12 +576,440 @@ struct EventDetailView: View {
         }
     }
 
+    private func updateMaxPlayers(_ maxPlayers: Int) async {
+        do {
+            let updatedEvent = try await viewModel.updateMaxPlayers(maxPlayers, for: event)
+            event = updatedEvent
+            appState.applyUpdatedEvent(updatedEvent)
+        } catch {
+            viewModel.errorMessage = error.localizedDescription
+        }
+    }
+
     private static let dateTimeFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
         return formatter
     }()
+
+    private static let shortDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        return formatter
+    }()
+
+    private static let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .none
+        formatter.timeStyle = .short
+        return formatter
+    }()
+}
+
+private struct EventDetailHeroView: View {
+    let onDismiss: () -> Void
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            RallyDiscoverStyle.primaryGreen
+                .overlay(
+                    LinearGradient(
+                        colors: [
+                            RallyDiscoverStyle.primaryGreen,
+                            RallyDiscoverStyle.accentGreen
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+
+            tennisCourtIllustration
+                .frame(width: 250, height: 210)
+                .padding(.top, 116)
+
+            HStack {
+                Button {
+                    onDismiss()
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 44, height: 44)
+                }
+                .accessibilityLabel(AppContent.string("common.back"))
+
+                Spacer()
+            }
+            .padding(.horizontal, 18)
+            .padding(.top, 42)
+        }
+    }
+
+    private var tennisCourtIllustration: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(red: 0.20, green: 0.36, blue: 0.12))
+                .frame(width: 234, height: 144)
+
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(.white.opacity(0.65), lineWidth: 2)
+                .frame(width: 178, height: 72)
+
+            Rectangle()
+                .fill(.white.opacity(0.65))
+                .frame(width: 2, height: 104)
+
+            Rectangle()
+                .fill(.white.opacity(0.65))
+                .frame(width: 178, height: 2)
+
+            Image(systemName: "tennisball.fill")
+                .font(.system(size: 104))
+                .foregroundStyle(RallyDiscoverStyle.yellowBadge)
+                .shadow(color: Color.black.opacity(0.18), radius: 10, x: 0, y: 8)
+                .offset(y: 62)
+
+            Image(systemName: "tennis.racket")
+                .font(.system(size: 52, weight: .medium))
+                .foregroundStyle(.white.opacity(0.92))
+                .rotationEffect(.degrees(-28))
+                .offset(x: 96, y: 58)
+        }
+    }
+}
+
+private struct EventDetailSpec: Identifiable {
+    let id = UUID()
+    let title: String
+    let value: String
+    let systemImage: String?
+    let imageName: String?
+
+    init(title: String, value: String, systemImage: String? = nil, imageName: String? = nil) {
+        self.title = title
+        self.value = value
+        self.systemImage = systemImage
+        self.imageName = imageName
+    }
+}
+
+private struct EventDetailSpecGrid: View {
+    let specs: [EventDetailSpec]
+    let playersSpec: EventDetailSpec
+    let canEditPlayers: Bool
+    let playerCount: Int
+    let maxPlayers: Int?
+    let isUpdatingPlayers: Bool
+    let onSelectMaxPlayers: (Int) async -> Void
+
+    var body: some View {
+        LazyVGrid(
+            columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: 2),
+            spacing: 14
+        ) {
+            ForEach(specs) { spec in
+                EventDetailSpecCard(spec: spec)
+            }
+
+            EventDetailPlayersSpecCard(
+                spec: playersSpec,
+                canEdit: canEditPlayers,
+                playerCount: playerCount,
+                maxPlayers: maxPlayers,
+                isUpdating: isUpdatingPlayers,
+                onSelectMaxPlayers: onSelectMaxPlayers
+            )
+        }
+    }
+}
+
+private struct EventDetailSpecCard: View {
+    let spec: EventDetailSpec
+
+    var body: some View {
+        VStack(spacing: 8) {
+            icon
+                .frame(height: 22)
+
+            Text(spec.title)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(RallyDiscoverStyle.mutedText)
+                .lineLimit(1)
+
+            Text(spec.value)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(RallyDiscoverStyle.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.74)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 78)
+        .padding(.horizontal, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(.white)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(Color(red: 0.88, green: 0.90, blue: 0.84), lineWidth: 1)
+        )
+    }
+
+    @ViewBuilder
+    private var icon: some View {
+        if let imageName = spec.imageName {
+            Image(imageName)
+                .resizable()
+                .renderingMode(.template)
+                .scaledToFit()
+                .foregroundStyle(.black)
+                .frame(width: 22, height: 22)
+                .accessibilityHidden(true)
+        } else if let systemImage = spec.systemImage {
+            Image(systemName: systemImage)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(.black)
+        }
+    }
+}
+
+private struct EventDetailPlayersSpecCard: View {
+    let spec: EventDetailSpec
+    let canEdit: Bool
+    let playerCount: Int
+    let maxPlayers: Int?
+    let isUpdating: Bool
+    let onSelectMaxPlayers: (Int) async -> Void
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: spec.systemImage ?? "person.2")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(.black)
+                .frame(height: 22)
+
+            Text(spec.title)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(RallyDiscoverStyle.mutedText)
+                .lineLimit(1)
+
+            HStack(spacing: 6) {
+                Text(spec.value)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(RallyDiscoverStyle.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.74)
+
+                if canEdit {
+                    playerLimitMenu
+                }
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 78)
+        .padding(.horizontal, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(.white)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(Color(red: 0.88, green: 0.90, blue: 0.84), lineWidth: 1)
+        )
+    }
+
+    private var playerLimitMenu: some View {
+        Menu {
+            ForEach(availablePlayerLimits, id: \.self) { playerLimit in
+                Button {
+                    Task {
+                        await onSelectMaxPlayers(playerLimit)
+                    }
+                } label: {
+                    if maxPlayers == playerLimit {
+                        Label("\(playerLimit)", systemImage: "checkmark")
+                    } else {
+                        Text("\(playerLimit)")
+                    }
+                }
+            }
+        } label: {
+            if isUpdating {
+                ProgressView()
+                    .controlSize(.small)
+            } else {
+                Image("pencil")
+                    .resizable()
+                    .renderingMode(.template)
+                    .scaledToFit()
+                    .foregroundStyle(.black)
+                    .frame(width: 14, height: 14)
+                    .accessibilityLabel(AppContent.string("events.detail.editMaxPlayers"))
+            }
+        }
+        .disabled(isUpdating)
+    }
+
+    private var availablePlayerLimits: [Int] {
+        let lowerBound = max(playerCount, Constants.Event.minimumPlayerLimit)
+        let upperBound = max(lowerBound, Constants.Event.maximumPlayerLimit)
+        return Array(lowerBound...upperBound)
+    }
+}
+
+private struct EventDetailSectionTitle: View {
+    let title: String
+
+    init(_ title: String) {
+        self.title = title
+    }
+
+    var body: some View {
+        Text(title)
+            .font(.system(size: 17, weight: .bold))
+            .foregroundStyle(RallyDiscoverStyle.ink)
+    }
+}
+
+private struct EventDetailProfileCard: View {
+    let profile: UserProfile
+    let fallbackTitle: String
+    let titleSuffix: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(displayTitle)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(RallyDiscoverStyle.ink)
+
+                Spacer(minLength: 8)
+
+                Text(profile.skillLevel?.rawValue ?? AppContent.string("events.host.skillNotSet"))
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(minWidth: 71)
+                    .padding(.horizontal, 8)
+                    .frame(height: 22)
+                    .background(skillLevelBadgeColor, in: Capsule())
+            }
+
+            if !profile.socialTags.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(profile.socialTags, id: \.self) { tag in
+                            Text(tag)
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 10)
+                                .frame(height: 22)
+                                .background(RallyDiscoverStyle.accentGreen, in: Capsule())
+                        }
+                    }
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RallyDiscoverStyle.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private var displayTitle: String {
+        let title = profile.displayName.isEmpty ? fallbackTitle : profile.displayName
+
+        guard let titleSuffix else {
+            return title
+        }
+
+        return "\(title) \(titleSuffix)"
+    }
+
+    private var skillLevelBadgeColor: Color {
+        switch profile.skillLevel {
+        case .one:
+            return RallyDiscoverStyle.primaryGreen
+        case .two:
+            return RallyDiscoverStyle.orangeBadge
+        case .three:
+            return RallyDiscoverStyle.redBadge
+        case .four:
+            return RallyDiscoverStyle.accentGreen
+        case nil:
+            return RallyDiscoverStyle.mutedText
+        }
+    }
+}
+
+private struct EventDetailUnavailableProfileCard: View {
+    let text: String
+
+    var body: some View {
+        Label(text, systemImage: "person.crop.circle.badge.questionmark")
+            .font(.system(size: 15, weight: .medium))
+            .foregroundStyle(RallyDiscoverStyle.mutedText)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(16)
+            .background(RallyDiscoverStyle.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+}
+
+private struct EventDetailPrimaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 16, weight: .semibold))
+            .foregroundStyle(.white)
+            .frame(minHeight: 52)
+            .padding(.horizontal, 18)
+            .background(RallyDiscoverStyle.primaryGreen.opacity(configuration.isPressed ? 0.78 : 1), in: Capsule())
+    }
+}
+
+private struct EventDetailChatButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 16, weight: .semibold))
+            .foregroundStyle(.black)
+            .frame(minHeight: 52)
+            .padding(.horizontal, 18)
+            .background(Color(red: 0.97, green: 0.97, blue: 0.96).opacity(configuration.isPressed ? 0.72 : 1))
+            .clipShape(Capsule())
+            .shadow(color: RallyDiscoverStyle.shadow.opacity(0.95), radius: 18, x: 0, y: 8)
+            .shadow(color: Color.black.opacity(0.05), radius: 6, x: 0, y: 2)
+    }
+}
+
+private struct EventDetailSecondaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 16, weight: .semibold))
+            .foregroundStyle(RallyDiscoverStyle.ink)
+            .frame(minHeight: 52)
+            .padding(.horizontal, 18)
+            .background(RallyDiscoverStyle.surface.opacity(configuration.isPressed ? 0.72 : 1), in: RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+private struct EventDetailDestructiveButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 16, weight: .semibold))
+            .foregroundStyle(.red)
+            .frame(minHeight: 52)
+            .padding(.horizontal, 18)
+            .background(Color.red.opacity(configuration.isPressed ? 0.16 : 0.10), in: Capsule())
+    }
+}
+
+private struct EventDetailCancelButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 16, weight: .semibold))
+            .foregroundStyle(.white)
+            .frame(minHeight: 52)
+            .padding(.horizontal, 18)
+            .background(Color(red: 0.98, green: 0.28, blue: 0.13).opacity(configuration.isPressed ? 0.82 : 1), in: Capsule())
+    }
 }
 
 private struct EditMaxPlayersSheet: View {
