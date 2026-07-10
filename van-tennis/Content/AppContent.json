@@ -115,7 +115,7 @@
       "title": "No messages yet",
       "description": "Event chat messages will appear here."
     },
-    "messagePlaceholder": "Message",
+    "messagePlaceholder": "Be kind. Play fair.",
     "send": "Send",
     "sending": "Sending...",
     "messageLengthError": "Message must be no more than %d characters.",
@@ -165,6 +165,8 @@
     },
     "create": {
       "title": "Create your\nevent",
+      "createButton": "Create",
+      "creating": "Creating...",
       "time": "Time",
       "start": "Start",
       "end": "End",

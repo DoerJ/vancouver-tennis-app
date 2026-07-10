@@ -1,12 +1,14 @@
 import SwiftUI
 
 struct ChatRoomView: View {
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appState: AppState
     @State private var messages: [ChatRoomMessage] = []
     @State private var draftMessage = ""
     @State private var isLoading = false
     @State private var isSending = false
     @State private var errorMessage: String?
+    @FocusState private var isComposerFocused: Bool
 
     let event: TennisEvent
     private let chatMessageService = ChatMessageService()
@@ -14,19 +16,22 @@ struct ChatRoomView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            chatHeader
+
+            Rectangle()
+                .fill(Color.black.opacity(0.1))
+                .frame(height: 1)
+                .padding(.horizontal, 46)
+
             ScrollViewReader { proxy in
                 ScrollView {
-                    LazyVStack(spacing: 12) {
+                    LazyVStack(spacing: 36) {
                         if isLoading && messages.isEmpty {
                             ProgressView(AppContent.string("chat.loadingMessages"))
                                 .padding(.top, 80)
                         } else if messages.isEmpty {
-                            ContentUnavailableView(
-                                AppContent.string("chat.emptyRoom.title"),
-                                systemImage: "message",
-                                description: Text(AppContent.string("chat.emptyRoom.description"))
-                            )
-                            .padding(.top, 80)
+                            emptyState
+                                .padding(.top, 80)
                         } else {
                             ForEach(messages) { message in
                                 messageRow(message)
@@ -34,57 +39,58 @@ struct ChatRoomView: View {
                             }
                         }
                     }
-                    .padding()
+                    .padding(.horizontal, 18)
+                    .padding(.top, 38)
+                    .padding(.bottom, 28)
                     .frame(maxWidth: .infinity)
                 }
+                .scrollDismissesKeyboard(.interactively)
                 .onChange(of: messages) { _, messages in
-                    guard let lastMessageID = messages.last?.id else {
+                    scrollToLatestMessage(with: proxy, messages: messages)
+                }
+                .onChange(of: isComposerFocused) { _, isFocused in
+                    guard isFocused else {
                         return
                     }
 
-                    withAnimation {
-                        proxy.scrollTo(lastMessageID, anchor: .bottom)
+                    Task {
+                        try? await Task.sleep(nanoseconds: 250_000_000)
+                        await MainActor.run {
+                            scrollToLatestMessage(with: proxy, messages: messages)
+                        }
                     }
                 }
             }
 
-            Divider()
+            Rectangle()
+                .fill(Color.black.opacity(0.1))
+                .frame(height: 1)
+                .padding(.horizontal, 46)
 
             if let errorMessage {
                 Text(errorMessage)
-                    .font(.footnote)
-                    .foregroundStyle(.red)
+                    .font(.footnote.weight(.medium))
+                    .foregroundStyle(RallyDiscoverStyle.redBadge)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal)
+                    .padding(.horizontal, 22)
                     .padding(.top, 8)
             }
 
             if draftMessageExceedsLimit {
                 Text(AppContent.string("chat.messageLengthError", Constants.Chat.maximumMessageLength))
-                    .font(.footnote)
-                    .foregroundStyle(.red)
+                    .font(.footnote.weight(.medium))
+                    .foregroundStyle(RallyDiscoverStyle.redBadge)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal)
+                    .padding(.horizontal, 22)
                     .padding(.top, errorMessage == nil ? 8 : 2)
             }
 
-            HStack(alignment: .bottom, spacing: 8) {
-                TextField(AppContent.string("chat.messagePlaceholder"), text: $draftMessage, axis: .vertical)
-                    .textFieldStyle(.roundedBorder)
-                    .lineLimit(1...4)
-
-                Button(isSending ? AppContent.string("chat.sending") : AppContent.string("chat.send")) {
-                    Task {
-                        await sendMessage()
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(isSending || trimmedDraftMessage.isEmpty || draftMessageExceedsLimit)
-            }
-            .padding()
+            composer
         }
-        .navigationTitle(event.court.displayName)
-        .navigationBarTitleDisplayMode(.inline)
+        .background(Color.white)
+        .ignoresSafeArea(.container, edges: .bottom)
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
         .task {
             await loadMessagesIfNeeded()
         }
@@ -97,6 +103,102 @@ struct ChatRoomView: View {
         .onDisappear {
             appState.closeChat(eventID: event.id)
         }
+        .preference(key: MainTabBarHiddenPreferenceKey.self, value: true)
+    }
+
+    private var chatHeader: some View {
+        ZStack {
+            Text(event.court.displayName)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(RallyDiscoverStyle.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
+                .padding(.horizontal, 70)
+
+            HStack {
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 24, weight: .medium))
+                        .foregroundStyle(RallyDiscoverStyle.ink)
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(AppContent.string("common.back"))
+
+                Spacer()
+            }
+        }
+        .padding(.horizontal, 25)
+        .padding(.top, 42)
+        .padding(.bottom, 17)
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "message")
+                .font(.system(size: 28))
+                .foregroundStyle(RallyDiscoverStyle.mutedText)
+
+            Text(AppContent.string("chat.emptyRoom.title"))
+                .font(.system(size: 15, weight: .semibold))
+                .lineSpacing(2)
+                .foregroundStyle(Color.black.opacity(0.5))
+
+            Text(AppContent.string("chat.emptyRoom.description"))
+                .font(.system(size: 13, weight: .medium))
+                .lineSpacing(2)
+                .foregroundStyle(Color.black.opacity(0.5))
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var composer: some View {
+        HStack(alignment: .bottom, spacing: 16) {
+            TextField(
+                text: $draftMessage,
+                axis: .vertical
+            ) {
+                Text(AppContent.string("chat.messagePlaceholder"))
+                    .foregroundStyle(Color.black.opacity(0.3))
+            }
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(RallyDiscoverStyle.ink)
+                .lineLimit(1...4)
+                .focused($isComposerFocused)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 14)
+                .background(RallyDiscoverStyle.surface)
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .shadow(color: RallyDiscoverStyle.shadow.opacity(0.95), radius: 18, x: 0, y: 8)
+                .shadow(color: Color.black.opacity(0.05), radius: 6, x: 0, y: 2)
+
+            Button {
+                Task {
+                    await sendMessage()
+                }
+            } label: {
+                if isSending {
+                    ProgressView()
+                        .tint(.white)
+                        .frame(width: 77, height: 35)
+                } else {
+                    Text(AppContent.string("chat.send"))
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 77, height: 35)
+                }
+            }
+            .background(RallyDiscoverStyle.accentGreen, in: Capsule())
+            .shadow(color: RallyDiscoverStyle.shadow, radius: 18, x: 0, y: 8)
+            .disabled(isSending || trimmedDraftMessage.isEmpty || draftMessageExceedsLimit)
+            .opacity(isSending || trimmedDraftMessage.isEmpty || draftMessageExceedsLimit ? 0.55 : 1)
+        }
+        .padding(.horizontal, 23)
+        .padding(.top, 30)
+        .padding(.bottom, 30)
     }
 
     @MainActor
@@ -127,22 +229,18 @@ struct ChatRoomView: View {
         } else {
             let isCurrentUser = message.senderID == appState.userProfile?.id
 
-            VStack(alignment: isCurrentUser ? .trailing : .leading, spacing: 4) {
+            VStack(alignment: isCurrentUser ? .trailing : .leading, spacing: 8) {
                 Text(message.senderDisplayName)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(Color.black.opacity(0.6))
+                    .padding(.horizontal, 5)
 
-                Text(Constants.Chat.displayBody(for: message.body))
-                    .font(.body)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .foregroundStyle(isCurrentUser ? .white : .primary)
-                    .background(isCurrentUser ? Color.accentColor : Color(.secondarySystemBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                messageBubble(message, isCurrentUser: isCurrentUser)
 
                 Text(Self.sentTimeFormatter.string(from: message.sentAt))
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(Color.black.opacity(0.6))
+                    .padding(.horizontal, 5)
             }
             .frame(maxWidth: .infinity, alignment: isCurrentUser ? .trailing : .leading)
         }
@@ -151,13 +249,51 @@ struct ChatRoomView: View {
     private func systemMessageRow(_ message: ChatRoomMessage) -> some View {
         Text(Constants.Chat.displayBody(for: message.body))
             .font(.caption)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(RallyDiscoverStyle.mutedText)
             .multilineTextAlignment(.center)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(Color(.tertiarySystemGroupedBackground))
+            .background(RallyDiscoverStyle.surface)
             .clipShape(Capsule())
             .frame(maxWidth: .infinity, alignment: .center)
+    }
+
+    private func scrollToLatestMessage(with proxy: ScrollViewProxy, messages: [ChatRoomMessage]) {
+        guard let lastMessageID = messages.last?.id else {
+            return
+        }
+
+        withAnimation {
+            proxy.scrollTo(lastMessageID, anchor: .bottom)
+        }
+    }
+
+    private func messageBubble(_ message: ChatRoomMessage, isCurrentUser: Bool) -> some View {
+        ViewThatFits(in: .horizontal) {
+            bubbleText(message, isCurrentUser: isCurrentUser)
+                .fixedSize(horizontal: true, vertical: false)
+
+            bubbleText(message, isCurrentUser: isCurrentUser)
+                .frame(maxWidth: 194, alignment: .leading)
+        }
+        .frame(maxWidth: 226, alignment: isCurrentUser ? .trailing : .leading)
+    }
+
+    private func bubbleText(_ message: ChatRoomMessage, isCurrentUser: Bool) -> some View {
+        Text(Constants.Chat.displayBody(for: message.body))
+            .font(.system(size: isCurrentUser ? 12 : 13, weight: .medium))
+            .lineSpacing(2)
+            .foregroundStyle(isCurrentUser ? .white : Color.black.opacity(0.5))
+            .multilineTextAlignment(.leading)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(
+                isCurrentUser
+                    ? RallyDiscoverStyle.accentGreen
+                    : RallyDiscoverStyle.surface,
+                in: Capsule()
+            )
+            .shadow(color: RallyDiscoverStyle.shadow.opacity(isCurrentUser ? 1 : 0.58), radius: 18, x: 0, y: 8)
     }
 
     private func loadMessagesIfNeeded() async {
@@ -238,6 +374,7 @@ struct ChatRoomView: View {
 
             await appendMessage(message)
             draftMessage = ""
+            isComposerFocused = false
         } catch {
             errorMessage = error.localizedDescription
         }

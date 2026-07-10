@@ -16,6 +16,7 @@ struct EventDetailView: View {
     @State private var selectedReportedUserIDs: Set<UUID> = []
     @State private var reportDescription = ""
     @State private var reportErrorMessage: String?
+    @State private var pendingMaxPlayers: Int?
 
     init(
         event: TennisEvent,
@@ -84,10 +85,44 @@ struct EventDetailView: View {
     }
 
     private var eventHero: some View {
-        EventDetailHeroView {
-            dismiss()
-        }
+        EventDetailHeroView(
+            showsSaveButton: shouldShowSaveButton,
+            canSave: canSaveMaxPlayers,
+            isSaving: viewModel.isUpdatingMaxPlayers,
+            onSave: {
+                Task {
+                    await savePendingMaxPlayers()
+                }
+            },
+            onDismiss: {
+                dismiss()
+            }
+        )
         .frame(height: 430)
+    }
+
+    private var shouldShowSaveButton: Bool {
+        !isEventEnded && isCurrentUserHost && !isEventNotFound
+    }
+
+    private var canSaveMaxPlayers: Bool {
+        guard let pendingMaxPlayers else {
+            return false
+        }
+
+        return event.maxPlayers.map { $0 != pendingMaxPlayers } ?? true
+    }
+
+    private var displayedMaxPlayers: Int? {
+        pendingMaxPlayers ?? event.maxPlayers
+    }
+
+    private var displayedPlayerCountText: String {
+        guard let displayedMaxPlayers else {
+            return "\(1 + event.participants.count) / Unlimited"
+        }
+
+        return "\(1 + event.participants.count) / \(displayedMaxPlayers)"
     }
 
     private var detailSheet: some View {
@@ -104,14 +139,14 @@ struct EventDetailView: View {
                 specs: eventDetailSpecs,
                 playersSpec: EventDetailSpec(
                     title: AppContent.string("events.detail.players"),
-                    value: maxPlayersText,
+                    value: displayedPlayerCountText,
                     systemImage: "person.2"
                 ),
                 canEditPlayers: !isEventEnded && isCurrentUserHost && !isEventNotFound,
                 playerCount: event.playerCount,
-                maxPlayers: event.maxPlayers,
+                maxPlayers: displayedMaxPlayers,
                 isUpdatingPlayers: viewModel.isUpdatingMaxPlayers,
-                onSelectMaxPlayers: updateMaxPlayers
+                onSelectMaxPlayers: stageMaxPlayers
             )
 
             VStack(alignment: .leading, spacing: 14) {
@@ -389,14 +424,6 @@ struct EventDetailView: View {
         return profiles
     }
 
-    private var maxPlayersText: String {
-        guard let maxPlayers = event.maxPlayers else {
-            return "\(1 + event.participants.count) / Unlimited"
-        }
-
-        return "\(1 + event.participants.count) / \(maxPlayers)"
-    }
-
     private var eventDetailSpecs: [EventDetailSpec] {
         [
             EventDetailSpec(
@@ -497,6 +524,7 @@ struct EventDetailView: View {
         }
 
         event = latestEvent
+        pendingMaxPlayers = nil
         hasRequestedToJoin = await viewModel.hasRequestedToJoin(
             event: latestEvent,
             currentUserID: appState.userProfile?.id
@@ -576,10 +604,19 @@ struct EventDetailView: View {
         }
     }
 
-    private func updateMaxPlayers(_ maxPlayers: Int) async {
+    private func stageMaxPlayers(_ maxPlayers: Int) {
+        pendingMaxPlayers = maxPlayers
+    }
+
+    private func savePendingMaxPlayers() async {
+        guard let pendingMaxPlayers, canSaveMaxPlayers else {
+            return
+        }
+
         do {
-            let updatedEvent = try await viewModel.updateMaxPlayers(maxPlayers, for: event)
+            let updatedEvent = try await viewModel.updateMaxPlayers(pendingMaxPlayers, for: event)
             event = updatedEvent
+            self.pendingMaxPlayers = nil
             appState.applyUpdatedEvent(updatedEvent)
         } catch {
             viewModel.errorMessage = error.localizedDescription
@@ -608,6 +645,10 @@ struct EventDetailView: View {
 }
 
 private struct EventDetailHeroView: View {
+    let showsSaveButton: Bool
+    let canSave: Bool
+    let isSaving: Bool
+    let onSave: () -> Void
     let onDismiss: () -> Void
 
     var body: some View {
@@ -640,6 +681,21 @@ private struct EventDetailHeroView: View {
                 .accessibilityLabel(AppContent.string("common.back"))
 
                 Spacer()
+
+                if showsSaveButton {
+                    Button {
+                        onSave()
+                    } label: {
+                        Text(isSaving ? AppContent.string("common.saving") : AppContent.string("common.save"))
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 18)
+                            .frame(height: 34)
+                            .background(canSave ? RallyDiscoverStyle.primaryGreen : Color.gray.opacity(0.45), in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!canSave || isSaving)
+                }
             }
             .padding(.horizontal, 18)
             .padding(.top, 42)
@@ -701,7 +757,7 @@ private struct EventDetailSpecGrid: View {
     let playerCount: Int
     let maxPlayers: Int?
     let isUpdatingPlayers: Bool
-    let onSelectMaxPlayers: (Int) async -> Void
+    let onSelectMaxPlayers: (Int) -> Void
 
     var body: some View {
         LazyVGrid(
@@ -780,7 +836,7 @@ private struct EventDetailPlayersSpecCard: View {
     let playerCount: Int
     let maxPlayers: Int?
     let isUpdating: Bool
-    let onSelectMaxPlayers: (Int) async -> Void
+    let onSelectMaxPlayers: (Int) -> Void
 
     var body: some View {
         VStack(spacing: 8) {
@@ -823,9 +879,7 @@ private struct EventDetailPlayersSpecCard: View {
         Menu {
             ForEach(availablePlayerLimits, id: \.self) { playerLimit in
                 Button {
-                    Task {
-                        await onSelectMaxPlayers(playerLimit)
-                    }
+                    onSelectMaxPlayers(playerLimit)
                 } label: {
                     if maxPlayers == playerLimit {
                         Label("\(playerLimit)", systemImage: "checkmark")

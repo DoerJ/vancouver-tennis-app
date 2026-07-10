@@ -98,7 +98,7 @@ struct CreateEventView: View {
                         await saveEvent()
                     }
                 } label: {
-                    Text(isSaving ? AppContent.string("common.saving") : AppContent.string("common.save"))
+                    Text(isSaving ? AppContent.string("events.create.creating") : AppContent.string("events.create.createButton"))
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 18)

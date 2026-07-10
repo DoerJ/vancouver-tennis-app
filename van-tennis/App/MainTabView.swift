@@ -6,23 +6,29 @@ struct MainTabView: View {
     @State private var findResetTrigger = 0
     @State private var isShowingProfile = false
     @State private var isShowingNotifications = false
+    @State private var isMainTabBarHidden = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
             selectedContent
                 .safeAreaInset(edge: .bottom) {
-                    Color.clear.frame(height: 82)
+                    Color.clear.frame(height: isMainTabBarHidden ? 0 : 82)
                 }
 
-            MainTabBar(
-                selectedTab: selectedTab,
-                hasMyEvents: hasMyEvents,
-                hasUnreadChats: appState.hasUnreadChats
-            ) { tab in
-                selectTab(tab)
+            if !isMainTabBarHidden {
+                MainTabBar(
+                    selectedTab: selectedTab,
+                    hasMyEvents: hasMyEvents,
+                    hasUnreadChats: appState.hasUnreadChats
+                ) { tab in
+                    selectTab(tab)
+                }
+                .padding(.horizontal, 26)
+                .padding(.bottom, 12)
             }
-            .padding(.horizontal, 26)
-            .padding(.bottom, 12)
+        }
+        .onPreferenceChange(MainTabBarHiddenPreferenceKey.self) { isHidden in
+            isMainTabBarHidden = isHidden
         }
         .sheet(isPresented: $isShowingProfile) {
             UserProfileView()
@@ -77,6 +83,14 @@ struct MainTabView: View {
         return !profile.hostedEvents.isEmpty || !profile.participatedEvents.isEmpty
     }
 
+}
+
+struct MainTabBarHiddenPreferenceKey: PreferenceKey {
+    static let defaultValue = false
+
+    static func reduce(value: inout Bool, nextValue: () -> Bool) {
+        value = value || nextValue()
+    }
 }
 
 private enum MainTab: Hashable, CaseIterable {
