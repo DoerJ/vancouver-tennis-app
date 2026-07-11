@@ -15,7 +15,10 @@ struct ChatView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
+            ZStack {
+                Color.white
+                    .ignoresSafeArea()
+
                 if isLoading {
                     ProgressView(AppContent.string("chat.loadingList"))
                 } else if let errorMessage {
@@ -31,27 +34,29 @@ struct ChatView: View {
                         description: Text(AppContent.string("chat.emptyList.description"))
                     )
                 } else {
-                    List(conversationPreviews) { preview in
-                        NavigationLink {
-                            ChatRoomView(event: preview.event)
-                        } label: {
-                            ChatConversationCard(preview: preview)
+                    VStack(spacing: 0) {
+                        chatHeader
+                            .padding(.horizontal, 28)
+                            .padding(.top, 18)
+
+                        List(conversationPreviews) { preview in
+                            NavigationLink {
+                                ChatRoomView(event: preview.event)
+                            } label: {
+                                ChatConversationCard(preview: preview)
+                            }
+                            .listRowBackground(Color.white)
+                            .listRowSeparator(.hidden)
                         }
+                        .listStyle(.plain)
+                        .scrollContentBackground(.hidden)
+                        .background(Color.white)
+                        .padding(.top, 34)
                     }
-                    .listStyle(.plain)
                 }
             }
-            .navigationTitle(AppContent.string("chat.title"))
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        onOpenProfile()
-                    } label: {
-                        Image(systemName: "person.circle")
-                    }
-                    .accessibilityLabel(AppContent.string("common.profile"))
-                }
-            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .navigationBar)
             .task {
                 await loadEvents()
             }
@@ -65,6 +70,29 @@ struct ChatView: View {
                     await loadEvents()
                 }
             }
+        }
+    }
+
+    private var chatHeader: some View {
+        VStack(alignment: .leading, spacing: 34) {
+            HStack(alignment: .center) {
+                Button {
+                    onOpenProfile()
+                } label: {
+                    Image("profile")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 40, height: 40)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(AppContent.string("common.profile"))
+
+                Spacer()
+            }
+
+            Text(AppContent.string("chat.title"))
+                .font(.system(size: 32, weight: .bold))
+                .foregroundStyle(RallyDiscoverStyle.ink)
         }
     }
 
@@ -140,8 +168,15 @@ private struct ChatConversationPreview: Identifiable {
     }
 
     var eventDisplayName: String {
-        "\(event.eventType.displayName) at \(event.court.displayName)"
+        "\(event.court.displayName) (\(Self.eventDateFormatter.string(from: event.startTime)))"
     }
+
+    private static let eventDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter
+    }()
 }
 
 private struct ChatConversationCard: View {
@@ -152,7 +187,7 @@ private struct ChatConversationCard: View {
             HStack(alignment: .firstTextBaseline, spacing: 12) {
                 Text(preview.eventDisplayName)
                     .font(.headline)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(RallyDiscoverStyle.ink)
                     .lineLimit(1)
 
                 Spacer(minLength: 8)
@@ -173,15 +208,23 @@ private struct ChatConversationCard: View {
 
                 Text(Self.timestampFormatter.string(from: preview.latestMessage.sentAt))
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(RallyDiscoverStyle.mutedText)
             }
 
             Text(latestMessagePreviewText)
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(RallyDiscoverStyle.mutedText)
                 .lineLimit(2)
         }
-        .padding(.vertical, 8)
+        .padding(.top, 8)
+        .padding(.bottom, 16)
+        .background(Color.white)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(Color.black.opacity(0.1))
+                .frame(width: 301, height: 1)
+                .frame(maxWidth: .infinity, alignment: .center)
+        }
         .accessibilityElement(children: .combine)
     }
 

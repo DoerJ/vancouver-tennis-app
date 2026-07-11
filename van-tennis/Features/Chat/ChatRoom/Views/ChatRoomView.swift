@@ -231,14 +231,14 @@ struct ChatRoomView: View {
 
             VStack(alignment: isCurrentUser ? .trailing : .leading, spacing: 8) {
                 Text(message.senderDisplayName)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(Color.black.opacity(0.6))
                     .padding(.horizontal, 5)
 
                 messageBubble(message, isCurrentUser: isCurrentUser)
 
                 Text(Self.sentTimeFormatter.string(from: message.sentAt))
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(Color.black.opacity(0.6))
                     .padding(.horizontal, 5)
             }
@@ -281,7 +281,7 @@ struct ChatRoomView: View {
 
     private func bubbleText(_ message: ChatRoomMessage, isCurrentUser: Bool) -> some View {
         Text(Constants.Chat.displayBody(for: message.body))
-            .font(.system(size: isCurrentUser ? 12 : 13, weight: .medium))
+            .font(.system(size: 14, weight: .medium))
             .lineSpacing(2)
             .foregroundStyle(isCurrentUser ? .white : Color.black.opacity(0.5))
             .multilineTextAlignment(.leading)
