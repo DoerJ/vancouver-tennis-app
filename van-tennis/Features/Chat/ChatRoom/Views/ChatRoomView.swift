@@ -137,9 +137,13 @@ struct ChatRoomView: View {
 
     private var emptyState: some View {
         VStack(spacing: 8) {
-            Image(systemName: "message")
-                .font(.system(size: 28))
+            Image("chat_lined")
+                .resizable()
+                .renderingMode(.template)
+                .scaledToFit()
                 .foregroundStyle(RallyDiscoverStyle.mutedText)
+                .frame(width: 34, height: 34)
+                .accessibilityHidden(true)
 
             Text(AppContent.string("chat.emptyRoom.title"))
                 .font(.system(size: 15, weight: .semibold))
