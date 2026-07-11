@@ -27,31 +27,34 @@ struct ChatView: View {
                         systemImage: "exclamationmark.triangle",
                         description: Text(errorMessage)
                     )
-                } else if conversationPreviews.isEmpty {
-                    ContentUnavailableView(
-                        AppContent.string("chat.emptyList.title"),
-                        systemImage: "message",
-                        description: Text(AppContent.string("chat.emptyList.description"))
-                    )
                 } else {
                     VStack(spacing: 0) {
                         chatHeader
                             .padding(.horizontal, 28)
                             .padding(.top, 18)
 
-                        List(conversationPreviews) { preview in
-                            NavigationLink {
-                                ChatRoomView(event: preview.event)
-                            } label: {
-                                ChatConversationCard(preview: preview)
+                        if conversationPreviews.isEmpty {
+                            ScrollView {
+                                emptyConversationView
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.top, 80)
                             }
-                            .listRowBackground(Color.white)
-                            .listRowSeparator(.hidden)
+                            .padding(.top, 48)
+                        } else {
+                            List(conversationPreviews) { preview in
+                                NavigationLink {
+                                    ChatRoomView(event: preview.event)
+                                } label: {
+                                    ChatConversationCard(preview: preview)
+                                }
+                                .listRowBackground(Color.white)
+                                .listRowSeparator(.hidden)
+                            }
+                            .listStyle(.plain)
+                            .scrollContentBackground(.hidden)
+                            .background(Color.white)
+                            .padding(.top, 34)
                         }
-                        .listStyle(.plain)
-                        .scrollContentBackground(.hidden)
-                        .background(Color.white)
-                        .padding(.top, 34)
                     }
                 }
             }
@@ -94,6 +97,30 @@ struct ChatView: View {
                 .font(.system(size: 32, weight: .bold))
                 .foregroundStyle(RallyDiscoverStyle.ink)
         }
+    }
+
+    private var emptyConversationView: some View {
+        VStack(spacing: 10) {
+            Image("chat_lined")
+                .resizable()
+                .renderingMode(.template)
+                .scaledToFit()
+                .foregroundStyle(RallyDiscoverStyle.ink)
+                .frame(width: 34, height: 34)
+                .accessibilityHidden(true)
+
+            Text(AppContent.string("chat.emptyList.title"))
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(RallyDiscoverStyle.ink)
+                .multilineTextAlignment(.center)
+
+            Text(AppContent.string("chat.emptyList.description"))
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(RallyDiscoverStyle.mutedText)
+                .multilineTextAlignment(.center)
+                .lineSpacing(2)
+        }
+        .padding(.horizontal, 28)
     }
 
     private var conversationPreviews: [ChatConversationPreview] {

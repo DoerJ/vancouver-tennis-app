@@ -12,7 +12,10 @@ struct NotificationListView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
+            ZStack {
+                Color.white
+                    .ignoresSafeArea()
+
                 if viewModel.isLoading && viewModel.notifications.isEmpty {
                     ProgressView(AppContent.string("notifications.loading"))
                 } else if let errorMessage = viewModel.errorMessage, viewModel.notifications.isEmpty {
@@ -23,38 +26,44 @@ struct NotificationListView: View {
                     )
                 } else {
                     VStack(spacing: 0) {
+                        notificationsHeader
+                            .padding(.horizontal, 28)
+                            .padding(.top, 18)
+
                         ScrollView {
-                            LazyVStack(spacing: 12) {
+                            LazyVStack(spacing: 0) {
                                 if viewModel.notifications.isEmpty {
-                                    ContentUnavailableView(
-                                        AppContent.string("notifications.empty.title"),
-                                        systemImage: "bell",
-                                        description: Text(AppContent.string("notifications.empty.description"))
-                                    )
+                                    emptyNotificationsView
                                     .frame(maxWidth: .infinity)
                                     .padding(.top, 80)
                                 } else {
-                                    ForEach(viewModel.notifications) { notification in
-                                        NotificationCardView(
-                                            notification: notification,
-                                            isDeleting: viewModel.deletingNotificationIDs.contains(notification.id),
-                                            onTap: tapAction(for: notification)
-                                        ) {
-                                            Task {
-                                                let didDeleteNotification = await viewModel.deleteNotification(
-                                                    notification,
-                                                    currentUserID: appState.userProfile?.id
-                                                )
+                                    ForEach(Array(viewModel.notifications.enumerated()), id: \.element.id) { index, notification in
+                                        VStack(spacing: 0) {
+                                            NotificationCardView(
+                                                notification: notification,
+                                                isDeleting: viewModel.deletingNotificationIDs.contains(notification.id),
+                                                onTap: tapAction(for: notification)
+                                            ) {
+                                                Task {
+                                                    let didDeleteNotification = await viewModel.deleteNotification(
+                                                        notification,
+                                                        currentUserID: appState.userProfile?.id
+                                                    )
 
-                                                if didDeleteNotification {
-                                                    appState.removeCachedNotification(notification.id)
+                                                    if didDeleteNotification {
+                                                        appState.removeCachedNotification(notification.id)
+                                                    }
                                                 }
+                                            }
+
+                                            if index < viewModel.notifications.count - 1 {
+                                                notificationsDivider
                                             }
                                         }
                                     }
                                 }
                             }
-                            .padding()
+                            .padding(.top, 34)
                             .frame(maxWidth: .infinity)
                         }
                         // .refreshable wrapper task can be cancelled by SwiftUI, the actual notification fetch is now owned by view model
@@ -64,17 +73,8 @@ struct NotificationListView: View {
                     }
                 }
             }
-            .navigationTitle(AppContent.string("notifications.title"))
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        onOpenProfile()
-                    } label: {
-                        Image(systemName: "person.circle")
-                    }
-                    .accessibilityLabel(AppContent.string("common.profile"))
-                }
-            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(item: $selectedJoinRequest) { notification in
                 ReviewParticipantJoinRequestView(notification: notification)
             }
@@ -93,6 +93,49 @@ struct NotificationListView: View {
                 await loadNotifications(showsLoading: true)
             }
         }
+    }
+
+    private var notificationsHeader: some View {
+        VStack(alignment: .leading, spacing: 34) {
+            Color.clear
+                .frame(width: 40, height: 40)
+
+            Text(AppContent.string("notifications.title"))
+                .font(.system(size: 32, weight: .bold))
+                .foregroundStyle(RallyDiscoverStyle.ink)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var emptyNotificationsView: some View {
+        VStack(spacing: 10) {
+            Image("Bell")
+                .resizable()
+                .renderingMode(.template)
+                .scaledToFit()
+                .foregroundStyle(RallyDiscoverStyle.ink)
+                .frame(width: 34, height: 34)
+                .accessibilityHidden(true)
+
+            Text(AppContent.string("notifications.empty.title"))
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(RallyDiscoverStyle.ink)
+                .multilineTextAlignment(.center)
+
+            Text(AppContent.string("notifications.empty.description"))
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(RallyDiscoverStyle.mutedText)
+                .multilineTextAlignment(.center)
+                .lineSpacing(2)
+        }
+        .padding(.horizontal, 28)
+    }
+
+    private var notificationsDivider: some View {
+        Rectangle()
+            .fill(Color.black.opacity(0.1))
+            .frame(width: 301, height: 1)
+            .frame(maxWidth: .infinity, alignment: .center)
     }
 
     private func loadNotifications(showsLoading: Bool) async {

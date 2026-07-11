@@ -39,10 +39,9 @@ struct MyEventsView: View {
                                 }
 
                                 if viewModel.events.isEmpty {
-                                    ContentUnavailableView(
-                                        AppContent.string("myEvents.empty.title"),
-                                        systemImage: "calendar.badge.exclamationmark",
-                                        description: Text(AppContent.string("myEvents.empty.description"))
+                                    RallyEmptyEventsState(
+                                        title: AppContent.string("myEvents.empty.title"),
+                                        description: AppContent.string("myEvents.empty.description")
                                     )
                                     .frame(maxWidth: .infinity)
                                     .padding(.top, 80)

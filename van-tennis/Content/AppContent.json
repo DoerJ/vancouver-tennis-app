@@ -107,7 +107,7 @@
     "title": "Chat",
     "loadingList": "Loading chats...",
     "emptyList": {
-      "title": "No chats yet",
+      "title": "No conversation yet",
       "description": "Your conversations will appear here."
     },
     "loadingMessages": "Loading messages",

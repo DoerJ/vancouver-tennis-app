@@ -22,8 +22,8 @@ struct NotificationCardView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 12) {
                 Text(notification.body)
-                    .font(.body)
-                    .foregroundStyle(.primary)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(RallyDiscoverStyle.ink)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 Button(role: .destructive, action: onDelete) {
@@ -40,14 +40,15 @@ struct NotificationCardView: View {
 
             TimelineView(.periodic(from: Date(), by: 60)) { context in
                 Label(createdAtText(now: context.date), systemImage: "clock")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(RallyDiscoverStyle.mutedText)
             }
         }
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-        .contentShape(RoundedRectangle(cornerRadius: 8))
+        .padding(.horizontal, 20)
+        .padding(.top, 8)
+        .padding(.bottom, 16)
+        .background(Color.white)
+        .contentShape(Rectangle())
         .onTapGesture {
             onTap?()
         }
