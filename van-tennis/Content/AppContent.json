@@ -13,6 +13,7 @@
     "continue": "Continue",
     "back": "Back",
     "ok": "OK",
+    "done": "Done",
     "profile": "Profile",
     "save": "Save",
     "saving": "Saving...",
@@ -208,15 +209,17 @@
       "joinEvent": "Join Event",
       "waitingApproval": "Waiting for host to approve",
       "leaveEvent": "Leave Event",
-      "reportEvent": "Report Event",
+      "reportEvent": "Report event",
+      "reportButton": "Report",
       "reportReceivedTitle": "Report Received",
       "reportReceivedMessage": "We have received your report and will review it. We will notify you of the results.",
       "editMaxPlayersInfo": "The event currently has %d players including the host.",
       "unlimitedPlayersInfo": "This event will allow unlimited players.",
       "noReportablePlayers": "No players available",
-      "reportReason": "Reason",
-      "reportWho": "Who to Report",
-      "reportDetails": "Details",
+      "reportReason": "Tell us what happened.",
+      "reportWho": "Who do you want to report?",
+      "reportDetails": "Do you want to tell us more?",
+      "reportDetailsPlaceholder": "Optional",
       "optional": "Optional",
       "submit": "Submit",
       "submitting": "Submitting..."
@@ -297,8 +300,10 @@
   },
   "reports": {
     "reasons": {
-      "harassment": "Harassment",
-      "languageAbuse": "Language Abuse"
+      "harassment": "Harassment or bullying",
+      "languageAbuse": "Hate speech or discrimination",
+      "sexualHarassment": "Sexual harassment or inappropriate content",
+      "noShowOrAbusiveBehavior": "No-show or abusive match behavior"
     }
   },
   "errors": {

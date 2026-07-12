@@ -12,7 +12,7 @@ struct EventDetailView: View {
     @State private var isShowingReportSubmittedAlert = false
     @State private var isCancelling = false
     @State private var hasRequestedToJoin = false
-    @State private var selectedReportReason: ReportReason = .harassment
+    @State private var selectedReportReasons: Set<ReportReason> = []
     @State private var selectedReportedUserIDs: Set<UUID> = []
     @State private var reportDescription = ""
     @State private var reportErrorMessage: String?
@@ -66,8 +66,8 @@ struct EventDetailView: View {
             await loadEventDetails()
         }
         .sheet(isPresented: $isShowingReportSheet) {
-            ReportEventSheet(
-                selectedReason: $selectedReportReason,
+            ReportEventView(
+                selectedReasons: $selectedReportReasons,
                 selectedReportedUserIDs: $selectedReportedUserIDs,
                 reportDescription: $reportDescription,
                 errorMessage: reportErrorMessage,
@@ -87,8 +87,11 @@ struct EventDetailView: View {
     private var eventHero: some View {
         EventDetailHeroView(
             showsSaveButton: shouldShowSaveButton,
+            showsReportButton: shouldShowReportButton,
+            isReportButtonEnabled: isReportButtonEnabled,
             canSave: canSaveMaxPlayers,
             isSaving: viewModel.isUpdatingMaxPlayers,
+            onReport: prepareReportSheet,
             onSave: {
                 Task {
                     await savePendingMaxPlayers()
@@ -103,6 +106,14 @@ struct EventDetailView: View {
 
     private var shouldShowSaveButton: Bool {
         !isEventEnded && isCurrentUserHost && !isEventNotFound
+    }
+
+    private var shouldShowReportButton: Bool {
+        !isEventEnded && canReportEvent && !isEventNotFound
+    }
+
+    private var isReportButtonEnabled: Bool {
+        !event.participants.isEmpty
     }
 
     private var canSaveMaxPlayers: Bool {
@@ -358,16 +369,6 @@ struct EventDetailView: View {
                 .disabled(viewModel.isLeaving || isEventNotFound)
             }
 
-            if !isEventEnded && canReportEvent {
-                Button(role: .destructive) {
-                    prepareReportSheet()
-                } label: {
-                    Text(AppContent.string("events.detail.reportEvent"))
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(EventDetailSecondaryButtonStyle())
-                .disabled(isEventNotFound)
-            }
         }
     }
 
@@ -394,7 +395,7 @@ struct EventDetailView: View {
     }
 
     private var canReportEvent: Bool {
-        (isCurrentUserHost && !event.participants.isEmpty) || isCurrentUserParticipant
+        isCurrentUserHost || isCurrentUserParticipant
     }
 
     private var canOpenChat: Bool {
@@ -532,7 +533,11 @@ struct EventDetailView: View {
     }
 
     private func prepareReportSheet() {
-        selectedReportReason = .harassment
+        guard isReportButtonEnabled else {
+            return
+        }
+
+        selectedReportReasons = []
         selectedReportedUserIDs = []
         reportDescription = ""
         reportErrorMessage = nil
@@ -550,7 +555,7 @@ struct EventDetailView: View {
                 event: event,
                 reporter: currentUser,
                 reportedUserIDs: Array(selectedReportedUserIDs),
-                reason: selectedReportReason,
+                reasons: Array(selectedReportReasons),
                 details: reportDescription
             )
             isShowingReportSheet = false
@@ -646,8 +651,11 @@ struct EventDetailView: View {
 
 private struct EventDetailHeroView: View {
     let showsSaveButton: Bool
+    let showsReportButton: Bool
+    let isReportButtonEnabled: Bool
     let canSave: Bool
     let isSaving: Bool
+    let onReport: () -> Void
     let onSave: () -> Void
     let onDismiss: () -> Void
 
@@ -681,6 +689,31 @@ private struct EventDetailHeroView: View {
                 .accessibilityLabel(AppContent.string("common.back"))
 
                 Spacer()
+
+                if showsReportButton {
+                    Button {
+                        onReport()
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image("flag")
+                                .resizable()
+                                .renderingMode(.template)
+                                .scaledToFit()
+                                .frame(width: 16, height: 16)
+
+                            Text(AppContent.string("events.detail.reportButton"))
+                                .lineLimit(1)
+                        }
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 14)
+                        .frame(height: 34)
+                        .background(Color(red: 250 / 255, green: 71 / 255, blue: 32 / 255), in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!isReportButtonEnabled)
+                    .opacity(isReportButtonEnabled ? 1 : 0.45)
+                }
 
                 if showsSaveButton {
                     Button {
@@ -1153,124 +1186,6 @@ private struct EditMaxPlayersSheet: View {
         }
 
         isSaving = false
-    }
-}
-
-private struct ReportEventSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @Binding var selectedReason: ReportReason
-    @Binding var selectedReportedUserIDs: Set<UUID>
-    @Binding var reportDescription: String
-
-    let errorMessage: String?
-    let isSubmitting: Bool
-    let reportableProfiles: [UserProfile]
-    let currentUserID: UUID?
-    let onSubmit: () async -> Void
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section(AppContent.string("events.detail.reportReason")) {
-                    Picker(AppContent.string("events.detail.reportReason"), selection: $selectedReason) {
-                        ForEach(ReportReason.allCases) { reason in
-                            Text(reason.displayName).tag(reason)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                }
-
-                Section(AppContent.string("events.detail.reportWho")) {
-                    if reportableProfiles.isEmpty {
-                        Text(AppContent.string("events.detail.noReportablePlayers"))
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 8) {
-                                ForEach(reportableProfiles, id: \.id) { profile in
-                                    reportProfileChip(profile)
-                                }
-                            }
-                            .padding(.vertical, 4)
-                        }
-                    }
-                }
-
-                Section {
-                    TextEditor(text: $reportDescription)
-                        .frame(minHeight: 120)
-                } header: {
-                    HStack {
-                        Text(AppContent.string("events.detail.reportDetails"))
-
-                        Spacer()
-
-                        Text(AppContent.string("events.detail.optional"))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                if let errorMessage {
-                    Section {
-                        Text(errorMessage)
-                            .foregroundStyle(.red)
-                    }
-                }
-            }
-            .navigationTitle(AppContent.string("events.detail.reportEvent"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button(AppContent.string("common.cancel")) {
-                        dismiss()
-                    }
-                    .disabled(isSubmitting)
-                }
-
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(isSubmitting ? AppContent.string("events.detail.submitting") : AppContent.string("events.detail.submit")) {
-                        Task {
-                            await onSubmit()
-                        }
-                    }
-                    .disabled(isSubmitting || selectedReportedUserIDs.isEmpty)
-                }
-            }
-        }
-    }
-
-    private func reportProfileChip(_ profile: UserProfile) -> some View {
-        let isCurrentUser = profile.id == currentUserID
-        let isSelected = selectedReportedUserIDs.contains(profile.id)
-
-        return Button {
-            guard !isCurrentUser else {
-                return
-            }
-
-            if isSelected {
-                selectedReportedUserIDs.remove(profile.id)
-            } else {
-                selectedReportedUserIDs.insert(profile.id)
-            }
-        } label: {
-            HStack(spacing: 6) {
-                Text(profile.displayName)
-                    .font(.subheadline)
-
-                if isSelected {
-                    Image(systemName: "checkmark")
-                        .font(.caption)
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .frame(minHeight: 36)
-        }
-        .buttonStyle(.bordered)
-        .disabled(isCurrentUser)
-        .opacity(isCurrentUser ? 0.45 : 1)
     }
 }
 

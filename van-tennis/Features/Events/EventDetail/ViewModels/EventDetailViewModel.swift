@@ -155,22 +155,24 @@ final class EventDetailViewModel: ObservableObject {
         event: TennisEvent,
         reporter: UserProfile,
         reportedUserIDs: [UUID],
-        reason: ReportReason,
+        reasons: [ReportReason],
         details: String
     ) async throws {
-        guard !reportedUserIDs.isEmpty else {
+        guard !reportedUserIDs.isEmpty, !reasons.isEmpty else {
             return
         }
 
         let trimmedDetails = details.trimmingCharacters(in: .whitespacesAndNewlines)
-        let reports = reportedUserIDs.map {
-            NewReport(
-                reporterID: reporter.id,
-                reportedUserID: $0,
-                reportedEventID: event.id,
-                reason: reason,
-                details: trimmedDetails.isEmpty ? nil : trimmedDetails
-            )
+        let reports = reportedUserIDs.flatMap { reportedUserID in
+            reasons.map { reason in
+                NewReport(
+                    reporterID: reporter.id,
+                    reportedUserID: reportedUserID,
+                    reportedEventID: event.id,
+                    reason: reason,
+                    details: trimmedDetails.isEmpty ? nil : trimmedDetails
+                )
+            }
         }
 
         isSubmittingReport = true

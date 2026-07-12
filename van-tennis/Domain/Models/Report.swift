@@ -3,6 +3,8 @@ import Foundation
 enum ReportReason: String, CaseIterable, Codable, Identifiable {
     case harassment
     case languageAbuse = "language_abuse"
+    case sexualHarassment = "sexual_harassment"
+    case noShowOrAbusiveBehavior = "no_show_or_abusive_behavior"
 
     var id: String {
         rawValue
@@ -14,6 +16,10 @@ enum ReportReason: String, CaseIterable, Codable, Identifiable {
             return AppContent.string("reports.reasons.harassment")
         case .languageAbuse:
             return AppContent.string("reports.reasons.languageAbuse")
+        case .sexualHarassment:
+            return AppContent.string("reports.reasons.sexualHarassment")
+        case .noShowOrAbusiveBehavior:
+            return AppContent.string("reports.reasons.noShowOrAbusiveBehavior")
         }
     }
 }
