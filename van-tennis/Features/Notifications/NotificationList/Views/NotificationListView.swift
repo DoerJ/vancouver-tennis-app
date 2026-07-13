@@ -18,6 +18,7 @@ struct NotificationListView: View {
 
                 if viewModel.isLoading && viewModel.notifications.isEmpty {
                     ProgressView(AppContent.string("notifications.loading"))
+                        .rallyLoadingStatusStyle()
                 } else if let errorMessage = viewModel.errorMessage, viewModel.notifications.isEmpty {
                     ContentUnavailableView(
                         AppContent.string("notifications.unableToLoad"),

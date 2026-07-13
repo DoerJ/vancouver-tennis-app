@@ -5,50 +5,57 @@ struct LoginView: View {
     @StateObject private var viewModel = LoginViewModel()
 
     var body: some View {
-        VStack(spacing: 24) {
-            Spacer()
+        ZStack {
+            Image("login")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
 
-            VStack(spacing: 8) {
-                Text(AppContent.string("app.name"))
-                    .font(.largeTitle)
-                    .fontWeight(.semibold)
+            VStack(spacing: 24) {
+                Spacer()
 
-                Text(AppContent.string("auth.login.subtitle"))
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
+                VStack(spacing: 8) {
+                    Text(AppContent.string("app.name"))
+                        .font(.largeTitle)
+                        .fontWeight(.semibold)
 
-            Spacer()
-
-            Button {
-                Task {
-                    await viewModel.continueWithGoogle(appState: appState)
+                    Text(AppContent.string("auth.login.subtitle"))
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
                 }
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "person.crop.circle.badge.checkmark")
-                    Text(
-                        viewModel.isSigningIn
-                            ? AppContent.string("auth.login.signingIn")
-                            : AppContent.string("auth.login.continueWithGoogle")
-                    )
-                }
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .tint(viewModel.isSigningIn ? .gray : .accentColor)
-            .disabled(viewModel.isSigningIn)
 
-            if let errorMessage = viewModel.errorMessage {
-                Text(errorMessage)
-                    .font(.footnote)
-                    .foregroundStyle(.red)
-                    .multilineTextAlignment(.center)
+                Spacer()
+
+                Button {
+                    Task {
+                        await viewModel.continueWithGoogle(appState: appState)
+                    }
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "person.crop.circle.badge.checkmark")
+                        Text(
+                            viewModel.isSigningIn
+                                ? AppContent.string("auth.login.signingIn")
+                                : AppContent.string("auth.login.continueWithGoogle")
+                        )
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .tint(viewModel.isSigningIn ? .gray : .accentColor)
+                .disabled(viewModel.isSigningIn)
+
+                if let errorMessage = viewModel.errorMessage {
+                    Text(errorMessage)
+                        .font(.footnote)
+                        .foregroundStyle(.red)
+                        .multilineTextAlignment(.center)
+                }
             }
+            .padding(24)
         }
-        .padding(24)
     }
 }
 

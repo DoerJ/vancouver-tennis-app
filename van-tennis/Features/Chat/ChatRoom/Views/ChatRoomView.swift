@@ -28,6 +28,7 @@ struct ChatRoomView: View {
                     LazyVStack(spacing: 36) {
                         if isLoading && messages.isEmpty {
                             ProgressView(AppContent.string("chat.loadingMessages"))
+                                .rallyLoadingStatusStyle()
                                 .padding(.top, 80)
                         } else if messages.isEmpty {
                             emptyState

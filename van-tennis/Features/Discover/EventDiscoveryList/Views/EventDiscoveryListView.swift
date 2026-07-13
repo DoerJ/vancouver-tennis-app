@@ -26,6 +26,7 @@ struct EventDiscoveryListView: View {
 
                 if viewModel.isLoading && viewModel.events.isEmpty {
                     ProgressView(AppContent.string("common.loadingEvents"))
+                        .rallyLoadingStatusStyle()
                 } else if let errorMessage = viewModel.errorMessage, viewModel.events.isEmpty {
                     ContentUnavailableView(
                         AppContent.string("common.unableToLoadEvents"),

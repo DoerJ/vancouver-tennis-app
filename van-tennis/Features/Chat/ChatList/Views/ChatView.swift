@@ -21,6 +21,7 @@ struct ChatView: View {
 
                 if isLoading {
                     ProgressView(AppContent.string("chat.loadingList"))
+                        .rallyLoadingStatusStyle()
                 } else if let errorMessage {
                     ContentUnavailableView(
                         AppContent.string("chat.unableToLoad"),

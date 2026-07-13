@@ -43,6 +43,7 @@ struct EventDetailView: View {
             .refreshable {
                 await loadEventDetails()
             }
+            .ignoresSafeArea(edges: .top)
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
@@ -102,6 +103,7 @@ struct EventDetailView: View {
             }
         )
         .frame(height: 430)
+        .clipped()
     }
 
     private var shouldShowSaveButton: Bool {
@@ -660,111 +662,104 @@ private struct EventDetailHeroView: View {
     let onDismiss: () -> Void
 
     var body: some View {
-        ZStack(alignment: .top) {
-            RallyDiscoverStyle.primaryGreen
-                .overlay(
-                    LinearGradient(
-                        colors: [
-                            RallyDiscoverStyle.primaryGreen,
-                            RallyDiscoverStyle.accentGreen
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+        GeometryReader { geometry in
+            ZStack(alignment: .top) {
+                Image("login")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: geometry.size.width, height: geometry.size.height + 48)
+                    .offset(y: 24)
+                    .clipped()
+
+                EventDetailTopBarView(
+                    showsSaveButton: showsSaveButton,
+                    showsReportButton: showsReportButton,
+                    isReportButtonEnabled: isReportButtonEnabled,
+                    canSave: canSave,
+                    isSaving: isSaving,
+                    onReport: onReport,
+                    onSave: onSave,
+                    onDismiss: onDismiss
                 )
-
-            tennisCourtIllustration
-                .frame(width: 250, height: 210)
-                .padding(.top, 116)
-
-            HStack {
-                Button {
-                    onDismiss()
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(width: 44, height: 44)
-                }
-                .accessibilityLabel(AppContent.string("common.back"))
-
-                Spacer()
-
-                if showsReportButton {
-                    Button {
-                        onReport()
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image("flag")
-                                .resizable()
-                                .renderingMode(.template)
-                                .scaledToFit()
-                                .frame(width: 16, height: 16)
-
-                            Text(AppContent.string("events.detail.reportButton"))
-                                .lineLimit(1)
-                        }
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 14)
-                        .frame(height: 34)
-                        .background(Color(red: 250 / 255, green: 71 / 255, blue: 32 / 255), in: Capsule())
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(!isReportButtonEnabled)
-                    .opacity(isReportButtonEnabled ? 1 : 0.45)
-                }
-
-                if showsSaveButton {
-                    Button {
-                        onSave()
-                    } label: {
-                        Text(isSaving ? AppContent.string("common.saving") : AppContent.string("common.save"))
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 18)
-                            .frame(height: 34)
-                            .background(canSave ? RallyDiscoverStyle.primaryGreen : Color.gray.opacity(0.45), in: Capsule())
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(!canSave || isSaving)
-                }
             }
-            .padding(.horizontal, 18)
-            .padding(.top, 42)
+            .frame(width: geometry.size.width, height: geometry.size.height)
+            .clipped()
         }
     }
+}
 
-    private var tennisCourtIllustration: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(red: 0.20, green: 0.36, blue: 0.12))
-                .frame(width: 234, height: 144)
+private struct EventDetailTopBarView: View {
+    let showsSaveButton: Bool
+    let showsReportButton: Bool
+    let isReportButtonEnabled: Bool
+    let canSave: Bool
+    let isSaving: Bool
+    let onReport: () -> Void
+    let onSave: () -> Void
+    let onDismiss: () -> Void
 
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(.white.opacity(0.65), lineWidth: 2)
-                .frame(width: 178, height: 72)
+    var body: some View {
+        HStack {
+            Button {
+                onDismiss()
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 44, height: 44)
+                    .background(Color.black.opacity(0.28), in: Circle())
+            }
+            .accessibilityLabel(AppContent.string("common.back"))
 
-            Rectangle()
-                .fill(.white.opacity(0.65))
-                .frame(width: 2, height: 104)
+            Spacer()
 
-            Rectangle()
-                .fill(.white.opacity(0.65))
-                .frame(width: 178, height: 2)
+            if showsReportButton {
+                Button {
+                    onReport()
+                } label: {
+                    HStack(spacing: 6) {
+                        Image("flag")
+                            .resizable()
+                            .renderingMode(.template)
+                            .scaledToFit()
+                            .frame(width: 16, height: 16)
 
-            Image(systemName: "tennisball.fill")
-                .font(.system(size: 104))
-                .foregroundStyle(RallyDiscoverStyle.yellowBadge)
-                .shadow(color: Color.black.opacity(0.18), radius: 10, x: 0, y: 8)
-                .offset(y: 62)
+                        Text(AppContent.string("events.detail.reportButton"))
+                            .lineLimit(1)
+                    }
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 14)
+                    .frame(height: 34)
+                    .background(
+                        isReportButtonEnabled
+                            ? Color(red: 250 / 255, green: 71 / 255, blue: 32 / 255)
+                            : Color.black.opacity(0.28),
+                        in: Capsule()
+                    )
+                }
+                .buttonStyle(.plain)
+                .disabled(!isReportButtonEnabled)
+            }
 
-            Image(systemName: "tennis.racket")
-                .font(.system(size: 52, weight: .medium))
-                .foregroundStyle(.white.opacity(0.92))
-                .rotationEffect(.degrees(-28))
-                .offset(x: 96, y: 58)
+            if showsSaveButton {
+                Button {
+                    onSave()
+                } label: {
+                    Text(isSaving ? AppContent.string("common.saving") : AppContent.string("common.save"))
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 18)
+                        .frame(height: 34)
+                        .background(canSave ? RallyDiscoverStyle.primaryGreen : Color.black.opacity(0.28), in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .disabled(!canSave || isSaving)
+            }
         }
+        .padding(.horizontal, 18)
+        .padding(.top, 64)
+        .frame(maxWidth: .infinity, alignment: .top)
     }
 }
 
