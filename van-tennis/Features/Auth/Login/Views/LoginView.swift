@@ -6,25 +6,12 @@ struct LoginView: View {
 
     var body: some View {
         ZStack {
-            Image("login")
+            Image("login_caption")
                 .resizable()
                 .scaledToFill()
                 .ignoresSafeArea()
 
             VStack(spacing: 24) {
-                Spacer()
-
-                VStack(spacing: 8) {
-                    Text(AppContent.string("app.name"))
-                        .font(.largeTitle)
-                        .fontWeight(.semibold)
-
-                    Text(AppContent.string("auth.login.subtitle"))
-                        .font(.body)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-
                 Spacer()
 
                 Button {
@@ -33,18 +20,28 @@ struct LoginView: View {
                     }
                 } label: {
                     HStack(spacing: 10) {
-                        Image(systemName: "person.crop.circle.badge.checkmark")
+                        Image("google")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 20, height: 20)
+
                         Text(
                             viewModel.isSigningIn
                                 ? AppContent.string("auth.login.signingIn")
-                                : AppContent.string("auth.login.continueWithGoogle")
+                            : AppContent.string("auth.login.continueWithGoogle")
                         )
                     }
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(height: 52)
                     .frame(maxWidth: .infinity)
+                    .background(
+                        Color.black.opacity(viewModel.isSigningIn ? 0.28 : 1),
+                        in: Capsule()
+                    )
+                    .shadow(color: RallyDiscoverStyle.shadow.opacity(viewModel.isSigningIn ? 0 : 0.95), radius: 18, x: 0, y: 8)
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .tint(viewModel.isSigningIn ? .gray : .accentColor)
+                .buttonStyle(.plain)
                 .disabled(viewModel.isSigningIn)
 
                 if let errorMessage = viewModel.errorMessage {
@@ -53,6 +50,9 @@ struct LoginView: View {
                         .foregroundStyle(.red)
                         .multilineTextAlignment(.center)
                 }
+
+                Spacer()
+                    .frame(height: 44)
             }
             .padding(24)
         }
