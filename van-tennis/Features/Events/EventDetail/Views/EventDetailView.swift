@@ -8,6 +8,7 @@ struct EventDetailView: View {
     @State private var event: TennisEvent
     @StateObject private var viewModel = EventDetailViewModel()
     @State private var isShowingCancelConfirmation = false
+    @State private var isShowingLeaveConfirmation = false
     @State private var isShowingReportSheet = false
     @State private var isShowingReportSubmittedAlert = false
     @State private var isCancelling = false
@@ -62,6 +63,22 @@ struct EventDetailView: View {
             Button(AppContent.string("events.detail.keepEvent"), role: .cancel) {}
         } message: {
             Text(AppContent.string("events.detail.cancelConfirmation"))
+        }
+        .confirmationDialog(
+            AppContent.string("events.detail.leaveEventTitle"),
+            isPresented: $isShowingLeaveConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button(AppContent.string("events.detail.leaveEvent"), role: .destructive) {
+                Task {
+                    await leaveEvent()
+                }
+            }
+            .disabled(isEventNotFound || isEventEnded)
+
+            Button(AppContent.string("events.detail.stayEvent"), role: .cancel) {}
+        } message: {
+            Text(AppContent.string("events.detail.leaveConfirmation"))
         }
         .task {
             await loadEventDetails()
@@ -355,19 +372,25 @@ struct EventDetailView: View {
 
             if !isEventEnded && isCurrentUserParticipant {
                 Button(role: .destructive) {
-                    Task {
-                        await leaveEvent()
-                    }
+                    isShowingLeaveConfirmation = true
                 } label: {
                     if viewModel.isLeaving {
                         ProgressView()
+                            .tint(.white)
                             .frame(maxWidth: .infinity)
                     } else {
-                        Text(AppContent.string("events.detail.leaveEvent"))
+                        HStack(spacing: 8) {
+                            Image("login_white")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 22, height: 22)
+
+                            Text(AppContent.string("events.detail.leaveEvent"))
+                        }
                             .frame(maxWidth: .infinity)
                     }
                 }
-                .buttonStyle(EventDetailDestructiveButtonStyle())
+                .buttonStyle(EventDetailCancelButtonStyle())
                 .disabled(viewModel.isLeaving || isEventNotFound)
             }
 
@@ -473,16 +496,7 @@ struct EventDetailView: View {
     }
 
     private var skillLevelBadgeColor: Color {
-        switch event.skillLevel {
-        case .one:
-            return RallyDiscoverStyle.primaryGreen
-        case .two:
-            return RallyDiscoverStyle.orangeBadge
-        case .three:
-            return RallyDiscoverStyle.redBadge
-        case .four:
-            return RallyDiscoverStyle.accentGreen
-        }
+        Constants.SkillLevelStyle.badgeColor(for: event.skillLevel)
     }
 
     private func detailInfoRow(title: String, value: String, systemImage: String? = nil, imageName: String? = nil) -> some View {
@@ -1008,18 +1022,7 @@ private struct EventDetailProfileCard: View {
     }
 
     private var skillLevelBadgeColor: Color {
-        switch profile.skillLevel {
-        case .one:
-            return RallyDiscoverStyle.primaryGreen
-        case .two:
-            return RallyDiscoverStyle.orangeBadge
-        case .three:
-            return RallyDiscoverStyle.redBadge
-        case .four:
-            return RallyDiscoverStyle.accentGreen
-        case nil:
-            return RallyDiscoverStyle.mutedText
-        }
+        Constants.SkillLevelStyle.badgeColor(for: profile.skillLevel)
     }
 }
 

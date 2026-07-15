@@ -177,7 +177,7 @@ struct EventDiscoveryListView: View {
                     Button {
                         onOpenNotifications()
                     } label: {
-                        Image("Bell")
+                        Image(notificationIconName)
                             .resizable()
                             .scaledToFit()
                             .frame(width: 31, height: 31)
@@ -191,6 +191,10 @@ struct EventDiscoveryListView: View {
                 .font(.system(size: 32, weight: .bold))
                 .foregroundStyle(RallyDiscoverStyle.ink)
         }
+    }
+
+    private var notificationIconName: String {
+        appState.userProfile?.notifications.isEmpty == false ? "notifications_active" : "Bell"
     }
 
     private var eventFilters: some View {

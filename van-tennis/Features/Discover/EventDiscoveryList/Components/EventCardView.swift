@@ -144,16 +144,7 @@ struct EventCardView: View {
     }
 
     private var skillLevelBadgeColor: Color {
-        switch event.skillLevel {
-        case .one:
-            return RallyDiscoverStyle.primaryGreen
-        case .two:
-            return RallyDiscoverStyle.orangeBadge
-        case .three:
-            return RallyDiscoverStyle.redBadge
-        case .four:
-            return RallyDiscoverStyle.accentGreen
-        }
+        Constants.SkillLevelStyle.badgeColor(for: event.skillLevel)
     }
 
     private func eventBadge(_ text: String, color: Color) -> some View {

@@ -210,30 +210,21 @@ struct UserProfileView: View {
             }
 
             VStack(alignment: .leading, spacing: 10) {
-                Text(AppContent.string("profile.socialTagsDisplayLabel"))
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(.black)
-
-                ProfileTagFlowLayout(horizontalSpacing: 12, verticalSpacing: 8) {
-                    ForEach(displayedSocialTags, id: \.self) { tag in
-                        profileBadge(tag, color: RallyDiscoverStyle.accentGreen)
+                if displayedSocialTags.isEmpty {
+                    HStack(spacing: 10) {
+                        socialTagsLabel
+                        socialTagsToggleButton
                     }
+                } else {
+                    socialTagsLabel
 
-                    Button {
-                        viewModel.toggleSocialTagOptions()
-                    } label: {
-                        Image("add_box")
-                            .resizable()
-                            .renderingMode(.template)
-                            .scaledToFit()
-                            .foregroundStyle(RallyDiscoverStyle.ink)
-                            .opacity(0.5)
-                            .frame(width: 24, height: 24)
+                    ProfileTagFlowLayout(horizontalSpacing: 12, verticalSpacing: 8) {
+                        ForEach(displayedSocialTags, id: \.self) { tag in
+                            profileBadge(tag, color: RallyDiscoverStyle.accentGreen)
+                        }
+
+                        socialTagsToggleButton
                     }
-                    .buttonStyle(.plain)
-                    .disabled(viewModel.isSavingProfile)
-                    .accessibilityLabel(AppContent.string("profile.editSocialTags"))
-                    .frame(height: 22)
                 }
             }
 
@@ -344,6 +335,30 @@ struct UserProfileView: View {
         return AppContent.string("profile.genderValue", gender.displayName)
     }
 
+    private var socialTagsLabel: some View {
+        Text(AppContent.string("profile.socialTagsDisplayLabel"))
+            .font(.system(size: 15, weight: .medium))
+            .foregroundStyle(.black)
+    }
+
+    private var socialTagsToggleButton: some View {
+        Button {
+            viewModel.toggleSocialTagOptions()
+        } label: {
+            Image(viewModel.showsSocialTagOptions ? "minus" : "add_box")
+                .resizable()
+                .renderingMode(.template)
+                .scaledToFit()
+                .foregroundStyle(RallyDiscoverStyle.ink)
+                .opacity(0.5)
+                .frame(width: 24, height: 24)
+        }
+        .buttonStyle(.plain)
+        .disabled(viewModel.isSavingProfile)
+        .accessibilityLabel(AppContent.string("profile.editSocialTags"))
+        .frame(height: 22)
+    }
+
     private func profileBadge(_ text: String, color: Color) -> some View {
         Text(text)
             .font(.system(size: 10, weight: .semibold))
@@ -406,7 +421,7 @@ struct UserProfileView: View {
             .frame(minWidth: 71)
             .padding(.horizontal, 8)
             .frame(height: 22)
-            .background(RallyDiscoverStyle.primaryGreen, in: Capsule())
+            .background(Constants.SkillLevelStyle.badgeColor(for: selectedSkillLevel), in: Capsule())
             .shadow(color: RallyDiscoverStyle.shadow.opacity(0.58), radius: 18, x: 0, y: 8)
         }
         .disabled(viewModel.isSavingProfile)
@@ -426,9 +441,16 @@ struct UserProfileView: View {
                 }
             }
         } label: {
-            genderIcon(for: selectedGender)
-                .frame(width: 32, height: 32)
-                .contentShape(Rectangle())
+            HStack(spacing: 8) {
+                genderIcon(for: selectedGender)
+                    .frame(width: 24, height: 24)
+
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(Color.black.opacity(0.45))
+            }
+            .frame(height: 32)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .disabled(viewModel.isSavingProfile)

@@ -110,7 +110,7 @@ private enum MainTab: Hashable, CaseIterable {
     }
 
     func iconName(isSelected: Bool) -> String {
-        "\(iconBaseName)_\(isSelected ? "filled" : "lined")"
+        return "\(iconBaseName)_\(isSelected ? "filled" : "lined")"
     }
 
     private var iconBaseName: String {
@@ -163,9 +163,9 @@ private struct MainTabBar: View {
 
                         if showsBadge(for: tab) {
                             Circle()
-                                .fill(Color.red)
-                                .frame(width: 8, height: 8)
-                                .offset(x: -8, y: 7)
+                                .fill(MainTabBarStyle.badge)
+                                .frame(width: 11, height: 11)
+                                .offset(x: -7, y: 6)
                         }
                     }
                     .frame(maxWidth: .infinity)
@@ -198,5 +198,6 @@ private struct MainTabBar: View {
 
 private enum MainTabBarStyle {
     static let background = Color(red: 0.57, green: 0.66, blue: 0.34)
+    static let badge = Color(red: 0.20, green: 0.36, blue: 0.12)
     static let shadow = Color(red: 0.16, green: 0.27, blue: 0.18).opacity(0.16)
 }

@@ -334,11 +334,5 @@ enum EventSkillLevelFilter: Hashable, Identifiable {
         }
     }
 
-    static let options: [EventSkillLevelFilter] = [
-        .all,
-        .skillLevel(.one),
-        .skillLevel(.two),
-        .skillLevel(.three),
-        .skillLevel(.four)
-    ]
+    static let options: [EventSkillLevelFilter] = [.all] + SkillLevel.allCases.map { .skillLevel($0) }
 }

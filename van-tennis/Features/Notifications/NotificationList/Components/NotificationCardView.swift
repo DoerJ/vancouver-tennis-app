@@ -30,7 +30,10 @@ struct NotificationCardView: View {
                     if isDeleting {
                         ProgressView()
                     } else {
-                        Image(systemName: "trash")
+                        Image("delete")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 22, height: 22)
                     }
                 }
                 .disabled(isDeleting)

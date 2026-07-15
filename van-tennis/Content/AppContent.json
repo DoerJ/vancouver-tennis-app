@@ -37,11 +37,21 @@
       "missingGoogleIDToken": "Google sign in did not return an ID token for Supabase."
     },
     "onboarding": {
-      "title": "Complete your profile",
+      "title": "Build your profile",
       "subtitle": "Choose the tennis skill level, gender, and tags that best match you.",
-      "skillLevel": "Skill Level",
+      "create": "Create",
+      "skillLevel": "Skill level",
       "gender": "Gender",
-      "socialTags": "Social Tags"
+      "socialTags": "My tags",
+      "skillDescriptions": {
+        "one": "A beginner who is learning basic strokes, serves, scoring, and court movement.",
+        "oneFive": "A beginner who can rally occasionally and is starting to build more reliable strokes and serves.",
+        "two": "An advanced beginner who can sustain short rallies but is still developing consistent strokes, serves, and court movement.",
+        "twoFive": "A developing player with improving consistency, basic placement, and more confidence in casual rallies.",
+        "three": "An intermediate player with reliable strokes, improved placement, and enough consistency for longer rallies.",
+        "threeFive": "A strong intermediate player with consistent rallies, better shot selection, and growing match strategy.",
+        "four": "An advanced player with strong consistency, controlled pace, match strategy, and confident court coverage."
+      }
     }
   },
   "discover": {
@@ -208,7 +218,10 @@
       "cancelConfirmation": "This will delete the event and remove it from your hosted events.",
       "joinEvent": "Join Event",
       "waitingApproval": "Waiting for host to approve",
+      "leaveEventTitle": "Leave this event?",
       "leaveEvent": "Leave Event",
+      "stayEvent": "Stay",
+      "leaveConfirmation": "This will remove you from the event and notify the host and other participants.",
       "reportEvent": "Report event",
       "reportButton": "Report",
       "reportReceivedTitle": "Report Received",

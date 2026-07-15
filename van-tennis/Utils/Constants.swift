@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 enum Constants {
     static let locationToCourts: [EventCity: [TennisCourt]] = [
@@ -7,7 +8,57 @@ enum Constants {
     ]
 
     enum SocialProfile {
-        static let tagOptions = ["intj", "enfp", "software engineer"]
+        static let tagOptions = [
+            "Friendly",
+            "Engineer",
+            "Just for Fun",
+            "Competitive",
+            "New to City",
+            "Patient",
+            "Designer",
+            "Social",
+            "Remote Worker",
+            "Beginner-Friendly",
+            "Finance",
+            "Chill",
+            "Founder",
+            "High Energy",
+            "Healthcare",
+            "Quiet",
+            "Product",
+            "Open-Minded",
+            "Student",
+            "Education"
+        ]
+    }
+
+    enum SkillLevelStyle {
+        static func badgeColor(for skillLevel: SkillLevel) -> Color {
+            switch skillLevel {
+            case .one:
+                return Color(hex: 0x91A857)
+            case .oneFive:
+                return Color(hex: 0x2E3D1F)
+            case .two:
+                return Color(hex: 0xF2DB21)
+            case .twoFive:
+                return Color(hex: 0xEB9401)
+            case .three:
+                return Color(hex: 0xF27B35)
+            case .threeFive:
+                return Color(hex: 0xFA4720)
+            case .four:
+                return Color(hex: 0xFA2020)
+            }
+        }
+
+        static func badgeColor(for skillLevel: SkillLevel?) -> Color {
+            guard let skillLevel else {
+                return RallyDiscoverStyle.mutedText
+            }
+
+            return badgeColor(for: skillLevel)
+        }
     }
 
     enum Event {
@@ -56,5 +107,15 @@ enum Constants {
 
     enum StorageKey {
         static let unreadChatCountsByEventID = "van-tennis.unreadChatCountsByEventID"
+    }
+}
+
+private extension Color {
+    init(hex: UInt32) {
+        let red = Double((hex >> 16) & 0xFF) / 255.0
+        let green = Double((hex >> 8) & 0xFF) / 255.0
+        let blue = Double(hex & 0xFF) / 255.0
+
+        self.init(red: red, green: green, blue: blue)
     }
 }
