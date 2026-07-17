@@ -194,7 +194,7 @@ struct EventDiscoveryListView: View {
     }
 
     private var notificationIconName: String {
-        appState.userProfile?.notifications.isEmpty == false ? "notifications_active" : "Bell"
+        appState.userProfile?.notifications.isEmpty == false ? "bell_orange" : "Bell"
     }
 
     private var eventFilters: some View {

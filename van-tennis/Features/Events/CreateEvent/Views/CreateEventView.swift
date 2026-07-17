@@ -39,12 +39,20 @@ struct CreateEventView: View {
                             .background(RallyDiscoverStyle.card)
                             .clipShape(RoundedRectangle(cornerRadius: 24))
                     }
+
+                    createButton
                 }
                 .padding(.horizontal, 13)
                 .padding(.top, 18)
-                .padding(.bottom, 28)
+                .padding(.bottom, 128)
             }
+
+            floatingBackButton
+                .padding(.leading, 18)
+                .padding(.top, 17)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
+        .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
         .onChange(of: viewModel.startTime) { newStartTime in
@@ -79,45 +87,27 @@ struct CreateEventView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 34) {
-            HStack {
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 28, weight: .medium))
-                        .foregroundStyle(RallyDiscoverStyle.ink)
-                        .frame(width: 40, height: 40)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(AppContent.string("common.cancel"))
-
-                Spacer()
-
-                Button {
-                    Task {
-                        await saveEvent()
-                    }
-                } label: {
-                    Text(isSaving ? AppContent.string("events.create.creating") : AppContent.string("events.create.createButton"))
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 18)
-                        .frame(height: 34)
-                        .background(RallyDiscoverStyle.primaryGreen, in: Capsule())
-                }
-                .buttonStyle(.plain)
-                .disabled(isSaving)
-                .opacity(isSaving ? 0.7 : 1)
-            }
-            .padding(.horizontal, 16)
-
             Text(AppContent.string("events.create.title"))
                 .font(.system(size: 32, weight: .bold))
                 .foregroundStyle(RallyDiscoverStyle.ink)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 16)
         }
-        .padding(.top, 17)
+        .padding(.top, 91)
+    }
+
+    private var floatingBackButton: some View {
+        Button {
+            dismiss()
+        } label: {
+            Image(systemName: "chevron.left")
+                .font(.system(size: 20, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 44, height: 44)
+                .background(Color.black.opacity(0.28), in: Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(AppContent.string("common.back"))
     }
 
     private var formCard: some View {
@@ -144,6 +134,20 @@ struct CreateEventView: View {
         .background(RallyDiscoverStyle.card)
         .clipShape(RoundedRectangle(cornerRadius: 24))
         .shadow(color: RallyDiscoverStyle.shadow.opacity(0.58), radius: 18, x: 0, y: 8)
+    }
+
+    private var createButton: some View {
+        Button {
+            Task {
+                await saveEvent()
+            }
+        } label: {
+            Text(isSaving ? AppContent.string("events.create.creating") : AppContent.string("events.create.createButton"))
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(CreateEventBottomButtonStyle())
+        .disabled(isSaving)
+        .opacity(isSaving ? 0.7 : 1)
     }
 
     private var timeSection: some View {
@@ -532,6 +536,19 @@ struct CreateEventView: View {
     NavigationStack {
         CreateEventView(creatorSkillLevel: .three)
             .environmentObject(AppState())
+    }
+}
+
+private struct CreateEventBottomButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 16, weight: .semibold))
+            .foregroundStyle(.white)
+            .frame(minHeight: 52)
+            .padding(.horizontal, 18)
+            .background(RallyDiscoverStyle.primaryGreen.opacity(configuration.isPressed ? 0.78 : 1), in: Capsule())
+            .shadow(color: RallyDiscoverStyle.shadow.opacity(0.95), radius: 18, x: 0, y: 8)
+            .shadow(color: Color.black.opacity(0.05), radius: 6, x: 0, y: 2)
     }
 }
 

@@ -45,6 +45,11 @@ struct EventDetailView: View {
                 await loadEventDetails()
             }
             .ignoresSafeArea(edges: .top)
+
+            floatingBackButton
+                .padding(.leading, 18)
+                .padding(.top, 24)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
@@ -114,13 +119,24 @@ struct EventDetailView: View {
                 Task {
                     await savePendingMaxPlayers()
                 }
-            },
-            onDismiss: {
-                dismiss()
             }
         )
         .frame(height: 430)
         .clipped()
+    }
+
+    private var floatingBackButton: some View {
+        Button {
+            dismiss()
+        } label: {
+            Image(systemName: "chevron.left")
+                .font(.system(size: 20, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 44, height: 44)
+                .background(Color.black.opacity(0.28), in: Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(AppContent.string("common.back"))
     }
 
     private var shouldShowSaveButton: Bool {
@@ -673,7 +689,6 @@ private struct EventDetailHeroView: View {
     let isSaving: Bool
     let onReport: () -> Void
     let onSave: () -> Void
-    let onDismiss: () -> Void
 
     var body: some View {
         GeometryReader { geometry in
@@ -692,8 +707,7 @@ private struct EventDetailHeroView: View {
                     canSave: canSave,
                     isSaving: isSaving,
                     onReport: onReport,
-                    onSave: onSave,
-                    onDismiss: onDismiss
+                    onSave: onSave
                 )
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
@@ -710,21 +724,9 @@ private struct EventDetailTopBarView: View {
     let isSaving: Bool
     let onReport: () -> Void
     let onSave: () -> Void
-    let onDismiss: () -> Void
 
     var body: some View {
         HStack {
-            Button {
-                onDismiss()
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(.white)
-                    .frame(width: 44, height: 44)
-                    .background(Color.black.opacity(0.28), in: Circle())
-            }
-            .accessibilityLabel(AppContent.string("common.back"))
-
             Spacer()
 
             if showsReportButton {
@@ -772,7 +774,7 @@ private struct EventDetailTopBarView: View {
             }
         }
         .padding(.horizontal, 18)
-        .padding(.top, 64)
+        .padding(.top, 72)
         .frame(maxWidth: .infinity, alignment: .top)
     }
 }
