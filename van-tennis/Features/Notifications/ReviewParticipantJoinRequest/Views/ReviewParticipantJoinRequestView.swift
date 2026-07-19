@@ -243,7 +243,7 @@ private struct JoinRequestRejectButtonStyle: ButtonStyle {
             .font(.system(size: 13, weight: .semibold))
             .foregroundStyle(.white)
             .frame(width: 140, height: 40)
-            .background(Color(red: 0.92, green: 0.58, blue: 0.00).opacity(configuration.isPressed ? 0.78 : 1), in: Capsule())
+            .background(Color.black.opacity(configuration.isPressed ? 0.40 : 0.50), in: Capsule())
     }
 }
 

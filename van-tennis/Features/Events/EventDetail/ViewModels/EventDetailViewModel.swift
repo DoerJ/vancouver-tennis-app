@@ -36,6 +36,9 @@ final class EventDetailViewModel: ObservableObject {
                 .sorted { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
 
             return latestEvent
+        } catch is CancellationError {
+            print("EventDetailViewModel: event details load was cancelled.")
+            return nil
         } catch {
             errorMessage = error.localizedDescription
             return nil

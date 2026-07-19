@@ -41,9 +41,6 @@ struct EventDetailView: View {
                 }
                 .padding(.bottom, 118)
             }
-            .refreshable {
-                await loadEventDetails()
-            }
             .ignoresSafeArea(edges: .top)
 
             floatingBackButton
