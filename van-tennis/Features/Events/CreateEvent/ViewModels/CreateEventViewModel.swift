@@ -9,12 +9,12 @@ final class CreateEventViewModel: ObservableObject {
     @Published var maxPlayers = 2
     @Published var city: EventCity = .burnaby {
         didSet {
-            if !city.courts.contains(court) {
-                court = city.courts[0]
+            if let firstCourt = city.courts.first {
+                court = firstCourt
             }
         }
     }
-    @Published var court: TennisCourt = .bcitCourt
+    @Published var court: TennisCourt = EventCity.burnaby.courts.first ?? .bcitCourt
     @Published var errorMessage: String?
     @Published var isSaving = false
 

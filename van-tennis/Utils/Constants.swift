@@ -3,8 +3,38 @@ import SwiftUI
 
 enum Constants {
     static let locationToCourts: [EventCity: [TennisCourt]] = [
-        .burnaby: [.bcitCourt, .centralParkCourt],
-        .richmond: [.southarmCourt]
+        .burnaby: [
+            .bcitCourt,
+            .bonsorPublicTennisCourts,
+            .brentwoodParkTennisCourts,
+            .burnabyHeightsParkTennisCourt,
+            .burnabyLakeSportsComplexWest,
+            .burnabyLakeTennisCourts,
+            .burnabyTennisClub,
+            .byrneCreekTennisCourts,
+            .caribooParkTennisCourts,
+            .centralParkCourt,
+            .confederationParkTennisCourts,
+            .edmondsParkTennisCourts,
+            .ernieWinchParkTennisCourts,
+            .keswickPark,
+            .moodyParkTennisCourt,
+            .robertBurnabyParkTennisCourts,
+            .sfuTennisCourts,
+            .slocanParkPublicTennisCourts,
+            .stoneyCreekParkTennisCourts,
+            .willingdonHeightsPark
+        ],
+        .richmond: [
+            .blundellParkTennisCourts,
+            .kingGeorgeTennisCourts,
+            .richmondTennisClub,
+            .southarmCourt,
+            .stevestonLondonTennisCourts,
+            .tennisBCHub,
+            .tennisBritishColumbia,
+            .thompsonCommunityParkTennisCourts
+        ]
     ]
 
     enum SocialProfile {

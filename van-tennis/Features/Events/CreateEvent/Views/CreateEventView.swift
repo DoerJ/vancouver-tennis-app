@@ -318,7 +318,7 @@ struct CreateEventView: View {
                         }
                     }
                 } label: {
-                    badgeLabel(viewModel.court.displayName, width: 154, color: RallyDiscoverStyle.primaryGreen)
+                    adaptiveBadgeLabel(viewModel.court.displayName, color: RallyDiscoverStyle.primaryGreen)
                 }
                 .buttonStyle(.plain)
 
@@ -347,6 +347,19 @@ struct CreateEventView: View {
             .lineLimit(1)
             .minimumScaleFactor(0.75)
             .frame(width: width, height: 27)
+            .background(color, in: Capsule())
+            .shadow(color: RallyDiscoverStyle.shadow, radius: 9, x: 0, y: 8)
+    }
+
+    private func adaptiveBadgeLabel(_ text: String, color: Color) -> some View {
+        Text(text)
+            .font(.system(size: 10, weight: .semibold))
+            .foregroundStyle(.white)
+            .lineLimit(1)
+            .minimumScaleFactor(0.72)
+            .padding(.horizontal, 14)
+            .frame(minWidth: 98, maxWidth: 210)
+            .frame(height: 27)
             .background(color, in: Capsule())
             .shadow(color: RallyDiscoverStyle.shadow, radius: 9, x: 0, y: 8)
     }

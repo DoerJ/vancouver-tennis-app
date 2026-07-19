@@ -126,6 +126,10 @@ struct ChatView: View {
 
     private var conversationPreviews: [ChatConversationPreview] {
         events.compactMap { event in
+            guard event.endTime > Date() else {
+                return nil
+            }
+
             guard let latestMessage = appState.cachedChatMessages(eventID: event.id)?.last else {
                 return nil
             }
@@ -160,6 +164,7 @@ struct ChatView: View {
 
         do {
             events = appState.cachedEvents(ids: eventIDs)
+                .filter { $0.endTime > Date() }
                 .sorted { $0.startTime < $1.startTime }
 
             let missingEventIDs = appState.missingCachedEventIDs(ids: eventIDs)
@@ -168,6 +173,7 @@ struct ChatView: View {
                 appState.updateCachedEvents(fetchedEvents)
 
                 events = appState.cachedEvents(ids: eventIDs)
+                    .filter { $0.endTime > Date() }
                     .sorted { $0.startTime < $1.startTime }
             }
 

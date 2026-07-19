@@ -189,12 +189,12 @@ struct ChatRoomView: View {
                 if isSending {
                     ProgressView()
                         .tint(.white)
-                        .frame(width: 77, height: 35)
+                        .frame(width: 86, height: 40)
                 } else {
                     Text(AppContent.string("chat.send"))
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(.white)
-                        .frame(width: 77, height: 35)
+                        .frame(width: 86, height: 40)
                 }
             }
             .background(RallyDiscoverStyle.accentGreen, in: Capsule())
@@ -237,14 +237,14 @@ struct ChatRoomView: View {
 
             VStack(alignment: isCurrentUser ? .trailing : .leading, spacing: 8) {
                 Text(message.senderDisplayName)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(Color.black.opacity(0.6))
                     .padding(.horizontal, 5)
 
                 messageBubble(message, isCurrentUser: isCurrentUser)
 
                 Text(Self.sentTimeFormatter.string(from: message.sentAt))
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(Color.black.opacity(0.6))
                     .padding(.horizontal, 5)
             }
@@ -280,26 +280,27 @@ struct ChatRoomView: View {
                 .fixedSize(horizontal: true, vertical: false)
 
             bubbleText(message, isCurrentUser: isCurrentUser)
-                .frame(maxWidth: 194, alignment: .leading)
+                .frame(maxWidth: 214, alignment: .leading)
         }
-        .frame(maxWidth: 226, alignment: isCurrentUser ? .trailing : .leading)
+        .frame(maxWidth: 246, alignment: isCurrentUser ? .trailing : .leading)
     }
 
     private func bubbleText(_ message: ChatRoomMessage, isCurrentUser: Bool) -> some View {
         Text(Constants.Chat.displayBody(for: message.body))
-            .font(.system(size: 14, weight: .medium))
+            .font(.system(size: 15, weight: .medium))
             .lineSpacing(2)
             .foregroundStyle(isCurrentUser ? .white : Color.black.opacity(0.5))
             .multilineTextAlignment(.leading)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 12)
             .background(
                 isCurrentUser
                     ? RallyDiscoverStyle.accentGreen
                     : RallyDiscoverStyle.surface,
                 in: Capsule()
             )
-            .shadow(color: RallyDiscoverStyle.shadow.opacity(isCurrentUser ? 1 : 0.58), radius: 18, x: 0, y: 8)
+            .shadow(color: RallyDiscoverStyle.shadow.opacity(isCurrentUser ? 1 : 0.95), radius: 18, x: 0, y: 8)
+            .shadow(color: Color.black.opacity(isCurrentUser ? 0 : 0.05), radius: 6, x: 0, y: 2)
     }
 
     private func loadMessagesIfNeeded() async {
