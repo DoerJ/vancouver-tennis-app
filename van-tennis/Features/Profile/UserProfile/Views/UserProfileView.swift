@@ -220,7 +220,7 @@ struct UserProfileView: View {
 
                     ProfileTagFlowLayout(horizontalSpacing: 12, verticalSpacing: 8) {
                         ForEach(displayedSocialTags, id: \.self) { tag in
-                            profileBadge(tag, color: RallyDiscoverStyle.accentGreen)
+                            SocialTagBadge(tag, showsShadow: true, shadowOpacity: 0.58)
                         }
 
                         socialTagsToggleButton
@@ -261,7 +261,7 @@ struct UserProfileView: View {
                 }
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(ProfileChatLikeButtonStyle())
+            .buttonStyle(RallySurfaceActionButtonStyle())
             .disabled(isSigningOut)
 
             Button(role: .destructive) {
@@ -278,7 +278,7 @@ struct UserProfileView: View {
                 }
                 .frame(maxWidth: .infinity)
             }
-            .buttonStyle(ProfileCancelLikeButtonStyle())
+            .buttonStyle(RallyDestructiveActionButtonStyle())
             .disabled(viewModel.isDeletingAccount)
         }
     }
@@ -308,23 +308,10 @@ struct UserProfileView: View {
 
     @ViewBuilder
     private func genderIcon(for gender: Gender?) -> some View {
-        switch gender {
-        case .male:
-            Image("face_male")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 24, height: 24)
-        case .female:
-            Image("face_female")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 24, height: 24)
-        case .nonBinary, .preferNotToSay, nil:
-            Image("face_non_binary")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 24, height: 24)
-        }
+        Image(GenderDisplayHelper.iconName(for: gender))
+            .resizable()
+            .scaledToFit()
+            .frame(width: 24, height: 24)
     }
 
     private var genderAccessibilityLabel: String {
@@ -359,40 +346,17 @@ struct UserProfileView: View {
         .frame(height: 22)
     }
 
-    private func profileBadge(_ text: String, color: Color) -> some View {
-        Text(text)
-            .font(.system(size: 10, weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(minWidth: 71)
-            .padding(.horizontal, 8)
-            .frame(height: 22)
-            .background(color, in: Capsule())
-            .shadow(color: RallyDiscoverStyle.shadow.opacity(0.58), radius: 18, x: 0, y: 8)
-    }
-
     private func socialTagOption(_ tag: String) -> some View {
         Button {
             viewModel.toggleSocialTag(tag)
         } label: {
-            HStack(spacing: 5) {
-                Text(tag)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-
-                if viewModel.selectedSocialTags.contains(tag) {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 8, weight: .bold))
-                }
-            }
-            .font(.system(size: 10, weight: .semibold))
-            .foregroundStyle(.white)
-            .padding(.horizontal, 10)
-            .frame(height: 22)
-            .background(
-                viewModel.selectedSocialTags.contains(tag)
+            SocialTagBadge(
+                tag,
+                color: viewModel.selectedSocialTags.contains(tag)
                     ? RallyDiscoverStyle.primaryGreen
                     : RallyDiscoverStyle.accentGreen,
-                in: Capsule()
+                horizontalPadding: 10,
+                showsCheckmark: viewModel.selectedSocialTags.contains(tag)
             )
         }
         .buttonStyle(.plain)
@@ -459,31 +423,6 @@ struct UserProfileView: View {
     private func startDisplayNameEditing() {
         viewModel.startDisplayNameEditing(profile: appState.userProfile)
         isDisplayNameFocused = true
-    }
-}
-
-private struct ProfileChatLikeButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 16, weight: .semibold))
-            .foregroundStyle(.black)
-            .frame(minHeight: 52)
-            .padding(.horizontal, 18)
-            .background(Color(red: 0.97, green: 0.97, blue: 0.96).opacity(configuration.isPressed ? 0.72 : 1))
-            .clipShape(Capsule())
-            .shadow(color: RallyDiscoverStyle.shadow.opacity(0.95), radius: 18, x: 0, y: 8)
-            .shadow(color: Color.black.opacity(0.05), radius: 6, x: 0, y: 2)
-    }
-}
-
-private struct ProfileCancelLikeButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 16, weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(minHeight: 52)
-            .padding(.horizontal, 18)
-            .background(Color(red: 0.98, green: 0.28, blue: 0.13).opacity(configuration.isPressed ? 0.82 : 1), in: Capsule())
     }
 }
 

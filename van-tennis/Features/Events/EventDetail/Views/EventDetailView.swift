@@ -195,13 +195,13 @@ struct EventDetailView: View {
             VStack(alignment: .leading, spacing: 14) {
                 detailInfoRow(
                     title: AppContent.string("events.detail.start"),
-                    value: Self.dateTimeFormatter.string(from: event.startTime),
+                    value: DateFormattingHelper.eventDateTimeString(from: event.startTime),
                     systemImage: "clock"
                 )
 
                 detailInfoRow(
                     title: AppContent.string("events.detail.end"),
-                    value: Self.dateTimeFormatter.string(from: event.endTime),
+                    value: DateFormattingHelper.eventDateTimeString(from: event.endTime),
                     systemImage: "clock.badge.checkmark"
                 )
 
@@ -332,7 +332,7 @@ struct EventDetailView: View {
                     }
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(EventDetailChatButtonStyle())
+                .buttonStyle(RallySurfaceActionButtonStyle())
                 .disabled(isEventNotFound)
             }
 
@@ -354,7 +354,7 @@ struct EventDetailView: View {
                             .frame(maxWidth: .infinity)
                     }
                 }
-                .buttonStyle(EventDetailPrimaryButtonStyle())
+                .buttonStyle(RallyPrimaryActionButtonStyle())
                 .disabled(viewModel.isJoining || hasRequestedToJoin || isEventNotFound)
             }
 
@@ -379,7 +379,7 @@ struct EventDetailView: View {
                             .frame(maxWidth: .infinity)
                     }
                 }
-                .buttonStyle(EventDetailCancelButtonStyle())
+                .buttonStyle(RallyDestructiveActionButtonStyle())
                 .disabled(isCancelling || isEventNotFound)
             }
 
@@ -403,7 +403,7 @@ struct EventDetailView: View {
                             .frame(maxWidth: .infinity)
                     }
                 }
-                .buttonStyle(EventDetailCancelButtonStyle())
+                .buttonStyle(RallyDestructiveActionButtonStyle())
                 .disabled(viewModel.isLeaving || isEventNotFound)
             }
 
@@ -501,11 +501,11 @@ struct EventDetailView: View {
             return AppContent.string("events.card.tomorrow")
         }
 
-        return Self.shortDateFormatter.string(from: event.startTime)
+        return DateFormattingHelper.monthDayString(from: event.startTime)
     }
 
     private var detailStartTimeText: String {
-        Self.timeFormatter.string(from: event.startTime)
+        DateFormattingHelper.timeString(from: event.startTime)
     }
 
     private var skillLevelBadgeColor: Color {
@@ -643,12 +643,15 @@ struct EventDetailView: View {
     }
 
     private func savePendingMaxPlayers() async {
-        guard let pendingMaxPlayers, canSaveMaxPlayers else {
+        guard canSaveMaxPlayers else {
             return
         }
 
         do {
-            let updatedEvent = try await viewModel.updateMaxPlayers(pendingMaxPlayers, for: event)
+            guard let updatedEvent = try await viewModel.saveMaxPlayersUpdate(pendingMaxPlayers, for: event) else {
+                return
+            }
+
             event = updatedEvent
             self.pendingMaxPlayers = nil
             appState.applyUpdatedEvent(updatedEvent)
@@ -657,25 +660,6 @@ struct EventDetailView: View {
         }
     }
 
-    private static let dateTimeFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter
-    }()
-
-    private static let shortDateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d"
-        return formatter
-    }()
-
-    private static let timeFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .none
-        formatter.timeStyle = .short
-        return formatter
-    }()
 }
 
 private struct EventDetailHeroView: View {
@@ -994,12 +978,7 @@ private struct EventDetailProfileCard: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 6) {
                         ForEach(profile.socialTags, id: \.self) { tag in
-                            Text(tag)
-                                .font(.system(size: 10, weight: .semibold))
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, 10)
-                                .frame(height: 22)
-                                .background(RallyDiscoverStyle.accentGreen, in: Capsule())
+                            SocialTagBadge(tag, horizontalPadding: 10)
                         }
                     }
                 }
@@ -1011,13 +990,7 @@ private struct EventDetailProfileCard: View {
     }
 
     private var displayTitle: String {
-        let title = profile.displayName.isEmpty ? fallbackTitle : profile.displayName
-
-        guard let titleSuffix else {
-            return title
-        }
-
-        return "\(title) \(titleSuffix)"
+        ProfileDisplayHelper.displayName(profile.displayName, fallback: fallbackTitle, suffix: titleSuffix)
     }
 
     private var skillLevelBadgeColor: Color {
@@ -1035,154 +1008,6 @@ private struct EventDetailUnavailableProfileCard: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(16)
             .background(RallyDiscoverStyle.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-    }
-}
-
-private struct EventDetailPrimaryButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 16, weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(minHeight: 52)
-            .padding(.horizontal, 18)
-            .background(RallyDiscoverStyle.primaryGreen.opacity(configuration.isPressed ? 0.78 : 1), in: Capsule())
-    }
-}
-
-private struct EventDetailChatButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 16, weight: .semibold))
-            .foregroundStyle(.black)
-            .frame(minHeight: 52)
-            .padding(.horizontal, 18)
-            .background(Color(red: 0.97, green: 0.97, blue: 0.96).opacity(configuration.isPressed ? 0.72 : 1))
-            .clipShape(Capsule())
-            .shadow(color: RallyDiscoverStyle.shadow.opacity(0.95), radius: 18, x: 0, y: 8)
-            .shadow(color: Color.black.opacity(0.05), radius: 6, x: 0, y: 2)
-    }
-}
-
-private struct EventDetailSecondaryButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 16, weight: .semibold))
-            .foregroundStyle(RallyDiscoverStyle.ink)
-            .frame(minHeight: 52)
-            .padding(.horizontal, 18)
-            .background(RallyDiscoverStyle.surface.opacity(configuration.isPressed ? 0.72 : 1), in: RoundedRectangle(cornerRadius: 16))
-    }
-}
-
-private struct EventDetailDestructiveButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 16, weight: .semibold))
-            .foregroundStyle(.red)
-            .frame(minHeight: 52)
-            .padding(.horizontal, 18)
-            .background(Color.red.opacity(configuration.isPressed ? 0.16 : 0.10), in: Capsule())
-    }
-}
-
-private struct EventDetailCancelButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 16, weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(minHeight: 52)
-            .padding(.horizontal, 18)
-            .background(Color(red: 0.98, green: 0.28, blue: 0.13).opacity(configuration.isPressed ? 0.82 : 1), in: Capsule())
-    }
-}
-
-private struct EditMaxPlayersSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @State private var hasPlayerLimit: Bool
-    @State private var maxPlayers: Int
-    @State private var isSaving = false
-    @State private var errorMessage: String?
-
-    let currentPlayerCount: Int
-    let onSave: (Int?) async throws -> Void
-
-    init(
-        currentPlayerCount: Int,
-        initialMaxPlayers: Int?,
-        onSave: @escaping (Int?) async throws -> Void
-    ) {
-        self.currentPlayerCount = currentPlayerCount
-        self.onSave = onSave
-        _hasPlayerLimit = State(initialValue: initialMaxPlayers != nil)
-        _maxPlayers = State(initialValue: max(initialMaxPlayers ?? currentPlayerCount, currentPlayerCount))
-    }
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section(AppContent.string("events.create.players")) {
-                    Toggle(AppContent.string("events.create.limitPlayers"), isOn: $hasPlayerLimit)
-
-                    if hasPlayerLimit {
-                        Stepper(
-                            AppContent.string("events.create.maxPlayers", maxPlayers),
-                            value: $maxPlayers,
-                            in: currentPlayerCount...max(
-                                currentPlayerCount,
-                                Constants.Event.maximumPlayerLimit
-                            )
-                        )
-
-                        Text(AppContent.string("events.detail.editMaxPlayersInfo", currentPlayerCount))
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Text(AppContent.string("events.detail.unlimitedPlayersInfo"))
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                if let errorMessage {
-                    Section {
-                        Text(errorMessage)
-                            .foregroundStyle(.red)
-                    }
-                }
-            }
-            .navigationTitle(AppContent.string("events.detail.editMaxPlayers"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(AppContent.string("common.cancel")) {
-                        dismiss()
-                    }
-                    .disabled(isSaving)
-                }
-
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(isSaving ? AppContent.string("common.saving") : AppContent.string("common.save")) {
-                        Task {
-                            await save()
-                        }
-                    }
-                    .disabled(isSaving)
-                }
-            }
-        }
-    }
-
-    private func save() async {
-        isSaving = true
-        errorMessage = nil
-
-        do {
-            try await onSave(hasPlayerLimit ? maxPlayers : nil)
-            dismiss()
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-
-        isSaving = false
     }
 }
 

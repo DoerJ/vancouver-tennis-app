@@ -243,6 +243,8 @@ final class AppState: ObservableObject {
         for event in events {
             cachedEventsByID[event.id] = event
         }
+
+        eventsRevision += 1
     }
 
     func applyUpdatedEvent(_ event: TennisEvent) {

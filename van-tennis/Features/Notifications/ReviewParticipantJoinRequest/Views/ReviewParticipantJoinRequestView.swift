@@ -95,13 +95,19 @@ struct ReviewParticipantJoinRequestView: View {
 
                 if !profile.socialTags.isEmpty {
                     HStack(alignment: .top, spacing: 12) {
-                        Text(tagLabel(for: profile.gender))
+                        Text(GenderDisplayHelper.socialTagsLabel(for: profile.gender))
                             .font(.system(size: 15, weight: .medium))
                             .foregroundStyle(.black)
 
                         JoinRequestTagFlowLayout(horizontalSpacing: 10, verticalSpacing: 8) {
                             ForEach(profile.socialTags, id: \.self) { tag in
-                                socialTagBadge(tag)
+                                SocialTagBadge(
+                                    tag,
+                                    horizontalPadding: 14,
+                                    showsShadow: true,
+                                    shadowOpacity: 1,
+                                    shadowRadius: 9
+                                )
                             }
                         }
                     }
@@ -140,7 +146,7 @@ struct ReviewParticipantJoinRequestView: View {
                             .frame(maxWidth: .infinity)
                     }
                 }
-                .buttonStyle(JoinRequestApproveButtonStyle())
+                .buttonStyle(RallyCompactPrimaryButtonStyle())
                 .disabled(actionButtonsAreDisabled)
 
                 Button(role: .destructive) {
@@ -164,7 +170,7 @@ struct ReviewParticipantJoinRequestView: View {
                             .frame(maxWidth: .infinity)
                     }
                 }
-                .buttonStyle(JoinRequestRejectButtonStyle())
+                .buttonStyle(RallyCompactMutedButtonStyle())
                 .disabled(actionButtonsAreDisabled)
             }
         }
@@ -180,42 +186,10 @@ struct ReviewParticipantJoinRequestView: View {
             .shadow(color: RallyDiscoverStyle.shadow, radius: 9, x: 0, y: 8)
     }
 
-    private func socialTagBadge(_ tag: String) -> some View {
-        Text(tag)
-            .font(.system(size: 10, weight: .semibold))
-            .foregroundStyle(.white)
-            .padding(.horizontal, 14)
-            .frame(height: 22)
-            .background(RallyDiscoverStyle.accentGreen, in: Capsule())
-            .shadow(color: RallyDiscoverStyle.shadow, radius: 9, x: 0, y: 8)
-    }
-
     private func genderIcon(for gender: Gender?) -> some View {
-        switch gender {
-        case .male:
-            Image("face_male")
-                .resizable()
-                .scaledToFit()
-        case .female:
-            Image("face_female")
-                .resizable()
-                .scaledToFit()
-        case .nonBinary, .preferNotToSay, nil:
-            Image("face_non_binary")
-                .resizable()
-                .scaledToFit()
-        }
-    }
-
-    private func tagLabel(for gender: Gender?) -> String {
-        switch gender {
-        case .male:
-            return AppContent.string("joinRequest.hisTags")
-        case .female:
-            return AppContent.string("joinRequest.herTags")
-        case .nonBinary, .preferNotToSay, nil:
-            return AppContent.string("joinRequest.theirTags")
-        }
+        Image(GenderDisplayHelper.iconName(for: gender))
+            .resizable()
+            .scaledToFit()
     }
 
     private var actionButtonsAreDisabled: Bool {
@@ -223,27 +197,6 @@ struct ReviewParticipantJoinRequestView: View {
             || viewModel.isDisapproving
             || viewModel.hasCompletedReview
             || !viewModel.canReviewJoinRequest
-    }
-}
-
-private struct JoinRequestApproveButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(width: 140, height: 40)
-            .background(RallyDiscoverStyle.primaryGreen.opacity(configuration.isPressed ? 0.78 : 1), in: Capsule())
-            .opacity(configuration.isPressed ? 0.88 : 1)
-    }
-}
-
-private struct JoinRequestRejectButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(width: 140, height: 40)
-            .background(Color.black.opacity(configuration.isPressed ? 0.40 : 0.50), in: Capsule())
     }
 }
 

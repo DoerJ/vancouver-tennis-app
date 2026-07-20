@@ -218,14 +218,15 @@ struct EventDiscoveryListView: View {
                 }
             } label: {
                 Text(
-                    filterTitle(
+                    FilterDisplayHelper.selectedTitle(
                         defaultTitle: AppContent.string("discover.filters.location"),
-                        selectedTitle: viewModel.selectedCityFilter.displayName
+                        selectedTitle: viewModel.selectedCityFilter.displayName,
+                        allTitle: AppContent.string("events.filters.all")
                     )
                 )
                     .lineLimit(1)
             }
-            .buttonStyle(DiscoverFilterPillStyle())
+            .buttonStyle(RallyFilterPillButtonStyle())
 
             Menu {
                 ForEach(EventSkillLevelFilter.options) { filter in
@@ -241,14 +242,15 @@ struct EventDiscoveryListView: View {
                 }
             } label: {
                 Text(
-                    filterTitle(
+                    FilterDisplayHelper.selectedTitle(
                         defaultTitle: AppContent.string("discover.filters.level"),
-                        selectedTitle: viewModel.selectedSkillLevelFilter.displayName
+                        selectedTitle: viewModel.selectedSkillLevelFilter.displayName,
+                        allTitle: AppContent.string("events.filters.all")
                     )
                 )
                     .lineLimit(1)
             }
-            .buttonStyle(DiscoverFilterPillStyle())
+            .buttonStyle(RallyFilterPillButtonStyle())
 
             Menu {
                 ForEach(EventTypeFilter.options) { filter in
@@ -264,14 +266,15 @@ struct EventDiscoveryListView: View {
                 }
             } label: {
                 Text(
-                    filterTitle(
+                    FilterDisplayHelper.selectedTitle(
                         defaultTitle: AppContent.string("discover.filters.type"),
-                        selectedTitle: viewModel.selectedEventTypeFilter.displayName
+                        selectedTitle: viewModel.selectedEventTypeFilter.displayName,
+                        allTitle: AppContent.string("events.filters.all")
                     )
                 )
                     .lineLimit(1)
             }
-            .buttonStyle(DiscoverFilterPillStyle())
+            .buttonStyle(RallyFilterPillButtonStyle())
 
             Button {
                 guard viewModel.resetFilters() else {
@@ -292,10 +295,6 @@ struct EventDiscoveryListView: View {
             .accessibilityLabel(AppContent.string("discover.resetFilters"))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private func filterTitle(defaultTitle: String, selectedTitle: String) -> String {
-        selectedTitle == AppContent.string("events.filters.all") ? defaultTitle : selectedTitle
     }
 
     private var hasActiveFilters: Bool {
@@ -359,18 +358,6 @@ private enum EventDiscoveryRoute: Hashable {
 #Preview {
     EventDiscoveryListView()
         .environmentObject(AppState())
-}
-
-private struct DiscoverFilterPillStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 10, weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(width: 71, height: 22)
-            .background(RallyDiscoverStyle.accentGreen.opacity(configuration.isPressed ? 0.8 : 1))
-            .clipShape(Capsule())
-            .shadow(color: RallyDiscoverStyle.shadow, radius: 9, x: 0, y: 8)
-    }
 }
 
 enum RallyDiscoverStyle {

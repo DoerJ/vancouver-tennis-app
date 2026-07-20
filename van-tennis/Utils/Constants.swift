@@ -63,6 +63,25 @@ enum Constants {
     }
 
     enum SkillLevelStyle {
+        static func description(for skillLevel: SkillLevel) -> String {
+            switch skillLevel {
+            case .one:
+                return AppContent.string("auth.onboarding.skillDescriptions.one")
+            case .oneFive:
+                return AppContent.string("auth.onboarding.skillDescriptions.oneFive")
+            case .two:
+                return AppContent.string("auth.onboarding.skillDescriptions.two")
+            case .twoFive:
+                return AppContent.string("auth.onboarding.skillDescriptions.twoFive")
+            case .three:
+                return AppContent.string("auth.onboarding.skillDescriptions.three")
+            case .threeFive:
+                return AppContent.string("auth.onboarding.skillDescriptions.threeFive")
+            case .four:
+                return AppContent.string("auth.onboarding.skillDescriptions.four")
+            }
+        }
+
         static func badgeColor(for skillLevel: SkillLevel) -> Color {
             switch skillLevel {
             case .one:

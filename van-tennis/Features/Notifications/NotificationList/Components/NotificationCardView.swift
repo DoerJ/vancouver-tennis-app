@@ -42,7 +42,10 @@ struct NotificationCardView: View {
             }
 
             TimelineView(.periodic(from: Date(), by: 60)) { context in
-                Label(createdAtText(now: context.date), systemImage: "clock")
+                Label(
+                    NotificationTimeDisplayHelper.relativeCreatedAtText(notification.createdAt, now: context.date),
+                    systemImage: "clock"
+                )
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(RallyDiscoverStyle.mutedText)
             }
@@ -57,49 +60,6 @@ struct NotificationCardView: View {
         }
     }
 
-    private func createdAtText(now: Date) -> String {
-        guard let createdAt = notification.createdAt else {
-            return AppContent.string("notifications.unknownTime")
-        }
-
-        let calendar = Calendar.current
-
-        if calendar.isDateInYesterday(createdAt) {
-            return AppContent.string("notifications.yesterday")
-        }
-
-        let components = calendar.dateComponents(
-            [.year, .month, .weekOfYear, .day, .hour, .minute],
-            from: createdAt,
-            to: now
-        )
-
-        if let years = components.year, years > 0 {
-            return AppContent.string(years == 1 ? "notifications.relativeTime.year" : "notifications.relativeTime.years", years)
-        }
-
-        if let months = components.month, months > 0 {
-            return AppContent.string(months == 1 ? "notifications.relativeTime.month" : "notifications.relativeTime.months", months)
-        }
-
-        if let weeks = components.weekOfYear, weeks > 0 {
-            return AppContent.string(weeks == 1 ? "notifications.relativeTime.week" : "notifications.relativeTime.weeks", weeks)
-        }
-
-        if let days = components.day, days > 0 {
-            return AppContent.string(days == 1 ? "notifications.relativeTime.day" : "notifications.relativeTime.days", days)
-        }
-
-        if let hours = components.hour, hours > 0 {
-            return AppContent.string(hours == 1 ? "notifications.relativeTime.hour" : "notifications.relativeTime.hours", hours)
-        }
-
-        if let minutes = components.minute, minutes > 0 {
-            return AppContent.string(minutes == 1 ? "notifications.relativeTime.minute" : "notifications.relativeTime.minutes", minutes)
-        }
-
-        return AppContent.string("notifications.justNow")
-    }
 }
 
 #Preview {

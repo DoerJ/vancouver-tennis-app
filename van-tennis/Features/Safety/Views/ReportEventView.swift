@@ -86,7 +86,7 @@ struct ReportEventView: View {
             Text(isSubmitting ? AppContent.string("events.detail.submitting") : AppContent.string("events.detail.submit"))
                 .frame(maxWidth: .infinity)
         }
-        .buttonStyle(ReportSubmitButtonStyle(isEnabled: canSubmit))
+        .buttonStyle(RallyPrimaryActionButtonStyle(isEnabled: canSubmit, showsShadow: true))
         .disabled(!canSubmit)
     }
 
@@ -245,31 +245,5 @@ struct ReportEventView: View {
 
     private var canSubmit: Bool {
         !isSubmitting && !selectedReportedUserIDs.isEmpty && !selectedReasons.isEmpty
-    }
-}
-
-private struct ReportSubmitButtonStyle: ButtonStyle {
-    let isEnabled: Bool
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 16, weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(minHeight: 52)
-            .padding(.horizontal, 18)
-            .background(
-                RallyDiscoverStyle.primaryGreen.opacity(buttonOpacity(isPressed: configuration.isPressed)),
-                in: Capsule()
-            )
-            .shadow(color: RallyDiscoverStyle.shadow.opacity(isEnabled ? 0.95 : 0), radius: 18, x: 0, y: 8)
-            .shadow(color: Color.black.opacity(isEnabled ? 0.05 : 0), radius: 6, x: 0, y: 2)
-    }
-
-    private func buttonOpacity(isPressed: Bool) -> Double {
-        guard isEnabled else {
-            return 0.45
-        }
-
-        return isPressed ? 0.78 : 1
     }
 }

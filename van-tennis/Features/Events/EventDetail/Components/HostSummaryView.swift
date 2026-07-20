@@ -44,12 +44,7 @@ struct ProfileSummaryRow: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 6) {
                         ForEach(profile.socialTags, id: \.self) { tag in
-                            Text(tag)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(.secondary.opacity(0.12), in: Capsule())
+                            SocialTagBadge(tag, horizontalPadding: 10)
                         }
                     }
                 }
@@ -58,12 +53,6 @@ struct ProfileSummaryRow: View {
     }
 
     private var displayTitle: String {
-        let title = profile.displayName.isEmpty ? fallbackTitle : profile.displayName
-
-        guard let titleSuffix else {
-            return title
-        }
-
-        return "\(title) \(titleSuffix)"
+        ProfileDisplayHelper.displayName(profile.displayName, fallback: fallbackTitle, suffix: titleSuffix)
     }
 }

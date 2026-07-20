@@ -50,7 +50,13 @@ struct EventCardView: View {
                             by: Constants.EventDiscovery.cardTimelineRefreshInterval
                         )
                     ) { context in
-                        Text(upcomingTimeText(now: context.date))
+                        Text(
+                            EventTimeDisplayHelper.upcomingTimeText(
+                                startTime: event.startTime,
+                                endTime: event.endTime,
+                                now: context.date
+                            )
+                        )
                             .font(.system(size: 10, weight: .semibold))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 10)
@@ -98,7 +104,7 @@ struct EventCardView: View {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 6) {
                                 ForEach(hostProfile.socialTags, id: \.self) { tag in
-                                    socialTagBadge(tag)
+                                    SocialTagBadge(tag)
                                 }
                             }
                         }
@@ -128,7 +134,7 @@ struct EventCardView: View {
     }
 
     private var timeRangeText: String {
-        "\(Self.dateFormatter.string(from: event.startTime)) - \(Self.timeFormatter.string(from: event.endTime))"
+        "\(DateFormattingHelper.eventDateTimeString(from: event.startTime)) - \(DateFormattingHelper.timeString(from: event.endTime))"
     }
 
     private var hostLabel: String {
@@ -157,58 +163,6 @@ struct EventCardView: View {
             .background(color, in: Capsule())
     }
 
-    private func socialTagBadge(_ text: String) -> some View {
-        Text(text)
-            .font(.system(size: 10, weight: .semibold))
-            .foregroundStyle(.white)
-            .padding(.horizontal, 12)
-            .frame(height: 22)
-            .background(RallyDiscoverStyle.accentGreen, in: Capsule())
-    }
-
-    private func upcomingTimeText(now: Date) -> String {
-        let calendar = Calendar.current
-
-        if event.startTime <= now && now < event.endTime {
-            return AppContent.string("events.card.inProgress")
-        }
-
-        if event.endTime <= now {
-            return AppContent.string("events.card.ended")
-        }
-
-        if calendar.isDateInTomorrow(event.startTime) {
-            return AppContent.string("events.card.tomorrow")
-        }
-
-        let secondsUntilStart = event.startTime.timeIntervalSince(now)
-        let hoursUntilStart = Int(ceil(secondsUntilStart / 3_600))
-
-        if hoursUntilStart < 24 {
-            return AppContent.string(hoursUntilStart == 1 ? "events.card.inHour" : "events.card.inHours", hoursUntilStart)
-        }
-
-        let startOfToday = calendar.startOfDay(for: now)
-        let startOfEventDay = calendar.startOfDay(for: event.startTime)
-        let daysUntilStart = calendar.dateComponents([.day], from: startOfToday, to: startOfEventDay).day ?? 1
-        let displayDays = max(daysUntilStart, 1)
-
-        return AppContent.string(displayDays == 1 ? "events.card.inDay" : "events.card.inDays", displayDays)
-    }
-
-    private static let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter
-    }()
-
-    private static let timeFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .none
-        formatter.timeStyle = .short
-        return formatter
-    }()
 }
 
 #Preview {

@@ -80,7 +80,10 @@ struct MainTabView: View {
             return false
         }
 
-        return !profile.hostedEvents.isEmpty || !profile.participatedEvents.isEmpty
+        _ = appState.eventsRevision
+
+        let eventIDs = Array(Set(profile.hostedEvents + profile.participatedEvents))
+        return appState.cachedEvents(ids: eventIDs).contains { $0.endTime > Date() }
     }
 
 }

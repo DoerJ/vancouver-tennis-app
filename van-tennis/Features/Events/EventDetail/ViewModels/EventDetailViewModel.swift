@@ -137,7 +137,7 @@ final class EventDetailViewModel: ObservableObject {
         }
     }
 
-    func updateMaxPlayers(_ maxPlayers: Int?, for event: TennisEvent) async throws -> TennisEvent {
+    private func updateMaxPlayers(_ maxPlayers: Int?, for event: TennisEvent) async throws -> TennisEvent {
         if let maxPlayers, maxPlayers < event.playerCount {
             throw EventDetailViewModelError.maxPlayersBelowCurrentPlayerCount(event.playerCount)
         }
@@ -152,6 +152,19 @@ final class EventDetailViewModel: ObservableObject {
             eventID: event.id,
             maxPlayers: maxPlayers
         )
+    }
+
+    func saveMaxPlayersUpdate(_ pendingMaxPlayers: Int?, for event: TennisEvent) async throws -> TennisEvent? {
+        guard let pendingMaxPlayers else {
+            return nil
+        }
+
+        let hasMaxPlayersChange = event.maxPlayers.map { $0 != pendingMaxPlayers } ?? true
+        guard hasMaxPlayersChange else {
+            return nil
+        }
+
+        return try await updateMaxPlayers(pendingMaxPlayers, for: event)
     }
 
     func submitReport(

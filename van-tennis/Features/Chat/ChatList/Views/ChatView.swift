@@ -2,12 +2,9 @@ import SwiftUI
 
 struct ChatView: View {
     @EnvironmentObject private var appState: AppState
-    @State private var events: [TennisEvent] = []
-    @State private var isLoading = false
-    @State private var errorMessage: String?
+    @StateObject private var viewModel = ChatListViewModel()
 
     let onOpenProfile: () -> Void
-    private let eventService = EventService()
 
     init(onOpenProfile: @escaping () -> Void = {}) {
         self.onOpenProfile = onOpenProfile
@@ -19,10 +16,10 @@ struct ChatView: View {
                 Color.white
                     .ignoresSafeArea()
 
-                if isLoading {
+                if viewModel.isLoading {
                     ProgressView(AppContent.string("chat.loadingList"))
                         .rallyLoadingStatusStyle()
-                } else if let errorMessage {
+                } else if let errorMessage = viewModel.errorMessage {
                     ContentUnavailableView(
                         AppContent.string("chat.unableToLoad"),
                         systemImage: "exclamationmark.triangle",
@@ -62,16 +59,16 @@ struct ChatView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
             .task {
-                await loadEvents()
+                await viewModel.loadEvents(appState: appState)
             }
             .onChange(of: appState.userProfile?.hostedEvents) { _, _ in
                 Task {
-                    await loadEvents()
+                    await viewModel.loadEvents(appState: appState)
                 }
             }
             .onChange(of: appState.userProfile?.participatedEvents) { _, _ in
                 Task {
-                    await loadEvents()
+                    await viewModel.loadEvents(appState: appState)
                 }
             }
         }
@@ -125,7 +122,7 @@ struct ChatView: View {
     }
 
     private var conversationPreviews: [ChatConversationPreview] {
-        events.compactMap { event in
+        viewModel.events.compactMap { event in
             guard event.endTime > Date() else {
                 return nil
             }
@@ -142,54 +139,6 @@ struct ChatView: View {
         }
         .sorted { $0.latestMessage.sentAt > $1.latestMessage.sentAt }
     }
-
-    private func loadEvents() async {
-        guard let profile = appState.userProfile else {
-            events = []
-            isLoading = false
-            errorMessage = nil
-            return
-        }
-
-        let eventIDs = Array(Set(profile.hostedEvents + profile.participatedEvents))
-        guard !eventIDs.isEmpty else {
-            events = []
-            isLoading = false
-            errorMessage = nil
-            return
-        }
-
-        isLoading = events.isEmpty
-        errorMessage = nil
-
-        do {
-            events = appState.cachedEvents(ids: eventIDs)
-                .filter { $0.endTime > Date() }
-                .sorted { $0.startTime < $1.startTime }
-
-            let missingEventIDs = appState.missingCachedEventIDs(ids: eventIDs)
-            if !missingEventIDs.isEmpty {
-                let fetchedEvents = try await eventService.fetchEvents(ids: missingEventIDs)
-                appState.updateCachedEvents(fetchedEvents)
-
-                events = appState.cachedEvents(ids: eventIDs)
-                    .filter { $0.endTime > Date() }
-                    .sorted { $0.startTime < $1.startTime }
-            }
-
-            let uncachedMessageEventIDs = events
-                .map(\.id)
-                .filter { appState.cachedChatMessages(eventID: $0) == nil }
-
-            if !uncachedMessageEventIDs.isEmpty {
-                await appState.preloadCachedChatMessages(eventIDs: uncachedMessageEventIDs)
-            }
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-
-        isLoading = false
-    }
 }
 
 private struct ChatConversationPreview: Identifiable {
@@ -202,15 +151,8 @@ private struct ChatConversationPreview: Identifiable {
     }
 
     var eventDisplayName: String {
-        "\(event.court.displayName) (\(Self.eventDateFormatter.string(from: event.startTime)))"
+        "\(event.court.displayName) (\(DateFormattingHelper.eventDateString(from: event.startTime)))"
     }
-
-    private static let eventDateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .none
-        return formatter
-    }()
 }
 
 private struct ChatConversationCard: View {
@@ -240,7 +182,7 @@ private struct ChatConversationCard: View {
                         .accessibilityLabel(AppContent.string("chat.unreadAccessibility", preview.unreadCount))
                 }
 
-                Text(Self.timestampFormatter.string(from: preview.latestMessage.sentAt))
+                Text(DateFormattingHelper.shortDateTimeString(from: preview.latestMessage.sentAt))
                     .font(.caption)
                     .foregroundStyle(RallyDiscoverStyle.mutedText)
             }
@@ -261,14 +203,6 @@ private struct ChatConversationCard: View {
         }
         .accessibilityElement(children: .combine)
     }
-
-    private static let timestampFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.doesRelativeDateFormatting = true
-        formatter.dateStyle = .short
-        formatter.timeStyle = .short
-        return formatter
-    }()
 
     private var latestMessagePreviewText: String {
         let body = Constants.Chat.displayBody(for: preview.latestMessage.body)

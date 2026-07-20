@@ -2,14 +2,13 @@ import SwiftUI
 
 struct OnboardingProfileView: View {
     @EnvironmentObject private var appState: AppState
+    @StateObject private var viewModel = OnboardingProfileViewModel()
     @State private var selectedLevel: SkillLevel?
     @State private var selectedGender: Gender?
     @State private var selectedSocialTags: Set<String> = []
-    @State private var isSaving = false
-    @State private var errorMessage: String?
 
     private var canCreateProfile: Bool {
-        selectedLevel != nil && selectedGender != nil && !isSaving
+        selectedLevel != nil && selectedGender != nil && !viewModel.isSaving
     }
 
     var body: some View {
@@ -29,7 +28,7 @@ struct OnboardingProfileView: View {
                     skillLevelSelector
                         .padding(.top, 30)
 
-                    Text(skillLevelDescription)
+                    Text(Constants.SkillLevelStyle.description(for: selectedLevel ?? .one))
                         .font(.system(size: 15, weight: .medium))
                         .foregroundStyle(Color.black.opacity(0.5))
                         .lineSpacing(4)
@@ -53,7 +52,7 @@ struct OnboardingProfileView: View {
                     socialTagsSection
                         .padding(.top, 24)
 
-                    if let errorMessage {
+                    if let errorMessage = viewModel.errorMessage {
                         Text(errorMessage)
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(RallyDiscoverStyle.redBadge)
@@ -88,10 +87,15 @@ struct OnboardingProfileView: View {
 
             Button {
                 Task {
-                    await saveProfile()
+                    await viewModel.saveProfile(
+                        selectedLevel: selectedLevel,
+                        selectedGender: selectedGender,
+                        selectedSocialTags: selectedSocialTags,
+                        appState: appState
+                    )
                 }
             } label: {
-                Text(isSaving ? AppContent.string("common.saving") : AppContent.string("auth.onboarding.create"))
+                Text(viewModel.isSaving ? AppContent.string("common.saving") : AppContent.string("auth.onboarding.create"))
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(.white)
                     .frame(width: 88, height: 28)
@@ -207,21 +211,15 @@ struct OnboardingProfileView: View {
         Button {
             toggleSocialTag(tag)
         } label: {
-            HStack(spacing: 5) {
-                Text(tag)
-                    .lineLimit(1)
-
-                if selectedSocialTags.contains(tag) {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 7, weight: .bold))
-                }
-            }
-            .font(.system(size: 10, weight: .semibold))
-            .foregroundStyle(.white)
-            .padding(.horizontal, 14)
-            .frame(height: 22)
-            .background(tagColor(for: tag), in: Capsule())
-            .shadow(color: RallyDiscoverStyle.shadow, radius: 9, x: 0, y: 8)
+            SocialTagBadge(
+                tag,
+                color: tagColor(for: tag),
+                horizontalPadding: 14,
+                showsShadow: true,
+                shadowRadius: 9,
+                showsCheckmark: selectedSocialTags.contains(tag),
+                checkmarkSize: 7
+            )
         }
         .buttonStyle(.plain)
     }
@@ -252,40 +250,10 @@ struct OnboardingProfileView: View {
         Constants.SkillLevelStyle.badgeColor(for: selectedLevel ?? .one)
     }
 
-    private var skillLevelDescription: String {
-        switch selectedLevel ?? .one {
-        case .one:
-            return AppContent.string("auth.onboarding.skillDescriptions.one")
-        case .oneFive:
-            return AppContent.string("auth.onboarding.skillDescriptions.oneFive")
-        case .two:
-            return AppContent.string("auth.onboarding.skillDescriptions.two")
-        case .twoFive:
-            return AppContent.string("auth.onboarding.skillDescriptions.twoFive")
-        case .three:
-            return AppContent.string("auth.onboarding.skillDescriptions.three")
-        case .threeFive:
-            return AppContent.string("auth.onboarding.skillDescriptions.threeFive")
-        case .four:
-            return AppContent.string("auth.onboarding.skillDescriptions.four")
-        }
-    }
-
     private func genderIcon(for gender: Gender?) -> some View {
-        switch gender {
-        case .male:
-            Image("face_male")
-                .resizable()
-                .scaledToFit()
-        case .female:
-            Image("face_female")
-                .resizable()
-                .scaledToFit()
-        case .nonBinary, .preferNotToSay, nil:
-            Image("face_non_binary")
-                .resizable()
-                .scaledToFit()
-        }
+        Image(GenderDisplayHelper.iconName(for: gender))
+            .resizable()
+            .scaledToFit()
     }
 
     private func tagColor(for tag: String) -> Color {
@@ -324,26 +292,6 @@ struct OnboardingProfileView: View {
         return min(max(indicatorXPosition, badgeHalfWidth), width - badgeHalfWidth)
     }
 
-    private func saveProfile() async {
-        guard let selectedLevel, let selectedGender else {
-            return
-        }
-
-        isSaving = true
-        errorMessage = nil
-
-        do {
-            try await appState.updateProfile(
-                skillLevel: selectedLevel,
-                gender: selectedGender,
-                socialTags: Constants.SocialProfile.tagOptions.filter { selectedSocialTags.contains($0) }
-            )
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-
-        isSaving = false
-    }
 }
 
 private struct OnboardingTagFlowLayout: Layout {

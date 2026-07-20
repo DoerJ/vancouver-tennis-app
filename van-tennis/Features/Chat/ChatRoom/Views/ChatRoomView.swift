@@ -3,16 +3,10 @@ import SwiftUI
 struct ChatRoomView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appState: AppState
-    @State private var messages: [ChatRoomMessage] = []
-    @State private var draftMessage = ""
-    @State private var isLoading = false
-    @State private var isSending = false
-    @State private var errorMessage: String?
+    @StateObject private var viewModel = ChatRoomViewModel()
     @FocusState private var isComposerFocused: Bool
 
     let event: TennisEvent
-    private let chatMessageService = ChatMessageService()
-    private let profileService = ProfileService()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -26,15 +20,15 @@ struct ChatRoomView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(spacing: 36) {
-                        if isLoading && messages.isEmpty {
+                        if viewModel.isLoading && viewModel.messages.isEmpty {
                             ProgressView(AppContent.string("chat.loadingMessages"))
                                 .rallyLoadingStatusStyle()
                                 .padding(.top, 80)
-                        } else if messages.isEmpty {
+                        } else if viewModel.messages.isEmpty {
                             emptyState
                                 .padding(.top, 80)
                         } else {
-                            ForEach(messages) { message in
+                            ForEach(viewModel.messages) { message in
                                 messageRow(message)
                                     .id(message.id)
                             }
@@ -46,7 +40,7 @@ struct ChatRoomView: View {
                     .frame(maxWidth: .infinity)
                 }
                 .scrollDismissesKeyboard(.interactively)
-                .onChange(of: messages) { _, messages in
+                .onChange(of: viewModel.messages) { _, messages in
                     scrollToLatestMessage(with: proxy, messages: messages)
                 }
                 .onChange(of: isComposerFocused) { _, isFocused in
@@ -57,7 +51,7 @@ struct ChatRoomView: View {
                     Task {
                         try? await Task.sleep(nanoseconds: 250_000_000)
                         await MainActor.run {
-                            scrollToLatestMessage(with: proxy, messages: messages)
+                            scrollToLatestMessage(with: proxy, messages: viewModel.messages)
                         }
                     }
                 }
@@ -68,7 +62,7 @@ struct ChatRoomView: View {
                 .frame(height: 1)
                 .padding(.horizontal, 46)
 
-            if let errorMessage {
+            if let errorMessage = viewModel.errorMessage {
                 Text(errorMessage)
                     .font(.footnote.weight(.medium))
                     .foregroundStyle(RallyDiscoverStyle.redBadge)
@@ -77,13 +71,13 @@ struct ChatRoomView: View {
                     .padding(.top, 8)
             }
 
-            if draftMessageExceedsLimit {
+            if viewModel.draftMessageExceedsLimit {
                 Text(AppContent.string("chat.messageLengthError", Constants.Chat.maximumMessageLength))
                     .font(.footnote.weight(.medium))
                     .foregroundStyle(RallyDiscoverStyle.redBadge)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 22)
-                    .padding(.top, errorMessage == nil ? 8 : 2)
+                    .padding(.top, viewModel.errorMessage == nil ? 8 : 2)
             }
 
             composer
@@ -93,10 +87,10 @@ struct ChatRoomView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
         .task {
-            await loadMessagesIfNeeded()
+            await viewModel.loadMessagesIfNeeded(eventID: event.id, appState: appState)
         }
         .onChange(of: appState.chatMessagesRevision) { _, _ in
-            syncMessagesFromCache()
+            viewModel.syncMessagesFromCache(eventID: event.id, appState: appState)
         }
         .onAppear {
             appState.openChat(eventID: event.id)
@@ -164,7 +158,7 @@ struct ChatRoomView: View {
     private var composer: some View {
         HStack(alignment: .bottom, spacing: 16) {
             TextField(
-                text: $draftMessage,
+                text: $viewModel.draftMessage,
                 axis: .vertical
             ) {
                 Text(AppContent.string("chat.messagePlaceholder"))
@@ -183,10 +177,13 @@ struct ChatRoomView: View {
 
             Button {
                 Task {
-                    await sendMessage()
+                    let didSend = await viewModel.sendMessage(eventID: event.id, appState: appState)
+                    if didSend {
+                        isComposerFocused = false
+                    }
                 }
             } label: {
-                if isSending {
+                if viewModel.isSending {
                     ProgressView()
                         .tint(.white)
                         .frame(width: 86, height: 40)
@@ -199,33 +196,12 @@ struct ChatRoomView: View {
             }
             .background(RallyDiscoverStyle.accentGreen, in: Capsule())
             .shadow(color: RallyDiscoverStyle.shadow, radius: 18, x: 0, y: 8)
-            .disabled(isSending || trimmedDraftMessage.isEmpty || draftMessageExceedsLimit)
-            .opacity(isSending || trimmedDraftMessage.isEmpty || draftMessageExceedsLimit ? 0.55 : 1)
+            .disabled(viewModel.isSending || viewModel.trimmedDraftMessage.isEmpty || viewModel.draftMessageExceedsLimit)
+            .opacity(viewModel.isSending || viewModel.trimmedDraftMessage.isEmpty || viewModel.draftMessageExceedsLimit ? 0.55 : 1)
         }
         .padding(.horizontal, 23)
         .padding(.top, 30)
         .padding(.bottom, 30)
-    }
-
-    @MainActor
-    private func appendMessage(_ message: ChatRoomMessage) {
-        if !messages.contains(where: { $0.id == message.id }) {
-            messages.append(message)
-            messages.sort { $0.sentAt < $1.sentAt }
-        }
-
-        appState.appendCachedChatMessage(message, eventID: event.id)
-        print("ChatRoomView: cache revision \(appState.chatMessagesRevision), visible messages \(messages.count).")
-    }
-
-    @MainActor
-    private func syncMessagesFromCache() {
-        guard let cachedMessages = appState.cachedChatMessages(eventID: event.id) else {
-            return
-        }
-
-        messages = cachedMessages
-        print("ChatRoomView: synced \(messages.count) cached messages for event \(event.id).")
     }
 
     @ViewBuilder
@@ -243,7 +219,7 @@ struct ChatRoomView: View {
 
                 messageBubble(message, isCurrentUser: isCurrentUser)
 
-                Text(Self.sentTimeFormatter.string(from: message.sentAt))
+                Text(DateFormattingHelper.timeString(from: message.sentAt))
                     .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(Color.black.opacity(0.6))
                     .padding(.horizontal, 5)
@@ -303,106 +279,6 @@ struct ChatRoomView: View {
             .shadow(color: Color.black.opacity(isCurrentUser ? 0 : 0.05), radius: 6, x: 0, y: 2)
     }
 
-    private func loadMessagesIfNeeded() async {
-        // Load chat messages from cache first
-        if let cachedMessages = appState.cachedChatMessages(eventID: event.id) {
-            messages = cachedMessages
-            return
-        }
-
-        await loadMessages()
-    }
-
-    private func loadMessages() async {
-        isLoading = true
-        errorMessage = nil
-
-        do {
-            let chatMessages = try await chatMessageService.fetchMessages(eventID: event.id)
-            let senderIDs = Array(Set(chatMessages.map(\.senderID)))
-            let profilesByID = try await profileService.fetchProfiles(userIDs: senderIDs)
-                .reduce(into: [UUID: UserProfile]()) { profiles, profile in
-                    profiles[profile.id] = profile
-                }
-
-            messages = chatMessages.map { message in
-                ChatRoomMessage(
-                    id: message.id,
-                    senderID: message.senderID,
-                    senderDisplayName: profilesByID[message.senderID]?.displayName ?? AppContent.string("chat.unknownPlayer"),
-                    body: message.body,
-                    sentAt: message.createdAt
-                )
-            }
-            appState.updateCachedChatMessages(messages, eventID: event.id)
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-
-        isLoading = false
-    }
-
-    private func sendMessage() async {
-        let trimmedMessage = trimmedDraftMessage
-
-        guard !trimmedMessage.isEmpty else {
-            return
-        }
-
-        guard !draftMessageExceedsLimit else {
-            errorMessage = AppContent.string("chat.messageLengthError", Constants.Chat.maximumMessageLength)
-            return
-        }
-
-        guard let currentUser = appState.userProfile else {
-            errorMessage = AppContent.string("errors.noAuthenticatedUser")
-            return
-        }
-
-        isSending = true
-        errorMessage = nil
-
-        do {
-            let createdMessage = try await chatMessageService.createMessage(
-                NewChatMessage(
-                    eventID: event.id,
-                    senderID: currentUser.id,
-                    body: trimmedMessage
-                )
-            )
-
-            let message = ChatRoomMessage(
-                id: createdMessage.id,
-                senderID: createdMessage.senderID,
-                senderDisplayName: currentUser.displayName,
-                body: createdMessage.body,
-                sentAt: createdMessage.createdAt
-            )
-
-            await appendMessage(message)
-            draftMessage = ""
-            isComposerFocused = false
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-
-        isSending = false
-    }
-
-    private var trimmedDraftMessage: String {
-        draftMessage.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    private var draftMessageExceedsLimit: Bool {
-        draftMessage.count > Constants.Chat.maximumMessageLength
-    }
-
-    private static let sentTimeFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .none
-        formatter.timeStyle = .short
-        return formatter
-    }()
 }
 
 #Preview {

@@ -145,7 +145,7 @@ struct CreateEventView: View {
             Text(isSaving ? AppContent.string("events.create.creating") : AppContent.string("events.create.createButton"))
                 .frame(maxWidth: .infinity)
         }
-        .buttonStyle(CreateEventBottomButtonStyle())
+        .buttonStyle(RallyPrimaryActionButtonStyle(showsShadow: true))
         .disabled(isSaving)
         .opacity(isSaving ? 0.7 : 1)
     }
@@ -385,13 +385,13 @@ struct CreateEventView: View {
                 .frame(width: 50, alignment: .leading)
 
             timePickerBadge(
-                text: Self.badgeDateFormatter.string(from: selection.wrappedValue),
+                text: DateFormattingHelper.fullDateBadgeString(from: selection.wrappedValue),
                 picker: datePicker,
                 color: color
             )
 
             timePickerBadge(
-                text: Self.badgeTimeFormatter.string(from: selection.wrappedValue),
+                text: DateFormattingHelper.timeBadgeString(from: selection.wrappedValue),
                 picker: timePicker,
                 color: color
             )
@@ -530,18 +530,6 @@ struct CreateEventView: View {
         }
     }
 
-    private static let badgeDateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d, yyyy"
-        return formatter
-    }()
-
-    private static let badgeTimeFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "h:mm a"
-        return formatter
-    }()
-
     private static let timePickerBadgeCornerRadius: CGFloat = 13.5
 }
 
@@ -549,19 +537,6 @@ struct CreateEventView: View {
     NavigationStack {
         CreateEventView(creatorSkillLevel: .three)
             .environmentObject(AppState())
-    }
-}
-
-private struct CreateEventBottomButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 16, weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(minHeight: 52)
-            .padding(.horizontal, 18)
-            .background(RallyDiscoverStyle.primaryGreen.opacity(configuration.isPressed ? 0.78 : 1), in: Capsule())
-            .shadow(color: RallyDiscoverStyle.shadow.opacity(0.95), radius: 18, x: 0, y: 8)
-            .shadow(color: Color.black.opacity(0.05), radius: 6, x: 0, y: 2)
     }
 }
 
