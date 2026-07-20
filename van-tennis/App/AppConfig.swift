@@ -27,6 +27,24 @@ enum AppConfig {
         return value
     }()
 
+    static let googleAuthorizationEndpoint: URL = {
+        guard let value = Bundle.main.object(forInfoDictionaryKey: "GoogleAuthorizationEndpoint") as? String,
+              let url = URL(string: value) else {
+            fatalError("Missing or invalid GoogleAuthorizationEndpoint in Info.plist")
+        }
+
+        return url
+    }()
+
+    static let googleTokenEndpoint: URL = {
+        guard let value = Bundle.main.object(forInfoDictionaryKey: "GoogleTokenEndpoint") as? String,
+              let url = URL(string: value) else {
+            fatalError("Missing or invalid GoogleTokenEndpoint in Info.plist")
+        }
+
+        return url
+    }()
+
     static let googleReversedClientID: String = {
         // The reversed client ID is used for the URL scheme in ASWebAuthenticationSession callback
         // It should be in the format "com.googleusercontent.apps.YOUR_CLIENT_ID"

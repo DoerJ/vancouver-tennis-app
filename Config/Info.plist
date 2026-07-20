@@ -39,6 +39,10 @@
 	<string>$(SUPABASE_PROJECT_URL)</string>
 	<key>GoogleClientID</key>
 	<string>$(GOOGLE_CLIENT_ID)</string>
+	<key>GoogleAuthorizationEndpoint</key>
+	<string>$(GOOGLE_AUTHORIZATION_ENDPOINT)</string>
+	<key>GoogleTokenEndpoint</key>
+	<string>$(GOOGLE_TOKEN_ENDPOINT)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>

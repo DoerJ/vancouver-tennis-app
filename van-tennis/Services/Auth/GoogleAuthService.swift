@@ -110,6 +110,7 @@ enum GoogleAuthError: LocalizedError {
 enum GoogleOAuthConfiguration {
     static let clientID = AppConfig.googleClientID
     static let reversedClientID = AppConfig.googleReversedClientID
+    static let authorizationEndpoint = AppConfig.googleAuthorizationEndpoint
     static let callbackScheme = reversedClientID
     static let redirectURI = "\(callbackScheme):/oauthredirect"
 
@@ -118,7 +119,9 @@ enum GoogleOAuthConfiguration {
             throw GoogleAuthError.missingClientID
         }
 
-        var components = URLComponents(string: "https://accounts.google.com/o/oauth2/v2/auth")!
+        guard var components = URLComponents(url: authorizationEndpoint, resolvingAgainstBaseURL: false) else {
+            throw GoogleAuthError.invalidCallback
+        }
         components.queryItems = [
             URLQueryItem(name: "client_id", value: clientID),
             URLQueryItem(name: "redirect_uri", value: redirectURI),
@@ -157,12 +160,14 @@ private struct GoogleOAuthCallback {
 }
 
 private enum GoogleOAuthTokenExchanger {
+    static let tokenEndpoint = AppConfig.googleTokenEndpoint
+
     static func exchangeCode(
         _ code: String,
         codeVerifier: String,
         redirectURI: String
     ) async throws -> GoogleAuthSession {
-        var request = URLRequest(url: URL(string: "https://oauth2.googleapis.com/token")!)
+        var request = URLRequest(url: tokenEndpoint)
         request.httpMethod = "POST"
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         request.httpBody = formBody([
