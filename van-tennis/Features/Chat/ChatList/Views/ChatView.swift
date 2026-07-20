@@ -101,7 +101,9 @@ struct ChatView: View {
         RallyEmptyState(
             iconName: "chat_lined",
             title: AppContent.string("chat.emptyList.title"),
-            description: AppContent.string("chat.emptyList.description")
+            description: AppContent.string("chat.emptyList.description"),
+            titleFontSize: 17,
+            descriptionFontSize: 15
         )
     }
 

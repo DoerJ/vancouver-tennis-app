@@ -311,13 +311,17 @@ struct EventDiscoveryListView: View {
             RallyEmptyState(
                 iconName: "playing_tennis",
                 title: AppContent.string("discover.empty.title"),
-                description: AppContent.string("discover.empty.description")
+                description: AppContent.string("discover.empty.description"),
+                titleFontSize: 17,
+                descriptionFontSize: 15
             )
         } else {
             RallyEmptyState(
                 iconName: "playing_tennis",
                 title: AppContent.string("discover.emptyFiltered.title"),
-                description: AppContent.string("discover.emptyFiltered.description")
+                description: AppContent.string("discover.emptyFiltered.description"),
+                titleFontSize: 17,
+                descriptionFontSize: 15
             )
         }
     }

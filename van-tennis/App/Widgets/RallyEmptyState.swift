@@ -4,6 +4,22 @@ struct RallyEmptyState: View {
     let iconName: String
     let title: String
     let description: String
+    let titleFontSize: CGFloat
+    let descriptionFontSize: CGFloat
+
+    init(
+        iconName: String,
+        title: String,
+        description: String,
+        titleFontSize: CGFloat = 15,
+        descriptionFontSize: CGFloat = 13
+    ) {
+        self.iconName = iconName
+        self.title = title
+        self.description = description
+        self.titleFontSize = titleFontSize
+        self.descriptionFontSize = descriptionFontSize
+    }
 
     var body: some View {
         VStack(spacing: 10) {
@@ -16,12 +32,12 @@ struct RallyEmptyState: View {
                 .accessibilityHidden(true)
 
             Text(title)
-                .font(.system(size: 15, weight: .semibold))
+                .font(.system(size: titleFontSize, weight: .semibold))
                 .foregroundStyle(RallyDiscoverStyle.ink)
                 .multilineTextAlignment(.center)
 
             Text(description)
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: descriptionFontSize, weight: .medium))
                 .foregroundStyle(RallyDiscoverStyle.mutedText)
                 .multilineTextAlignment(.center)
                 .lineSpacing(2)

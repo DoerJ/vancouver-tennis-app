@@ -43,7 +43,9 @@ struct MyEventsView: View {
                                     RallyEmptyState(
                                         iconName: "playing_tennis",
                                         title: AppContent.string("myEvents.empty.title"),
-                                        description: AppContent.string("myEvents.empty.description")
+                                        description: AppContent.string("myEvents.empty.description"),
+                                        titleFontSize: 17,
+                                        descriptionFontSize: 15
                                     )
                                     .frame(maxWidth: .infinity)
                                     .padding(.top, 80)
