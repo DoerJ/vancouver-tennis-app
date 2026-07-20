@@ -123,17 +123,9 @@ struct EventDetailView: View {
     }
 
     private var floatingBackButton: some View {
-        Button {
+        RallyCircularBackButton {
             dismiss()
-        } label: {
-            Image(systemName: "chevron.left")
-                .font(.system(size: 20, weight: .bold))
-                .foregroundStyle(.white)
-                .frame(width: 44, height: 44)
-                .background(Color.black.opacity(0.28), in: Circle())
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(AppContent.string("common.back"))
     }
 
     private var shouldShowSaveButton: Bool {
@@ -239,13 +231,7 @@ struct EventDetailView: View {
 
                 Spacer(minLength: 10)
 
-                Text(event.skillLevel.rawValue)
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(minWidth: 71)
-                    .padding(.horizontal, 8)
-                    .frame(height: 22)
-                    .background(skillLevelBadgeColor, in: Capsule())
+                SkillLevelBadge(event.skillLevel)
             }
 
             Text(detailSummaryText)
@@ -508,10 +494,6 @@ struct EventDetailView: View {
         DateFormattingHelper.timeString(from: event.startTime)
     }
 
-    private var skillLevelBadgeColor: Color {
-        Constants.SkillLevelStyle.badgeColor(for: event.skillLevel)
-    }
-
     private func detailInfoRow(title: String, value: String, systemImage: String? = nil, imageName: String? = nil) -> some View {
         HStack(spacing: 12) {
             detailInfoIcon(systemImage: systemImage, imageName: imageName)
@@ -574,67 +556,43 @@ struct EventDetailView: View {
     }
 
     private func submitReport() async {
-        guard let currentUser = appState.userProfile else {
-            reportErrorMessage = AppContent.string("errors.noAuthenticatedUser")
-            return
-        }
+        reportErrorMessage = nil
 
-        do {
-            try await viewModel.submitReport(
-                event: event,
-                reporter: currentUser,
-                reportedUserIDs: Array(selectedReportedUserIDs),
-                reasons: Array(selectedReportReasons),
-                details: reportDescription
-            )
+        if await viewModel.submitReport(
+            event: event,
+            appState: appState,
+            reportedUserIDs: Array(selectedReportedUserIDs),
+            reasons: Array(selectedReportReasons),
+            details: reportDescription
+        ) {
             isShowingReportSheet = false
             isShowingReportSubmittedAlert = true
-        } catch {
-            reportErrorMessage = error.localizedDescription
+        } else {
+            reportErrorMessage = viewModel.errorMessage
         }
     }
 
     private func cancelEvent() async {
         isCancelling = true
-        viewModel.errorMessage = nil
-
-        do {
-            try await appState.cancelHostedEvent(event)
-            onEventCancelled(event.id)
-            dismiss()
-        } catch {
-            viewModel.errorMessage = error.localizedDescription
+        defer {
+            isCancelling = false
         }
 
-        isCancelling = false
+        if await viewModel.cancelHostedEvent(event, appState: appState) {
+            onEventCancelled(event.id)
+            dismiss()
+        }
     }
 
     private func joinEvent() async {
-        guard let currentUser = appState.userProfile else {
-            viewModel.errorMessage = AppContent.string("errors.noAuthenticatedUser")
-            return
-        }
-
-        do {
-            try await viewModel.joinEvent(event, currentUser: currentUser)
+        if await viewModel.requestToJoinEvent(event, appState: appState) {
             hasRequestedToJoin = true
-        } catch {
-            viewModel.errorMessage = error.localizedDescription
         }
     }
 
     private func leaveEvent() async {
-        guard let currentUser = appState.userProfile else {
-            viewModel.errorMessage = AppContent.string("errors.noAuthenticatedUser")
-            return
-        }
-
-        do {
-            try await viewModel.leaveEvent(event, currentUser: currentUser)
-            appState.removeCachedEvent(event.id)
+        if await viewModel.leaveEvent(event, appState: appState) {
             dismiss()
-        } catch {
-            viewModel.errorMessage = error.localizedDescription
         }
     }
 
@@ -965,13 +923,7 @@ private struct EventDetailProfileCard: View {
 
                 Spacer(minLength: 8)
 
-                Text(profile.skillLevel?.rawValue ?? AppContent.string("events.host.skillNotSet"))
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(minWidth: 71)
-                    .padding(.horizontal, 8)
-                    .frame(height: 22)
-                    .background(skillLevelBadgeColor, in: Capsule())
+                SkillLevelBadge(profile.skillLevel)
             }
 
             if !profile.socialTags.isEmpty {
@@ -993,9 +945,6 @@ private struct EventDetailProfileCard: View {
         ProfileDisplayHelper.displayName(profile.displayName, fallback: fallbackTitle, suffix: titleSuffix)
     }
 
-    private var skillLevelBadgeColor: Color {
-        Constants.SkillLevelStyle.badgeColor(for: profile.skillLevel)
-    }
 }
 
 private struct EventDetailUnavailableProfileCard: View {

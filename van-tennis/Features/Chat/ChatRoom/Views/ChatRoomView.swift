@@ -12,10 +12,7 @@ struct ChatRoomView: View {
         VStack(spacing: 0) {
             chatHeader
 
-            Rectangle()
-                .fill(Color.black.opacity(0.1))
-                .frame(height: 1)
-                .padding(.horizontal, 46)
+            RallyDivider(horizontalPadding: 46)
 
             ScrollViewReader { proxy in
                 ScrollView {
@@ -57,10 +54,7 @@ struct ChatRoomView: View {
                 }
             }
 
-            Rectangle()
-                .fill(Color.black.opacity(0.1))
-                .frame(height: 1)
-                .padding(.horizontal, 46)
+            RallyDivider(horizontalPadding: 46)
 
             if let errorMessage = viewModel.errorMessage {
                 Text(errorMessage)
@@ -111,17 +105,9 @@ struct ChatRoomView: View {
                 .padding(.horizontal, 70)
 
             HStack {
-                Button {
+                RallyCircularBackButton {
                     dismiss()
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(width: 44, height: 44)
-                        .background(Color.black.opacity(0.28), in: Circle())
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel(AppContent.string("common.back"))
 
                 Spacer()
             }

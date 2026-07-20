@@ -10,16 +10,9 @@ struct ReviewParticipantJoinRequestView: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 0) {
-                Button {
+                RallyCircularBackButton {
                     dismiss()
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(width: 44, height: 44)
-                        .background(Color.black.opacity(0.28), in: Circle())
                 }
-                .accessibilityLabel(AppContent.string("common.back"))
                 .padding(.top, 24)
 
                 Text(AppContent.string("joinRequest.title"))
@@ -77,8 +70,7 @@ struct ReviewParticipantJoinRequestView: View {
                         .font(.system(size: 15, weight: .medium))
                         .foregroundStyle(.black)
 
-                    genderIcon(for: profile.gender)
-                        .frame(width: 24, height: 24)
+                    GenderIconView(profile.gender, size: 24)
 
                     Spacer(minLength: 0)
                 }
@@ -89,7 +81,7 @@ struct ReviewParticipantJoinRequestView: View {
                             .font(.system(size: 15, weight: .medium))
                             .foregroundStyle(.black)
 
-                        skillLevelBadge(skillLevel)
+                        SkillLevelBadge(skillLevel, width: 71, minWidth: nil, showsShadow: true, shadowRadius: 9)
                     }
                 }
 
@@ -119,10 +111,7 @@ struct ReviewParticipantJoinRequestView: View {
 
     private var requestActions: some View {
         VStack(spacing: 24) {
-            Rectangle()
-                .fill(Color.black.opacity(0.10))
-                .frame(maxWidth: 301)
-                .frame(height: 1)
+            RallyDivider(width: 301)
 
             HStack(spacing: 28) {
                 Button {
@@ -175,21 +164,6 @@ struct ReviewParticipantJoinRequestView: View {
             }
         }
         .frame(maxWidth: .infinity)
-    }
-
-    private func skillLevelBadge(_ skillLevel: SkillLevel) -> some View {
-        Text(skillLevel.rawValue)
-            .font(.system(size: 10, weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(width: 71, height: 22)
-            .background(Constants.SkillLevelStyle.badgeColor(for: skillLevel), in: Capsule())
-            .shadow(color: RallyDiscoverStyle.shadow, radius: 9, x: 0, y: 8)
-    }
-
-    private func genderIcon(for gender: Gender?) -> some View {
-        Image(GenderDisplayHelper.iconName(for: gender))
-            .resizable()
-            .scaledToFit()
     }
 
     private var actionButtonsAreDisabled: Bool {

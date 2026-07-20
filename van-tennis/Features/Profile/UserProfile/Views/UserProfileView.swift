@@ -296,22 +296,11 @@ struct UserProfileView: View {
     }
 
     private var profileDivider: some View {
-        Rectangle()
-            .fill(Color.black.opacity(0.1))
-            .frame(height: 1)
-            .padding(.leading, 2)
+        RallyDivider(leadingPadding: 2)
     }
 
     private var displayedSocialTags: [String] {
         Constants.SocialProfile.tagOptions.filter { appState.userProfile?.socialTags.contains($0) == true }
-    }
-
-    @ViewBuilder
-    private func genderIcon(for gender: Gender?) -> some View {
-        Image(GenderDisplayHelper.iconName(for: gender))
-            .resizable()
-            .scaledToFit()
-            .frame(width: 24, height: 24)
     }
 
     private var genderAccessibilityLabel: String {
@@ -377,16 +366,7 @@ struct UserProfileView: View {
                 }
             }
         } label: {
-            HStack(spacing: 5) {
-                Text(selectedSkillLevel.rawValue)
-            }
-            .font(.system(size: 10, weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(minWidth: 71)
-            .padding(.horizontal, 8)
-            .frame(height: 22)
-            .background(Constants.SkillLevelStyle.badgeColor(for: selectedSkillLevel), in: Capsule())
-            .shadow(color: RallyDiscoverStyle.shadow.opacity(0.58), radius: 18, x: 0, y: 8)
+            SkillLevelBadge(selectedSkillLevel, showsShadow: true, shadowOpacity: 0.58)
         }
         .disabled(viewModel.isSavingProfile)
     }
@@ -406,8 +386,7 @@ struct UserProfileView: View {
             }
         } label: {
             HStack(spacing: 8) {
-                genderIcon(for: selectedGender)
-                    .frame(width: 24, height: 24)
+                GenderIconView(selectedGender, size: 24)
 
                 Image(systemName: "chevron.down")
                     .font(.system(size: 11, weight: .semibold))

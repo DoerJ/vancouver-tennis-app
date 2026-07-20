@@ -69,7 +69,7 @@ struct NotificationListView: View {
                         }
                         // .refreshable wrapper task can be cancelled by SwiftUI, the actual notification fetch is now owned by view model
                         .refreshable {
-                            refreshNotifications(showsLoading: viewModel.notifications.isEmpty)
+                            viewModel.refreshNotifications(appState: appState, showsLoading: viewModel.notifications.isEmpty)
                         }
                     }
                 }
@@ -86,12 +86,12 @@ struct NotificationListView: View {
             }
 
             Task {
-                await loadNotifications(showsLoading: false)
+                await viewModel.loadNotifications(appState: appState, showsLoading: false)
             }
         }
         .onAppear {
             Task {
-                await loadNotifications(showsLoading: true)
+                await viewModel.loadNotifications(appState: appState, showsLoading: true)
             }
         }
     }
@@ -109,54 +109,15 @@ struct NotificationListView: View {
     }
 
     private var emptyNotificationsView: some View {
-        VStack(spacing: 10) {
-            Image("Bell")
-                .resizable()
-                .renderingMode(.template)
-                .scaledToFit()
-                .foregroundStyle(RallyDiscoverStyle.ink)
-                .frame(width: 34, height: 34)
-                .accessibilityHidden(true)
-
-            Text(AppContent.string("notifications.empty.title"))
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(RallyDiscoverStyle.ink)
-                .multilineTextAlignment(.center)
-
-            Text(AppContent.string("notifications.empty.description"))
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(RallyDiscoverStyle.mutedText)
-                .multilineTextAlignment(.center)
-                .lineSpacing(2)
-        }
-        .padding(.horizontal, 28)
+        RallyEmptyState(
+            iconName: "Bell",
+            title: AppContent.string("notifications.empty.title"),
+            description: AppContent.string("notifications.empty.description")
+        )
     }
 
     private var notificationsDivider: some View {
-        Rectangle()
-            .fill(Color.black.opacity(0.1))
-            .frame(width: 301, height: 1)
-            .frame(maxWidth: .infinity, alignment: .center)
-    }
-
-    private func loadNotifications(showsLoading: Bool) async {
-        if let notificationIDs = await viewModel.loadNotifications(
-            currentUserID: appState.userProfile?.id,
-            showsLoading: showsLoading
-        ) {
-            appState.updateCachedNotifications(notificationIDs)
-        }
-    }
-
-    private func refreshNotifications(showsLoading: Bool) {
-        viewModel.refreshNotifications(
-            currentUserID: appState.userProfile?.id,
-            showsLoading: showsLoading
-        ) { notificationIDs in
-            if let notificationIDs {
-                appState.updateCachedNotifications(notificationIDs)
-            }
-        }
+        RallyDivider(width: 301)
     }
 
     private func tapAction(for notification: NotificationEvent) -> (() -> Void)? {

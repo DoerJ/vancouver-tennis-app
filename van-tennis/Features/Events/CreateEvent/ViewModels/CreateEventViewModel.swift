@@ -133,7 +133,37 @@ final class CreateEventViewModel: ObservableObject {
         return true
     }
 
-    func save(activeHostedEvents: [TennisEvent]) async -> TennisEvent? {
+    func createEvent(appState: AppState) async -> TennisEvent? {
+        guard !isSaving else {
+            return nil
+        }
+
+        guard appState.supabaseSession != nil else {
+            return nil
+        }
+
+        isSaving = true
+        errorMessage = nil
+        defer {
+            isSaving = false
+        }
+
+        do {
+            let activeHostedEvents = try await appState.activeHostedEventsForCurrentUser()
+            guard let event = try await save(activeHostedEvents: activeHostedEvents) else {
+                return nil
+            }
+
+            appState.updateCachedEvents([event])
+            try await appState.appendHostedEvent(event.id)
+            return event
+        } catch {
+            errorMessage = error.localizedDescription
+            return nil
+        }
+    }
+
+    private func save(activeHostedEvents: [TennisEvent]) async throws -> TennisEvent? {
         guard let draft else {
             return nil
         }
@@ -143,18 +173,7 @@ final class CreateEventViewModel: ObservableObject {
             return nil
         }
 
-        isSaving = true
-        errorMessage = nil
-
-        do {
-            let event = try await eventService.createEvent(draft)
-            isSaving = false
-            return event
-        } catch {
-            errorMessage = error.localizedDescription
-            isSaving = false
-            return nil
-        }
+        return try await eventService.createEvent(draft)
     }
 
     private func overlaps(draft: TennisEventDraft, existingEvent: TennisEvent) -> Bool {

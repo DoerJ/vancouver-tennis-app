@@ -12,6 +12,17 @@ final class NotificationListViewModel: ObservableObject {
     private let notificationEventService = NotificationEventService()
     private var refreshTask: Task<Void, Never>?
 
+    func refreshNotifications(appState: AppState, showsLoading: Bool = false) {
+        refreshNotifications(
+            currentUserID: appState.userProfile?.id,
+            showsLoading: showsLoading
+        ) { notificationIDs in
+            if let notificationIDs {
+                appState.updateCachedNotifications(notificationIDs)
+            }
+        }
+    }
+
     func refreshNotifications(
         currentUserID: UUID?,
         showsLoading: Bool = false,
@@ -30,6 +41,15 @@ final class NotificationListViewModel: ObservableObject {
             await MainActor.run {
                 self?.refreshTask = nil
             }
+        }
+    }
+
+    func loadNotifications(appState: AppState, showsLoading: Bool = false) async {
+        if let notificationIDs = await loadNotifications(
+            currentUserID: appState.userProfile?.id,
+            showsLoading: showsLoading
+        ) {
+            appState.updateCachedNotifications(notificationIDs)
         }
     }
 

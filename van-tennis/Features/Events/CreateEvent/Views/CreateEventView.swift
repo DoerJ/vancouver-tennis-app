@@ -4,7 +4,6 @@ struct CreateEventView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appState: AppState
     @StateObject private var viewModel: CreateEventViewModel
-    @State private var isPreparingToSave = false
     @State private var activeTimePicker: CreateEventTimePicker?
     private let onEventCreated: (TennisEvent) -> Void
 
@@ -82,7 +81,7 @@ struct CreateEventView: View {
     }
 
     private var isSaving: Bool {
-        isPreparingToSave || viewModel.isSaving
+        viewModel.isSaving
     }
 
     private var header: some View {
@@ -97,17 +96,9 @@ struct CreateEventView: View {
     }
 
     private var floatingBackButton: some View {
-        Button {
+        RallyCircularBackButton {
             dismiss()
-        } label: {
-            Image(systemName: "chevron.left")
-                .font(.system(size: 20, weight: .bold))
-                .foregroundStyle(.white)
-                .frame(width: 44, height: 44)
-                .background(Color.black.opacity(0.28), in: Circle())
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(AppContent.string("common.back"))
     }
 
     private var formCard: some View {
@@ -224,11 +215,7 @@ struct CreateEventView: View {
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(.black)
 
-                Text(viewModel.creatorSkillLevel.rawValue)
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 71, height: 22)
-                    .background(skillLevelBadgeColor, in: Capsule())
+                SkillLevelBadge(viewModel.creatorSkillLevel, width: 71, minWidth: nil)
 
                 Spacer()
             }
@@ -287,7 +274,14 @@ struct CreateEventView: View {
                         }
                     }
                 } label: {
-                    badgeLabel(viewModel.city.displayName, width: 98, color: RallyDiscoverStyle.accentGreen)
+                    RallyBadge(
+                        viewModel.city.displayName,
+                        color: RallyDiscoverStyle.accentGreen,
+                        width: 98,
+                        minWidth: nil,
+                        height: 27,
+                        showsShadow: true
+                    )
                 }
                 .buttonStyle(.plain)
 
@@ -318,7 +312,16 @@ struct CreateEventView: View {
                         }
                     }
                 } label: {
-                    adaptiveBadgeLabel(viewModel.court.displayName, color: RallyDiscoverStyle.primaryGreen)
+                    RallyBadge(
+                        viewModel.court.displayName,
+                        color: RallyDiscoverStyle.primaryGreen,
+                        minWidth: 98,
+                        maxWidth: 210,
+                        height: 27,
+                        horizontalPadding: 14,
+                        minimumScaleFactor: 0.72,
+                        showsShadow: true
+                    )
                 }
                 .buttonStyle(.plain)
 
@@ -334,34 +337,7 @@ struct CreateEventView: View {
     }
 
     private var createDivider: some View {
-        Rectangle()
-            .fill(Color.black.opacity(0.1))
-            .frame(height: 1)
-            .padding(.leading, 2)
-    }
-
-    private func badgeLabel(_ text: String, width: CGFloat, color: Color) -> some View {
-        Text(text)
-            .font(.system(size: 10, weight: .semibold))
-            .foregroundStyle(.white)
-            .lineLimit(1)
-            .minimumScaleFactor(0.75)
-            .frame(width: width, height: 27)
-            .background(color, in: Capsule())
-            .shadow(color: RallyDiscoverStyle.shadow, radius: 9, x: 0, y: 8)
-    }
-
-    private func adaptiveBadgeLabel(_ text: String, color: Color) -> some View {
-        Text(text)
-            .font(.system(size: 10, weight: .semibold))
-            .foregroundStyle(.white)
-            .lineLimit(1)
-            .minimumScaleFactor(0.72)
-            .padding(.horizontal, 14)
-            .frame(minWidth: 98, maxWidth: 210)
-            .frame(height: 27)
-            .background(color, in: Capsule())
-            .shadow(color: RallyDiscoverStyle.shadow, radius: 9, x: 0, y: 8)
+        RallyDivider(leadingPadding: 2)
     }
 
     private func timeRow(
@@ -406,14 +382,15 @@ struct CreateEventView: View {
         Button {
             activeTimePicker = picker
         } label: {
-            Text(text)
-                .font(.system(size: 9, weight: .semibold))
-                .foregroundStyle(.white)
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-                .frame(width: 88, height: 27)
-                .background(color, in: Capsule())
-                .shadow(color: RallyDiscoverStyle.shadow, radius: 9, x: 0, y: 8)
+            RallyBadge(
+                text,
+                color: color,
+                fontSize: 9,
+                width: 88,
+                minWidth: nil,
+                height: 27,
+                showsShadow: true
+            )
         }
         .buttonStyle(.plain)
     }
@@ -485,10 +462,6 @@ struct CreateEventView: View {
         }
     }
 
-    private var skillLevelBadgeColor: Color {
-        Constants.SkillLevelStyle.badgeColor(for: viewModel.creatorSkillLevel)
-    }
-
     private func eventTypeColor(_ type: EventType) -> Color {
         switch type {
         case .practice:
@@ -501,33 +474,12 @@ struct CreateEventView: View {
     }
 
     private func saveEvent() async {
-        guard !isSaving else {
+        guard let event = await viewModel.createEvent(appState: appState) else {
             return
         }
 
-        guard appState.supabaseSession != nil else {
-            return
-        }
-
-        isPreparingToSave = true
-        defer {
-            isPreparingToSave = false
-        }
-
-        do {
-            let activeHostedEvents = try await appState.activeHostedEventsForCurrentUser()
-
-            guard let event = await viewModel.save(activeHostedEvents: activeHostedEvents) else {
-                return
-            }
-
-            appState.updateCachedEvents([event])
-            try await appState.appendHostedEvent(event.id)
-            onEventCreated(event)
-            dismiss()
-        } catch {
-            viewModel.errorMessage = error.localizedDescription
-        }
+        onEventCreated(event)
+        dismiss()
     }
 
     private static let timePickerBadgeCornerRadius: CGFloat = 13.5

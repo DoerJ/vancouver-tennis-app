@@ -157,12 +157,13 @@ struct OnboardingProfileView: View {
     }
 
     private var selectedSkillBadge: some View {
-        Text((selectedLevel ?? .one).rawValue)
-            .font(.system(size: 10, weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(width: 72, height: 22)
-            .background(skillBadgeColor, in: Capsule())
-            .shadow(color: RallyDiscoverStyle.shadow, radius: 9, x: 0, y: 8)
+        SkillLevelBadge(
+            selectedLevel ?? .one,
+            width: 72,
+            minWidth: nil,
+            showsShadow: true,
+            shadowRadius: 9
+        )
     }
 
     private var genderSection: some View {
@@ -185,8 +186,7 @@ struct OnboardingProfileView: View {
                 }
             } label: {
                 HStack(spacing: 8) {
-                    genderIcon(for: selectedGender)
-                        .frame(width: 24, height: 24)
+                    GenderIconView(selectedGender, size: 24)
 
                     Image(systemName: "chevron.down")
                         .font(.system(size: 11, weight: .semibold))
@@ -225,10 +225,7 @@ struct OnboardingProfileView: View {
     }
 
     private var onboardingDivider: some View {
-        Rectangle()
-            .fill(Color.black.opacity(0.10))
-            .frame(height: 1)
-            .padding(.horizontal, 14)
+        RallyDivider(horizontalPadding: 14)
     }
 
     private var createButtonColor: Color {
@@ -244,16 +241,6 @@ struct OnboardingProfileView: View {
         }
 
         return CGFloat(index) / CGFloat(levels.count - 1)
-    }
-
-    private var skillBadgeColor: Color {
-        Constants.SkillLevelStyle.badgeColor(for: selectedLevel ?? .one)
-    }
-
-    private func genderIcon(for gender: Gender?) -> some View {
-        Image(GenderDisplayHelper.iconName(for: gender))
-            .resizable()
-            .scaledToFit()
     }
 
     private func tagColor(for tag: String) -> Color {

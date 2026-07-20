@@ -230,10 +230,7 @@ struct ReportEventView: View {
     }
 
     private var reportDivider: some View {
-        Rectangle()
-            .fill(Color.black.opacity(0.10))
-            .frame(height: 1)
-            .padding(.horizontal, 4)
+        RallyDivider(horizontalPadding: 4)
     }
 
     private func sectionTitle(_ title: String) -> some View {

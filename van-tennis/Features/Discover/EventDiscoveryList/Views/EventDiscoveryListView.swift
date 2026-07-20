@@ -308,45 +308,18 @@ struct EventDiscoveryListView: View {
         if viewModel.selectedCityFilter == .all
             && viewModel.selectedSkillLevelFilter == .all
             && viewModel.selectedEventTypeFilter == .all {
-            RallyEmptyEventsState(
+            RallyEmptyState(
+                iconName: "playing_tennis",
                 title: AppContent.string("discover.empty.title"),
                 description: AppContent.string("discover.empty.description")
             )
         } else {
-            RallyEmptyEventsState(
+            RallyEmptyState(
+                iconName: "playing_tennis",
                 title: AppContent.string("discover.emptyFiltered.title"),
                 description: AppContent.string("discover.emptyFiltered.description")
             )
         }
-    }
-}
-
-struct RallyEmptyEventsState: View {
-    let title: String
-    let description: String
-
-    var body: some View {
-        VStack(spacing: 10) {
-            Image("playing_tennis")
-                .resizable()
-                .renderingMode(.template)
-                .scaledToFit()
-                .foregroundStyle(RallyDiscoverStyle.ink)
-                .frame(width: 34, height: 34)
-                .accessibilityHidden(true)
-
-            Text(title)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(RallyDiscoverStyle.ink)
-                .multilineTextAlignment(.center)
-
-            Text(description)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(RallyDiscoverStyle.mutedText)
-                .multilineTextAlignment(.center)
-                .lineSpacing(2)
-        }
-        .padding(.horizontal, 28)
     }
 }
 

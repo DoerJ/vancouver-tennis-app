@@ -79,11 +79,8 @@ struct EventCardView: View {
                         .font(.system(size: 15, weight: .medium))
                         .foregroundStyle(RallyDiscoverStyle.mutedText)
 
-                    eventBadge(
-                        event.skillLevel.rawValue,
-                        color: skillLevelBadgeColor
-                    )
-                    eventBadge(
+                    SkillLevelBadge(event.skillLevel)
+                    RallyBadge(
                         event.eventType.displayName,
                         color: RallyDiscoverStyle.yellowBadge
                     )
@@ -147,20 +144,6 @@ struct EventCardView: View {
         }
 
         return AppContent.string("events.card.hostFallback")
-    }
-
-    private var skillLevelBadgeColor: Color {
-        Constants.SkillLevelStyle.badgeColor(for: event.skillLevel)
-    }
-
-    private func eventBadge(_ text: String, color: Color) -> some View {
-        Text(text)
-            .font(.system(size: 10, weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(minWidth: 71)
-            .padding(.horizontal, 8)
-            .frame(height: 22)
-            .background(color, in: Capsule())
     }
 
 }

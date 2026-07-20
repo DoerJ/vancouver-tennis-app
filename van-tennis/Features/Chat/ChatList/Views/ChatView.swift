@@ -98,27 +98,11 @@ struct ChatView: View {
     }
 
     private var emptyConversationView: some View {
-        VStack(spacing: 10) {
-            Image("chat_lined")
-                .resizable()
-                .renderingMode(.template)
-                .scaledToFit()
-                .foregroundStyle(RallyDiscoverStyle.ink)
-                .frame(width: 34, height: 34)
-                .accessibilityHidden(true)
-
-            Text(AppContent.string("chat.emptyList.title"))
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(RallyDiscoverStyle.ink)
-                .multilineTextAlignment(.center)
-
-            Text(AppContent.string("chat.emptyList.description"))
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(RallyDiscoverStyle.mutedText)
-                .multilineTextAlignment(.center)
-                .lineSpacing(2)
-        }
-        .padding(.horizontal, 28)
+        RallyEmptyState(
+            iconName: "chat_lined",
+            title: AppContent.string("chat.emptyList.title"),
+            description: AppContent.string("chat.emptyList.description")
+        )
     }
 
     private var conversationPreviews: [ChatConversationPreview] {
@@ -196,10 +180,7 @@ private struct ChatConversationCard: View {
         .padding(.bottom, 16)
         .background(Color.white)
         .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(Color.black.opacity(0.1))
-                .frame(width: 301, height: 1)
-                .frame(maxWidth: .infinity, alignment: .center)
+            RallyDivider(width: 301)
         }
         .accessibilityElement(children: .combine)
     }

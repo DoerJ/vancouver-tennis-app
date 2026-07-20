@@ -62,7 +62,22 @@ final class EventDetailViewModel: ObservableObject {
         }
     }
 
-    func joinEvent(_ event: TennisEvent, currentUser: UserProfile) async throws {
+    func requestToJoinEvent(_ event: TennisEvent, appState: AppState) async -> Bool {
+        guard let currentUser = appState.userProfile else {
+            errorMessage = AppContent.string("errors.noAuthenticatedUser")
+            return false
+        }
+
+        do {
+            try await joinEvent(event, currentUser: currentUser)
+            return true
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
+    }
+
+    private func joinEvent(_ event: TennisEvent, currentUser: UserProfile) async throws {
         guard let latestEvent = try await eventService.fetchEventDetails(id: event.id) else {
             throw EventDetailViewModelError.eventNotFound
         }
@@ -97,7 +112,23 @@ final class EventDetailViewModel: ObservableObject {
         )
     }
 
-    func leaveEvent(_ event: TennisEvent, currentUser: UserProfile) async throws {
+    func leaveEvent(_ event: TennisEvent, appState: AppState) async -> Bool {
+        guard let currentUser = appState.userProfile else {
+            errorMessage = AppContent.string("errors.noAuthenticatedUser")
+            return false
+        }
+
+        do {
+            try await leaveEvent(event, currentUser: currentUser)
+            appState.removeCachedEvent(event.id)
+            return true
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
+    }
+
+    private func leaveEvent(_ event: TennisEvent, currentUser: UserProfile) async throws {
         guard let latestEvent = try await eventService.fetchEventDetails(id: event.id) else {
             throw EventDetailViewModelError.eventNotFound
         }
@@ -137,6 +168,18 @@ final class EventDetailViewModel: ObservableObject {
         }
     }
 
+    func cancelHostedEvent(_ event: TennisEvent, appState: AppState) async -> Bool {
+        errorMessage = nil
+
+        do {
+            try await appState.cancelHostedEvent(event)
+            return true
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
+    }
+
     private func updateMaxPlayers(_ maxPlayers: Int?, for event: TennisEvent) async throws -> TennisEvent {
         if let maxPlayers, maxPlayers < event.playerCount {
             throw EventDetailViewModelError.maxPlayersBelowCurrentPlayerCount(event.playerCount)
@@ -167,7 +210,7 @@ final class EventDetailViewModel: ObservableObject {
         return try await updateMaxPlayers(pendingMaxPlayers, for: event)
     }
 
-    func submitReport(
+    private func submitReport(
         event: TennisEvent,
         reporter: UserProfile,
         reportedUserIDs: [UUID],
@@ -198,6 +241,33 @@ final class EventDetailViewModel: ObservableObject {
         }
 
         _ = try await reportService.createReports(reports)
+    }
+
+    func submitReport(
+        event: TennisEvent,
+        appState: AppState,
+        reportedUserIDs: [UUID],
+        reasons: [ReportReason],
+        details: String
+    ) async -> Bool {
+        guard let currentUser = appState.userProfile else {
+            errorMessage = AppContent.string("errors.noAuthenticatedUser")
+            return false
+        }
+
+        do {
+            try await submitReport(
+                event: event,
+                reporter: currentUser,
+                reportedUserIDs: reportedUserIDs,
+                reasons: reasons,
+                details: details
+            )
+            return true
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
     }
 }
 

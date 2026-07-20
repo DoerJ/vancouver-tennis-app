@@ -13,6 +13,20 @@ final class MyEventsViewModel: ObservableObject {
     private let profileService = ProfileService()
     private var refreshTask: Task<Void, Never>?
 
+    func refreshEvents(appState: AppState, showsLoading: Bool = false) {
+        refreshEvents(
+            currentUserID: appState.userProfile?.id,
+            showsLoading: showsLoading
+        ) { eventIDs in
+            if let eventIDs {
+                appState.updateCachedEvents(
+                    hostedEvents: eventIDs.hostedEvents,
+                    participatedEvents: eventIDs.participatedEvents
+                )
+            }
+        }
+    }
+
     func refreshEvents(
         currentUserID: UUID?,
         showsLoading: Bool = false,
@@ -31,6 +45,18 @@ final class MyEventsViewModel: ObservableObject {
             await MainActor.run {
                 self?.refreshTask = nil
             }
+        }
+    }
+
+    func loadEvents(appState: AppState, showsLoading: Bool = false) async {
+        if let eventIDs = await loadEvents(
+            currentUserID: appState.userProfile?.id,
+            showsLoading: showsLoading
+        ) {
+            appState.updateCachedEvents(
+                hostedEvents: eventIDs.hostedEvents,
+                participatedEvents: eventIDs.participatedEvents
+            )
         }
     }
 
@@ -93,6 +119,22 @@ final class MyEventsViewModel: ObservableObject {
 
     func removeEvent(id: UUID) {
         events.removeAll { $0.id == id }
+    }
+
+    func isHostedByCurrentUser(_ event: TennisEvent, currentUserID: UUID?) -> Bool {
+        event.hostID == currentUserID
+    }
+
+    func hostDisplayNameOverride(for event: TennisEvent, currentUserID: UUID?) -> String? {
+        isHostedByCurrentUser(event, currentUserID: currentUserID) ? AppContent.string("events.card.hostYou") : nil
+    }
+
+    func hostProfile(for event: TennisEvent, currentUserProfile fallbackProfile: UserProfile?) -> UserProfile? {
+        if event.hostID == fallbackProfile?.id {
+            return currentUserProfile ?? fallbackProfile
+        }
+
+        return hostProfilesByID[event.hostID]
     }
 
     private func loadMissingHostProfiles(for events: [TennisEvent], currentUserID: UUID) async {

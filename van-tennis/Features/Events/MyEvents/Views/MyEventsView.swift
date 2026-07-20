@@ -40,7 +40,8 @@ struct MyEventsView: View {
                                 }
 
                                 if viewModel.events.isEmpty {
-                                    RallyEmptyEventsState(
+                                    RallyEmptyState(
+                                        iconName: "playing_tennis",
                                         title: AppContent.string("myEvents.empty.title"),
                                         description: AppContent.string("myEvents.empty.description")
                                     )
@@ -57,9 +58,18 @@ struct MyEventsView: View {
                                             } label: {
                                                 EventCardView(
                                                     event: event,
-                                                    hostProfile: hostProfile(for: event),
-                                                    hostDisplayNameOverride: hostDisplayNameOverride(for: event),
-                                                    showsHostSocialTags: !isHostedByCurrentUser(event)
+                                                    hostProfile: viewModel.hostProfile(
+                                                        for: event,
+                                                        currentUserProfile: appState.userProfile
+                                                    ),
+                                                    hostDisplayNameOverride: viewModel.hostDisplayNameOverride(
+                                                        for: event,
+                                                        currentUserID: appState.userProfile?.id
+                                                    ),
+                                                    showsHostSocialTags: !viewModel.isHostedByCurrentUser(
+                                                        event,
+                                                        currentUserID: appState.userProfile?.id
+                                                    )
                                                 )
                                             }
                                             .buttonStyle(.plain)
@@ -74,14 +84,14 @@ struct MyEventsView: View {
                         }
                         .scrollBounceBehavior(.always)
                         .refreshable {
-                            refreshMyEvents(showsLoading: viewModel.events.isEmpty)
+                            viewModel.refreshEvents(appState: appState, showsLoading: viewModel.events.isEmpty)
                         }
                     }
                 }
             }
             .onAppear {
                 Task {
-                    await loadMyEvents(showsLoading: true)
+                    await viewModel.loadEvents(appState: appState, showsLoading: true)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -112,47 +122,6 @@ struct MyEventsView: View {
         }
     }
 
-    private func loadMyEvents(showsLoading: Bool) async {
-        if let eventIDs = await viewModel.loadEvents(
-            currentUserID: appState.userProfile?.id,
-            showsLoading: showsLoading
-        ) {
-            appState.updateCachedEvents(
-                hostedEvents: eventIDs.hostedEvents,
-                participatedEvents: eventIDs.participatedEvents
-            )
-        }
-    }
-
-    private func refreshMyEvents(showsLoading: Bool) {
-        viewModel.refreshEvents(
-            currentUserID: appState.userProfile?.id,
-            showsLoading: showsLoading
-        ) { eventIDs in
-            if let eventIDs {
-                appState.updateCachedEvents(
-                    hostedEvents: eventIDs.hostedEvents,
-                    participatedEvents: eventIDs.participatedEvents
-                )
-            }
-        }
-    }
-
-    private func isHostedByCurrentUser(_ event: TennisEvent) -> Bool {
-        event.hostID == appState.userProfile?.id
-    }
-
-    private func hostDisplayNameOverride(for event: TennisEvent) -> String? {
-        isHostedByCurrentUser(event) ? AppContent.string("events.card.hostYou") : nil
-    }
-
-    private func hostProfile(for event: TennisEvent) -> UserProfile? {
-        if isHostedByCurrentUser(event) {
-            return viewModel.currentUserProfile ?? appState.userProfile
-        }
-
-        return viewModel.hostProfilesByID[event.hostID]
-    }
 }
 
 #Preview {
