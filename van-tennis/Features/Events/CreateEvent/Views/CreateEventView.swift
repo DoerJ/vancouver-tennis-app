@@ -198,7 +198,7 @@ struct CreateEventView: View {
                             .font(.system(size: 10, weight: .semibold))
                             .foregroundStyle(.white)
                             .frame(width: 72, height: 22)
-                            .background(eventTypeColor(type), in: Capsule())
+                            .background(Constants.EventTypeStyle.badgeColor(for: type), in: Capsule())
                         }
                         .buttonStyle(.plain)
                     }
@@ -459,17 +459,6 @@ struct CreateEventView: View {
             Double(viewModel.maxPlayers)
         } set: { value in
             viewModel.maxPlayers = Int(value.rounded())
-        }
-    }
-
-    private func eventTypeColor(_ type: EventType) -> Color {
-        switch type {
-        case .practice:
-            return RallyDiscoverStyle.accentGreen
-        case .casual:
-            return RallyDiscoverStyle.yellowBadge
-        case .match:
-            return RallyDiscoverStyle.orangeBadge
         }
     }
 

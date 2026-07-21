@@ -82,7 +82,7 @@ struct EventCardView: View {
                     SkillLevelBadge(event.skillLevel)
                     RallyBadge(
                         event.eventType.displayName,
-                        color: RallyDiscoverStyle.yellowBadge
+                        color: Constants.EventTypeStyle.badgeColor(for: event.eventType)
                     )
                 }
 

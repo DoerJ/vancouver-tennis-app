@@ -110,6 +110,19 @@ enum Constants {
         }
     }
 
+    enum EventTypeStyle {
+        static func badgeColor(for eventType: EventType) -> Color {
+            switch eventType {
+            case .practice:
+                return RallyDiscoverStyle.accentGreen
+            case .casual:
+                return RallyDiscoverStyle.yellowBadge
+            case .match:
+                return RallyDiscoverStyle.orangeBadge
+            }
+        }
+    }
+
     enum Event {
         static let creationWindowDays = 3
         static let minimumPlayerLimit = 2
