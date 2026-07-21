@@ -44,6 +44,10 @@ struct UserProfileView: View {
                         actionButtons
                             .padding(.top, 62)
 
+                        termsOfServiceLink
+                            .padding(.top, 28)
+                            .frame(maxWidth: .infinity, alignment: .center)
+
                         Spacer(minLength: 120)
                     }
                     .padding(.horizontal, 29)
@@ -281,6 +285,18 @@ struct UserProfileView: View {
             .buttonStyle(RallyDestructiveActionButtonStyle())
             .disabled(viewModel.isDeletingAccount)
         }
+    }
+
+    private var termsOfServiceLink: some View {
+        NavigationLink {
+            TermsOfServiceView()
+        } label: {
+            Text(AppContent.string("profile.termsOfService"))
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(RallyDiscoverStyle.ink.opacity(0.65))
+                .underline()
+        }
+        .buttonStyle(.plain)
     }
 
     private var profileDisplayName: String {

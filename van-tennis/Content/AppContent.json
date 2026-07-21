@@ -302,7 +302,12 @@
     "accountDeletedTitle": "Account Deleted",
     "accountDeletedMessage": "Your account has been successfully deleted.",
     "displayNameRequired": "Display name is required.",
-    "displayNameTaken": "This profile name has been taken. Choose another one."
+    "displayNameTaken": "This profile name has been taken. Choose another one.",
+    "termsOfService": "Terms of Service"
+  },
+  "terms": {
+    "effectiveDate": "Effective date:",
+    "lastUpdated": "Last updated:"
   },
   "joinRequest": {
     "title": "Join Request",
