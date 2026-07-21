@@ -143,13 +143,6 @@
       "casual": "Casual",
       "match": "Match"
     },
-    "status": {
-      "upcoming": "Upcoming",
-      "inProgress": "In Progress",
-      "completed": "Completed",
-      "full": "Full",
-      "cancelled": "Cancelled"
-    },
     "locations": {
       "burnaby": "Burnaby",
       "richmond": "Richmond",

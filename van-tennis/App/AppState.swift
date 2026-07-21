@@ -269,7 +269,6 @@ final class AppState: ObservableObject {
         let now = Date()
         return (cachedEvents + fetchedEvents)
             .filter { $0.endTime > now }
-            .filter { $0.status != .cancelled && $0.status != .completed }
     }
 
     var hasUnreadChats: Bool {

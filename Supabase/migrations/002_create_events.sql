@@ -8,7 +8,6 @@ create table if not exists public.tennis_events (
     location_city text not null check (location_city in ('burnaby', 'richmond')),
     location_court text not null check (location_court in ('bcitCourt', 'centralParkCourt', 'southarmCourt')),
     skill_level text not null check (skill_level in ('1.0', '2.0', '3.0', '4.0')),
-    status text not null default 'upcoming',
     participants uuid[] not null default '{}',
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),

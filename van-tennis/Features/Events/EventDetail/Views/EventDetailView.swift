@@ -973,7 +973,6 @@ private struct EventDetailUnavailableProfileCard: View {
                 city: .burnaby,
                 court: .bcitCourt,
                 skillLevel: .three,
-                status: .upcoming,
                 participants: [UUID()],
                 createdAt: nil,
                 updatedAt: nil

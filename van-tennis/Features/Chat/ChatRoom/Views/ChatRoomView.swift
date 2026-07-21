@@ -280,7 +280,6 @@ struct ChatRoomView: View {
                 city: .burnaby,
                 court: .bcitCourt,
                 skillLevel: .three,
-                status: .upcoming,
                 participants: [],
                 createdAt: nil,
                 updatedAt: nil

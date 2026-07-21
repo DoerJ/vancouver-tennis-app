@@ -1,4 +1,9 @@
-create extension if not exists pg_cron;
+alter table public.tennis_events
+drop column if exists status;
+
+drop function if exists public.refresh_tennis_event_statuses();
+
+drop type if exists public.tennis_event_status;
 
 create or replace function public.delete_expired_events()
 returns void
@@ -49,20 +54,5 @@ end;
 $$;
 
 grant execute on function public.delete_expired_events() to authenticated;
-
-do $$
-begin
-    perform cron.unschedule('delete-expired-events-daily-9am-pst');
-exception
-    when others then
-        null;
-end;
-$$;
-
-select cron.schedule(
-    'delete-expired-events-daily-9am-pst',
-    '0 17 * * *',
-    $$ select public.delete_expired_events(); $$
-);
 
 notify pgrst, 'reload schema';
