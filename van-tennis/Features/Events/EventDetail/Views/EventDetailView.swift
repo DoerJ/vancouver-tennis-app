@@ -917,9 +917,16 @@ private struct EventDetailProfileCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(displayTitle)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(RallyDiscoverStyle.ink)
+                HStack(alignment: .center, spacing: 6) {
+                    Text(displayTitle)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(RallyDiscoverStyle.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.82)
+
+                    GenderIconView(profile.gender, size: 18)
+                        .accessibilityHidden(true)
+                }
 
                 Spacer(minLength: 8)
 

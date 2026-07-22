@@ -4,11 +4,16 @@ import Supabase
 struct ProfileService {
     private let client = SupabaseClientProvider.shared
     private let deviceTokenService = DeviceTokenService()
+    private let blacklistService = BlacklistService()
 
     func findOrCreateProfile(for user: User) async throws -> UserProfile {
         // uuid is used as the primary key to query the profile
         if let existingProfile = try await findProfile(userID: user.id) {
             return existingProfile
+        }
+
+        if try await blacklistService.isCurrentUserEmailBlacklisted() {
+            throw ProfileServiceError.emailBlacklisted
         }
 
         let newProfile = NewUserProfile(
@@ -186,11 +191,14 @@ struct ProfileService {
 
 enum ProfileServiceError: LocalizedError {
     case profileNotFound
+    case emailBlacklisted
 
     var errorDescription: String? {
         switch self {
         case .profileNotFound:
             return AppContent.string("errors.userProfileNotFound")
+        case .emailBlacklisted:
+            return AppContent.string("auth.login.emailBlacklisted")
         }
     }
 }

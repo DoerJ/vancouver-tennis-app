@@ -1,0 +1,163 @@
+{
+  "title": "RallyGo Privacy Policy",
+  "effectiveDate": "July 21, 2026",
+  "lastUpdated": "July 21, 2026",
+  "intro": [
+    "RallyGo (\"RallyGo,\" \"we,\" \"us,\" or \"our\") provides a mobile application that helps tennis players discover, create, join, and manage tennis events and communicate with other participants (the \"Service\"). This Privacy Policy explains what personal information we collect, how we use and disclose it, how long we retain it, and the choices available to you.",
+    "RallyGo is operated by YUHAO HE. Before publishing this policy, replace every bracketed item and confirm that this policy matches the production version of the Service."
+  ],
+  "sections": [
+    {
+      "title": "1. Information We Collect",
+      "paragraphs": [],
+      "subsections": [
+        {
+          "title": "Information you provide or authorize",
+          "paragraphs": [],
+          "bullets": [
+            "Account and contact information: your Google account identifier, email address, display name, and profile image URL when you sign in with Google.",
+            "Player profile information: the display name, tennis skill level, gender selection, and social or interest tags you choose to add. Gender and social tags are optional.",
+            "Event information: events you host or join, including date, time, city, tennis court, event type, skill level, player limit, and participation status.",
+            "Communications: messages you send in an event chat room.",
+            "Safety and support information: reports you submit about a user or event, including the report category and any details you provide, and communications you send to us for support."
+          ],
+          "footer": [
+            "Please do not include sensitive personal information in chat messages, reports, or support requests unless it is necessary."
+          ]
+        },
+        {
+          "title": "Information collected automatically",
+          "paragraphs": [],
+          "bullets": [
+            "Identifiers and technical information: internal user, event, message, notification, and report identifiers; timestamps; authentication and session information; and basic request information processed by our service providers to operate and secure the Service.",
+            "Push-notification information: your Apple Push Notification service (APNs) device token and platform type if you allow notifications."
+          ],
+          "footer": [
+            "RallyGo uses a list of supported cities and tennis courts selected by you. The current version of the app does not request or collect your device's precise or approximate GPS location."
+          ]
+        }
+      ],
+      "bullets": [],
+      "bulletGroups": [],
+      "footer": []
+    },
+    {
+        "title": "2. How We Use Information",
+        "paragraphs": [
+            "We use personal information to:"
+        ],
+        "bullets": [
+            "create and authenticate your account;",
+            "create and display your player profile to other authenticated RallyGo users;",
+            "let users create, discover, join, and manage tennis events;",
+            "provide event chat rooms and identify message senders;",
+            "send service-related notifications, including event, join-request, cancellation, and chat notifications;",
+            "operate safety reporting, investigate abuse, moderate content, and enforce our Terms of Service;",
+            "provide support and respond to requests;",
+            "maintain the security, reliability, and integrity of the Service;",
+            "comply with law and protect the rights, safety, and property of users, RallyGo, and others; and",
+            "establish, exercise, or defend legal claims."
+        ],
+        "footer": [
+            "We do not use personal information for third-party advertising, and we do not sell personal information. The current version of RallyGo does not use data to track you across apps or websites owned by other companies."
+        ]
+    },
+    {
+        "title": "3. How Information Is Visible to Other Users",
+        "paragraphs": [
+            "RallyGo is a social service. Other authenticated users may be able to view your display name, profile image, skill level, gender selection, social tags, hosted or joined events, and event-participation status. Users in the same event chat room can view your messages and the display name associated with them. Event details—including the scheduled court, city, date, and time—are visible to authenticated users who can discover or access that event.",
+            "Do not post information that you do not want other RallyGo users to see. Other users may retain information they have seen or captured even after you delete it from the Service."
+        ]
+    },
+    {
+        "title": "4. How We Disclose Information",
+        "paragraphs": [
+            "We may disclose information in the following circumstances:"
+        ],
+        "bullets": [
+            "To other RallyGo users, as described in Section 3 and as needed to provide events and chat.",
+            "To service providers that process information on our behalf to operate the Service:",
+            "Supabase, for authentication, database hosting, realtime chat, and backend functions;",
+            "Google, for Google sign-in and identity information you authorize Google to provide; and",
+            "Apple, for delivery of push notifications through APNs and distribution of the app through the App Store.",
+            "For safety and legal reasons, when we reasonably believe disclosure is necessary to comply with law or legal process; investigate fraud, abuse, or safety incidents; enforce our agreements; or protect the rights, property, or safety of RallyGo, our users, or others.",
+            "In a business transaction, such as a merger, financing, acquisition, reorganization, or sale of assets, subject to appropriate confidentiality and legal protections.",
+            "With your direction or consent."
+        ],
+        "footer": [
+            "Our service providers are permitted to process personal information only for appropriate service-related purposes and must protect it in accordance with their contractual and legal obligations."
+        ]
+    },
+    {
+        "title": "5. Data Retention",
+        "paragraphs": [
+            "We retain information only for as long as reasonably necessary for the purposes described in this policy, including to provide the Service, protect users, resolve disputes, enforce agreements, and comply with law."
+        ],
+        "bullets": [
+            "Account and profile information: retained while your account is active and deleted when your account is deleted, subject to the exceptions below.",
+            "Event records, associated event chat messages, and event-linked notifications: scheduled for deletion after the event has ended and a three-day operational period has passed.",
+            "Push-notification device tokens: retained while associated with your account and deleted when your account is deleted. Apple or the operating system may also invalidate a token independently.",
+            "Safety reports: retained while needed to investigate and resolve the report, protect users, prevent abuse, enforce our Terms, and meet legal obligations. Reports associated with your account are deleted through the current in-app deletion process unless retention is required by law or reasonably necessary for a safety incident, dispute, fraud-prevention purpose, or legal claim.",
+            "Service-provider logs and backups: may remain for a limited period under our providers' backup, security, and log-retention schedules before being deleted or overwritten."
+        ],
+        "footer": [
+            "When information is no longer needed, we delete it or de-identify it. We may retain information for longer when required by law, necessary for safety or fraud prevention, or needed to establish, exercise, or defend legal claims."
+        ]
+    },
+    {
+        "title": "6. Your Choices and Rights",
+        "paragraphs": [
+            "You can review and update certain profile information in the app. You may decline push notifications or change notification permission at any time in iOS Settings. Turning off notifications does not delete your account.",
+            "You may initiate account deletion in the app by going to Profile → Delete account. Account deletion is intended to remove your profile, device tokens, hosted events, event participation, messages associated with deleted events, and related app data, subject to the retention exceptions in Section 5. It also signs you out of RallyGo. Deleting your RallyGo account does not delete your Google account.",
+            "Depending on where you live, you may have rights to request access to, correction of, deletion of, or a copy of your personal information; withdraw consent where processing is based on consent; or complain to a privacy regulator. To make a request, contact us using Section 12. We may need to verify your identity before completing a request. Some rights are subject to legal exceptions."
+        ]
+    },
+    {
+        "title": "7. Legal Bases for Processing",
+        "paragraphs": [
+            "Where applicable law requires a legal basis, we process personal information:"
+        ],
+        "bullets": [
+            "to perform our contract with you and provide the Service;",
+            "with your consent, such as when you enable push notifications or voluntarily provide optional profile information;",
+            "for our legitimate interests in operating, securing, improving, and protecting the Service and its users, where those interests are not overridden by your rights; and",
+            "to comply with legal obligations and protect vital interests, rights, and safety."
+        ],
+        "footer": [
+            "You may withdraw consent at any time, but withdrawal does not affect processing already carried out lawfully and may limit features that depend on the information."
+        ]
+    },
+    {
+        "title": "8. International Data Transfers",
+        "paragraphs": [
+            "RallyGo and its service providers may process information in Canada, the United States, and other countries where they operate. These countries may have privacy laws different from those in your jurisdiction. Where required, we use appropriate safeguards for international transfers."
+        ]
+    },
+    {
+        "title": "9. Security",
+        "paragraphs": [
+            "We use reasonable administrative, technical, and organizational safeguards designed to protect personal information. These include authenticated access, encrypted network connections, and database access controls. No method of transmission or storage is completely secure, so we cannot guarantee absolute security."
+        ]
+    },
+    {
+        "title": "10. Children's Privacy",
+        "paragraphs": [
+            "RallyGo is intended only for people who are at least 18 years old. We do not knowingly collect personal information from anyone under 18. If you believe a person under 18 has provided personal information to us, contact us so that we can investigate and delete it as appropriate."
+        ]
+    },
+    {
+        "title": "11. Changes to This Policy",
+        "paragraphs": [
+            "We may update this Privacy Policy from time to time. We will post the revised policy with a new \"Last updated\" date and provide additional notice when required by law. If a material change requires consent, we will request it as required."
+        ]
+    },
+    {
+        "title": "12. Contact Us",
+        "paragraphs": [
+            "Questions, privacy requests, and complaints may be sent to:",
+            "Email: rallygo.support@gmail.com",
+            "If you are in Canada and are not satisfied with our response, you may have the right to contact the privacy regulator responsible for your jurisdiction."
+        ]
+    }
+  ]
+}

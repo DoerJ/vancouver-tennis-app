@@ -34,7 +34,8 @@
       "missingAuthorizationCode": "Google did not return an authorization code.",
       "tokenExchangeFailed": "Google sign in failed while exchanging the authorization code.",
       "missingSupabaseConfiguration": "Add your Supabase project URL and anon key before signing in.",
-      "missingGoogleIDToken": "Google sign in did not return an ID token for Supabase."
+      "missingGoogleIDToken": "Google sign in did not return an ID token for Supabase.",
+      "emailBlacklisted": "This email is not eligible to create a RallyGo account."
     },
     "onboarding": {
       "title": "Build your profile",
@@ -303,7 +304,8 @@
     "accountDeletedMessage": "Your account has been successfully deleted.",
     "displayNameRequired": "Display name is required.",
     "displayNameTaken": "This profile name has been taken. Choose another one.",
-    "termsOfService": "Terms of Service"
+    "termsOfService": "Terms of Service",
+    "privacyPolicy": "Privacy Policy"
   },
   "terms": {
     "effectiveDate": "Effective date:",

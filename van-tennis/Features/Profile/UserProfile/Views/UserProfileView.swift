@@ -44,7 +44,7 @@ struct UserProfileView: View {
                         actionButtons
                             .padding(.top, 62)
 
-                        termsOfServiceLink
+                        legalLinks
                             .padding(.top, 28)
                             .frame(maxWidth: .infinity, alignment: .center)
 
@@ -287,16 +287,29 @@ struct UserProfileView: View {
         }
     }
 
-    private var termsOfServiceLink: some View {
-        NavigationLink {
-            TermsOfServiceView()
-        } label: {
-            Text(AppContent.string("profile.termsOfService"))
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(RallyDiscoverStyle.ink.opacity(0.65))
-                .underline()
+    private var legalLinks: some View {
+        VStack(spacing: 8) {
+            NavigationLink {
+                TermsOfServiceView()
+            } label: {
+                legalLinkText(AppContent.string("profile.termsOfService"))
+            }
+            .buttonStyle(.plain)
+
+            NavigationLink {
+                PrivacyPolicyView()
+            } label: {
+                legalLinkText(AppContent.string("profile.privacyPolicy"))
+            }
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
+    }
+
+    private func legalLinkText(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 13, weight: .medium))
+            .foregroundStyle(RallyDiscoverStyle.ink.opacity(0.65))
+            .underline()
     }
 
     private var profileDisplayName: String {

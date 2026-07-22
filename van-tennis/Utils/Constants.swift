@@ -91,7 +91,7 @@ enum Constants {
             case .two:
                 return Color(hex: 0xF2DB21)
             case .twoFive:
-                return Color(hex: 0xEB9401)
+                return Color(hex: 0xFFA300)
             case .three:
                 return Color(hex: 0xF27B35)
             case .threeFive:
@@ -114,11 +114,11 @@ enum Constants {
         static func badgeColor(for eventType: EventType) -> Color {
             switch eventType {
             case .practice:
-                return RallyDiscoverStyle.accentGreen
+                return Color(hex: 0x91A857)
             case .casual:
-                return RallyDiscoverStyle.yellowBadge
+                return Color(hex: 0xF2DB21)
             case .match:
-                return RallyDiscoverStyle.orangeBadge
+                return Color(hex: 0xFFA300)
             }
         }
     }

@@ -346,8 +346,6 @@ enum RallyDiscoverStyle {
     static let primaryGreen = Color(red: 0.20, green: 0.36, blue: 0.12)
     static let accentGreen = Color(red: 0.57, green: 0.66, blue: 0.34)
     static let redBadge = Color(red: 0.98, green: 0.28, blue: 0.13)
-    static let yellowBadge = Color(red: 0.95, green: 0.86, blue: 0.13)
-    static let orangeBadge = Color(red: 1.00, green: 0.64, blue: 0.00)
     static let avatarBackground = Color(red: 0.98, green: 0.93, blue: 0.78)
     static let sun = Color(red: 0.98, green: 0.64, blue: 0.25)
     static let shadow = Color(red: 0.16, green: 0.27, blue: 0.18).opacity(0.12)

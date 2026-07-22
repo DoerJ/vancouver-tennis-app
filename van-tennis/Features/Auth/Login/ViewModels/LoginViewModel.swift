@@ -49,6 +49,13 @@ final class LoginViewModel: ObservableObject {
             appState.supabaseSession = nil
             appState.userProfile = nil
             appState.authenticationState = .signedOut
+        } catch ProfileServiceError.emailBlacklisted {
+            try? await supabaseAuthService.signOut()
+            appState.googleSession = nil
+            appState.supabaseSession = nil
+            appState.userProfile = nil
+            appState.authenticationState = .signedOut
+            errorMessage = ProfileServiceError.emailBlacklisted.localizedDescription
         } catch {
             appState.googleSession = nil
             appState.supabaseSession = nil
