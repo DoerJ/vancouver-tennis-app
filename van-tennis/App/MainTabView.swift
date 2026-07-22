@@ -18,7 +18,6 @@ struct MainTabView: View {
             if !isMainTabBarHidden {
                 MainTabBar(
                     selectedTab: selectedTab,
-                    hasMyEvents: hasMyEvents,
                     hasUnreadChats: appState.hasUnreadChats
                 ) { tab in
                     selectTab(tab)
@@ -73,17 +72,6 @@ struct MainTabView: View {
         if tab == .find {
             findResetTrigger += 1
         }
-    }
-
-    private var hasMyEvents: Bool {
-        guard let profile = appState.userProfile else {
-            return false
-        }
-
-        _ = appState.eventsRevision
-
-        let eventIDs = Array(Set(profile.hostedEvents + profile.participatedEvents))
-        return appState.cachedEvents(ids: eventIDs).contains { $0.endTime > Date() }
     }
 
 }
@@ -146,7 +134,6 @@ private enum MainTab: Hashable, CaseIterable {
 
 private struct MainTabBar: View {
     let selectedTab: MainTab
-    let hasMyEvents: Bool
     let hasUnreadChats: Bool
     let onSelect: (MainTab) -> Void
 
@@ -192,7 +179,7 @@ private struct MainTabBar: View {
         case .find:
             return false
         case .myEvents:
-            return hasMyEvents
+            return false
         case .chat:
             return hasUnreadChats
         }
