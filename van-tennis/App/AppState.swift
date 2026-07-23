@@ -178,7 +178,7 @@ final class AppState: ObservableObject {
             throw AppStateError.notEventHost
         }
 
-        try await eventService.cancelHostedEvent(eventID: event.id)
+        try await eventService.cancelHostedEvent(event)
 
         if let updatedProfile = try await profileService.findProfile(userID: supabaseSession.user.id) {
             applyAuthenticatedState(supabaseSession: supabaseSession, userProfile: updatedProfile)

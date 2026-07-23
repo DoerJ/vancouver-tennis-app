@@ -82,11 +82,11 @@ struct EventService {
             .execute()
     }
 
-    func cancelHostedEvent(eventID: UUID) async throws {
+    func cancelHostedEvent(_ event: TennisEvent) async throws {
         try await client
             .rpc(
                 "cancel_hosted_event",
-                params: CancelHostedEventParams(eventID: eventID)
+                params: CancelHostedEventParams(event: event)
             )
             .execute()
     }
@@ -180,9 +180,16 @@ private struct UpdateEventMaxPlayersParams: Encodable {
 
 private struct CancelHostedEventParams: Encodable {
     let eventID: UUID
+    let courtDisplayName: String
+
+    init(event: TennisEvent) {
+        eventID = event.id
+        courtDisplayName = event.court.displayName
+    }
 
     enum CodingKeys: String, CodingKey {
         case eventID = "event_id"
+        case courtDisplayName = "p_location_court_display_name"
     }
 }
 
@@ -193,6 +200,7 @@ private struct CreateTennisEventParams: Encodable {
     let maxPlayers: Int?
     let city: EventCity
     let court: TennisCourt
+    let courtDisplayName: String
     let skillLevel: SkillLevel
 
     init(draft: TennisEventDraft) {
@@ -202,6 +210,7 @@ private struct CreateTennisEventParams: Encodable {
         maxPlayers = draft.maxPlayers
         city = draft.city
         court = draft.court
+        courtDisplayName = draft.court.displayName
         skillLevel = draft.skillLevel
     }
 
@@ -212,6 +221,7 @@ private struct CreateTennisEventParams: Encodable {
         case maxPlayers = "p_max_players"
         case city = "p_location_city"
         case court = "p_location_court"
+        case courtDisplayName = "p_location_court_display_name"
         case skillLevel = "p_skill_level"
     }
 
@@ -230,6 +240,7 @@ private struct CreateTennisEventParams: Encodable {
 
         try container.encode(city, forKey: .city)
         try container.encode(court, forKey: .court)
+        try container.encode(courtDisplayName, forKey: .courtDisplayName)
         try container.encode(skillLevel, forKey: .skillLevel)
     }
 }
