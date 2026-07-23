@@ -26,6 +26,7 @@
     "login": {
       "subtitle": "Sign in to find and manage tennis matches.",
       "continueWithGoogle": "Continue with Google",
+      "continueWithApple": "Continue with Apple",
       "signingIn": "Signing in...",
       "missingGoogleClientID": "Add your Google iOS client ID before signing in.",
       "missingCallbackURL": "Google did not return an authentication callback.",
@@ -35,6 +36,8 @@
       "tokenExchangeFailed": "Google sign in failed while exchanging the authorization code.",
       "missingSupabaseConfiguration": "Add your Supabase project URL and anon key before signing in.",
       "missingGoogleIDToken": "Google sign in did not return an ID token for Supabase.",
+      "missingAppleIDToken": "Apple sign in did not return an identity token for Supabase.",
+      "appleSignInFailed": "Apple sign in failed. Please try again.",
       "emailBlacklisted": "This email is not eligible to create a RallyGo account."
     },
     "onboarding": {

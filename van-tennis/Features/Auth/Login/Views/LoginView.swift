@@ -14,35 +14,27 @@ struct LoginView: View {
             VStack(spacing: 24) {
                 Spacer()
 
-                Button {
-                    Task {
-                        await viewModel.continueWithGoogle(appState: appState)
-                    }
-                } label: {
-                    HStack(spacing: 10) {
-                        Image("google")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 20, height: 20)
-
-                        Text(
-                            viewModel.isSigningIn
-                                ? AppContent.string("auth.login.signingIn")
+                VStack(spacing: 12) {
+                    authButton(
+                        iconName: "google",
+                        title: viewModel.isSigningIn
+                            ? AppContent.string("auth.login.signingIn")
                             : AppContent.string("auth.login.continueWithGoogle")
-                        )
+                    ) {
+                        Task {
+                            await viewModel.continueWithGoogle(appState: appState)
+                        }
                     }
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(height: 52)
-                    .frame(maxWidth: .infinity)
-                    .background(
-                        Color.black.opacity(viewModel.isSigningIn ? 0.28 : 1),
-                        in: Capsule()
-                    )
-                    .shadow(color: RallyDiscoverStyle.shadow.opacity(viewModel.isSigningIn ? 0 : 0.95), radius: 18, x: 0, y: 8)
+
+                    authButton(
+                        iconName: "apple-icon",
+                        title: AppContent.string("auth.login.continueWithApple")
+                    ) {
+                        Task {
+                            await viewModel.continueWithApple(appState: appState)
+                        }
+                    }
                 }
-                .buttonStyle(.plain)
-                .disabled(viewModel.isSigningIn)
 
                 if let errorMessage = viewModel.errorMessage {
                     Text(errorMessage)
@@ -56,6 +48,34 @@ struct LoginView: View {
             }
             .padding(24)
         }
+    }
+
+    private func authButton(
+        iconName: String,
+        title: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Image(iconName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 20, height: 20)
+
+                Text(title)
+            }
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(.white)
+            .frame(height: 52)
+            .frame(maxWidth: .infinity)
+            .background(
+                Color.black.opacity(viewModel.isSigningIn ? 0.28 : 1),
+                in: Capsule()
+            )
+            .shadow(color: RallyDiscoverStyle.shadow.opacity(viewModel.isSigningIn ? 0 : 0.95), radius: 18, x: 0, y: 8)
+        }
+        .buttonStyle(.plain)
+        .disabled(viewModel.isSigningIn)
     }
 }
 

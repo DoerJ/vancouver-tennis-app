@@ -17,6 +17,7 @@ final class LoginViewModel: ObservableObject {
         This flow ensures that we securely authenticate the user with Google and then manage their session and profile within app's backend.
     */
     private let googleAuthService = GoogleAuthService()
+    private let appleAuthService = AppleAuthService()
     private let supabaseAuthService = SupabaseAuthService()
     private let profileService = ProfileService()
 
@@ -65,5 +66,44 @@ final class LoginViewModel: ObservableObject {
         }
 
         isSigningIn = false
+    }
+
+    func continueWithApple(appState: AppState) async {
+        guard !isSigningIn else {
+            return
+        }
+
+        isSigningIn = true
+        errorMessage = nil
+        appState.authenticationState = .signingIn
+
+        do {
+            let appleSession = try await appleAuthService.signIn()
+            let supabaseSession = try await supabaseAuthService.signInWithApple(appleSession)
+            let userProfile = try await profileService.findOrCreateProfile(for: supabaseSession.user)
+
+            appState.completeSignIn(
+                supabaseSession: supabaseSession,
+                userProfile: userProfile
+            )
+        } catch AppleAuthError.cancelled {
+            resetAuthentication(appState: appState)
+        } catch ProfileServiceError.emailBlacklisted {
+            try? await supabaseAuthService.signOut()
+            resetAuthentication(appState: appState)
+            errorMessage = ProfileServiceError.emailBlacklisted.localizedDescription
+        } catch {
+            resetAuthentication(appState: appState)
+            errorMessage = error.localizedDescription
+        }
+
+        isSigningIn = false
+    }
+
+    private func resetAuthentication(appState: AppState) {
+        appState.googleSession = nil
+        appState.supabaseSession = nil
+        appState.userProfile = nil
+        appState.authenticationState = .signedOut
     }
 }

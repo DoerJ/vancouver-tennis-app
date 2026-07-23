@@ -21,6 +21,20 @@ struct SupabaseAuthService {
         )
     }
 
+    func signInWithApple(_ appleSession: AppleAuthSession) async throws -> Session {
+        guard AppConfig.isSupabaseConfigured else {
+            throw SupabaseAuthError.missingSupabaseConfiguration
+        }
+
+        return try await SupabaseClientProvider.shared.auth.signInWithIdToken(
+            credentials: OpenIDConnectCredentials(
+                provider: .apple,
+                idToken: appleSession.idToken,
+                nonce: appleSession.nonce
+            )
+        )
+    }
+
     func signOut() async throws {
         try await SupabaseClientProvider.shared.auth.signOut()
     }
@@ -29,6 +43,7 @@ struct SupabaseAuthService {
 enum SupabaseAuthError: LocalizedError {
     case missingSupabaseConfiguration
     case missingGoogleIDToken
+    case missingAppleIDToken
 
     var errorDescription: String? {
         switch self {
@@ -36,6 +51,8 @@ enum SupabaseAuthError: LocalizedError {
             return AppContent.string("auth.login.missingSupabaseConfiguration")
         case .missingGoogleIDToken:
             return AppContent.string("auth.login.missingGoogleIDToken")
+        case .missingAppleIDToken:
+            return AppContent.string("auth.login.missingAppleIDToken")
         }
     }
 }

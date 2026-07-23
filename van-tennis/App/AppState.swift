@@ -107,6 +107,18 @@ final class AppState: ObservableObject {
         }
     }
 
+    func completeSignIn(
+        supabaseSession: Session,
+        userProfile: UserProfile
+    ) {
+        googleSession = nil
+        applyAuthenticatedState(supabaseSession: supabaseSession, userProfile: userProfile)
+
+        Task {
+            await saveCurrentDeviceTokenIfPossible()
+        }
+    }
+
     func updateProfile(
         displayName: String? = nil,
         skillLevel: SkillLevel? = nil,
