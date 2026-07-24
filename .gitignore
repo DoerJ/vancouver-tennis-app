@@ -4,3 +4,6 @@ Config/Local.xcconfig
 APNsKeys
 SupabaseAuthKeys
 *.plist
+Supabase
+xcuserdata/
+*.xcuserstate
