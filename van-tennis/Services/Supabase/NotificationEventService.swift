@@ -18,6 +18,18 @@ struct NotificationEventService {
             .value
     }
 
+    func fetchNotification(id notificationID: UUID) async throws -> NotificationEvent? {
+        let notifications: [NotificationEvent] = try await client
+            .from("notifications")
+            .select()
+            .eq("id", value: notificationID.uuidString)
+            .limit(1)
+            .execute()
+            .value
+
+        return notifications.first
+    }
+
     func fetchNotifications(recipientID: UUID) async throws -> [NotificationEvent] {
         try await client
             .from("notifications")

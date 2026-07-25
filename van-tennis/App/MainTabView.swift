@@ -6,6 +6,7 @@ struct MainTabView: View {
     @State private var findResetTrigger = 0
     @State private var isShowingProfile = false
     @State private var isShowingNotifications = false
+    @State private var selectedJoinRequestNotificationID: UUID?
     @State private var isMainTabBarHidden = false
 
     var body: some View {
@@ -35,12 +36,30 @@ struct MainTabView: View {
             }
                 .environmentObject(appState)
         }
-        .sheet(isPresented: $isShowingNotifications) {
-            NotificationListView {
+        .sheet(
+            isPresented: $isShowingNotifications,
+            onDismiss: {
+                selectedJoinRequestNotificationID = nil
+            }
+        ) {
+            NotificationListView(initialJoinRequestNotificationID: selectedJoinRequestNotificationID) {
                 isShowingNotifications = false
+                selectedJoinRequestNotificationID = nil
                 isShowingProfile = true
             }
             .environmentObject(appState)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NotificationService.remoteNotificationDidOpenNotification)) { notification in
+            guard appState.authenticationState == .signedIn else {
+                return
+            }
+
+            let context = notification.object as? NotificationService.OpenedNotificationContext
+            selectedJoinRequestNotificationID = context?.notificationType == .eventJoined
+                ? context?.notificationID
+                : nil
+            isShowingProfile = false
+            isShowingNotifications = true
         }
     }
 

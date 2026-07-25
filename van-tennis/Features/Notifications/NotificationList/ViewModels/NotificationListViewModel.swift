@@ -72,6 +72,21 @@ final class NotificationListViewModel: ObservableObject {
         }
     }
 
+    // Fetch a single notification by ID, to handle user click event on a join request foreground notification
+    func notification(id notificationID: UUID) async -> NotificationEvent? {
+        if let notification = notifications.first(where: { $0.id == notificationID }) {
+            return notification
+        }
+
+        do {
+            return try await notificationEventService.fetchNotification(id: notificationID)
+        } catch {
+            print("NotificationListViewModel: failed to fetch notification \(notificationID): \(error.localizedDescription)")
+            errorMessage = error.localizedDescription
+            return nil
+        }
+    }
+
     func deleteNotification(_ notification: NotificationEvent, currentUserID: UUID?) async -> Bool {
         guard currentUserID != nil else {
             errorMessage = AppContent.string("errors.noAuthenticatedUser")

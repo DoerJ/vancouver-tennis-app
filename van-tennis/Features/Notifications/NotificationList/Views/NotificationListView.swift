@@ -4,9 +4,15 @@ struct NotificationListView: View {
     @EnvironmentObject private var appState: AppState
     @StateObject private var viewModel = NotificationListViewModel()
     @State private var selectedJoinRequest: NotificationEvent?
+    @State private var pendingJoinRequestNotificationID: UUID?
     let onOpenProfile: () -> Void
+    let initialJoinRequestNotificationID: UUID?
 
-    init(onOpenProfile: @escaping () -> Void = {}) {
+    init(
+        initialJoinRequestNotificationID: UUID? = nil,
+        onOpenProfile: @escaping () -> Void = {}
+    ) {
+        self.initialJoinRequestNotificationID = initialJoinRequestNotificationID
         self.onOpenProfile = onOpenProfile
     }
 
@@ -110,6 +116,14 @@ struct NotificationListView: View {
         .onAppear {
             Task {
                 await viewModel.loadNotifications(appState: appState, showsLoading: true)
+                await openPendingJoinRequestIfNeeded()
+            }
+        }
+        .onChange(of: initialJoinRequestNotificationID) { _, notificationID in
+            pendingJoinRequestNotificationID = notificationID
+
+            Task {
+                await openPendingJoinRequestIfNeeded()
             }
         }
     }
@@ -146,6 +160,23 @@ struct NotificationListView: View {
         return {
             selectedJoinRequest = notification
         }
+    }
+
+    private func openPendingJoinRequestIfNeeded() async {
+        let notificationID = pendingJoinRequestNotificationID ?? initialJoinRequestNotificationID
+
+        guard let notificationID else {
+            return
+        }
+
+        guard let notification = await viewModel.notification(id: notificationID),
+              notification.notificationType == .eventJoined else {
+            pendingJoinRequestNotificationID = nil
+            return
+        }
+
+        pendingJoinRequestNotificationID = nil
+        selectedJoinRequest = notification
     }
 }
 

@@ -12,9 +12,15 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
     */
     static let deviceTokenDidUpdateNotification = Notification.Name("DeviceTokenDidUpdateNotification")
     static let remoteNotificationDidArriveNotification = Notification.Name("RemoteNotificationDidArriveNotification")
+    static let remoteNotificationDidOpenNotification = Notification.Name("RemoteNotificationDidOpenNotification")
     static private(set) var currentDeviceToken: String?
     static private(set) var activeChatEventID: UUID?
     static private var isUserSignedIn = false
+
+    struct OpenedNotificationContext {
+        let notificationID: UUID?
+        let notificationType: NotificationType?
+    }
 
     static func setActiveChatEventID(_ eventID: UUID?) {
         activeChatEventID = eventID
@@ -117,6 +123,7 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
     ) async {
         print("NotificationService: user opened notification.")
         postRemoteNotificationDidArrive()
+        postRemoteNotificationDidOpen(response.notification.request.content.userInfo)
     }
 
     private func postRemoteNotificationDidArrive() {
@@ -128,6 +135,24 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
         NotificationCenter.default.post(
             name: Self.remoteNotificationDidArriveNotification,
             object: nil
+        )
+    }
+
+    private func postRemoteNotificationDidOpen(_ userInfo: [AnyHashable: Any]) {
+        guard Self.isUserSignedIn else {
+            print("NotificationService: ignored notification open while signed out.")
+            return
+        }
+
+        let notificationID = (userInfo["notification_id"] as? String).flatMap(UUID.init(uuidString:))
+        let notificationType = (userInfo["notification_type"] as? String).flatMap(NotificationType.init(rawValue:))
+
+        NotificationCenter.default.post(
+            name: Self.remoteNotificationDidOpenNotification,
+            object: OpenedNotificationContext(
+                notificationID: notificationID,
+                notificationType: notificationType
+            )
         )
     }
 
