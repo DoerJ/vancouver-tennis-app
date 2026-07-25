@@ -23,6 +23,7 @@ final class AppState: ObservableObject {
     private let deviceTokenService = DeviceTokenService()
     private let authService = SupabaseAuthService()
     private var cancellables: Set<AnyCancellable> = []
+    private var authStateChangesTask: Task<Void, Never>?
     private var chatMessagesRealtimeTask: Task<Void, Never>?
     private var chatMessagesRealtimeChannel: RealtimeChannelV2?
     private var subscribedChatEventIDs: Set<UUID> = []
@@ -58,6 +59,7 @@ final class AppState: ObservableObject {
 
     init() {
         unreadChatCountsByEventID = Self.loadUnreadChatCounts()
+        startAuthStateChangesListener()
 
         NotificationCenter.default.publisher(for: NotificationService.deviceTokenDidUpdateNotification)
             .compactMap { $0.object as? String }
@@ -96,9 +98,7 @@ final class AppState: ObservableObject {
             await hydrateCachedNotificationReadState(currentUserID: session.user.id)
             await saveCurrentDeviceTokenIfPossible()
         } catch {
-            supabaseSession = nil
-            userProfile = nil
-            authenticationState = .signedOut
+            forceLocalSignOut(reason: "AppState: failed to restore Supabase session: \(error.localizedDescription)")
         }
     }
 
@@ -197,14 +197,23 @@ final class AppState: ObservableObject {
     }
 
     func refreshCurrentProfile() async {
-        guard let supabaseSession else {
+        guard supabaseSession != nil else {
+            return
+        }
+
+        let refreshedSession: Session
+
+        do {
+            refreshedSession = try await SupabaseClientProvider.shared.auth.session
+        } catch {
+            forceLocalSignOut(reason: "AppState: Supabase session refresh failed: \(error.localizedDescription)")
             return
         }
 
         do {
-            if let profile = try await profileService.findProfile(userID: supabaseSession.user.id) {
-                applyAuthenticatedState(supabaseSession: supabaseSession, userProfile: profile)
-                await hydrateCachedNotificationReadState(currentUserID: supabaseSession.user.id)
+            if let profile = try await profileService.findProfile(userID: refreshedSession.user.id) {
+                applyAuthenticatedState(supabaseSession: refreshedSession, userProfile: profile)
+                await hydrateCachedNotificationReadState(currentUserID: refreshedSession.user.id)
             }
         } catch {
             print("AppState: failed to refresh current profile: \(error.localizedDescription)")
@@ -574,6 +583,15 @@ final class AppState: ObservableObject {
             // Local auth state should still be cleared if remote sign-out fails.
         }
 
+        forceLocalSignOut(reason: nil)
+    }
+
+    private func forceLocalSignOut(reason: String?) {
+        if let reason {
+            print(reason)
+        }
+
+        stopChatMessagesRealtimeSubscription()
         NotificationService.setUserSignedIn(false)
         googleSession = nil
         supabaseSession = nil
@@ -585,6 +603,23 @@ final class AppState: ObservableObject {
         persistUnreadChatCounts()
         chatMessagesRevision += 1
         authenticationState = .signedOut
+    }
+
+    // If Supabase session token is expired while app is still running, the user will be signed out and the app will return to the sign-in page.
+    private func startAuthStateChangesListener() {
+        authStateChangesTask = Task { [weak self] in
+            for await state in SupabaseClientProvider.shared.auth.authStateChanges {
+                guard state.event == .signedOut || state.event == .userDeleted else {
+                    continue
+                }
+
+                await MainActor.run {
+                    self?.forceLocalSignOut(
+                        reason: "AppState: Supabase auth state changed to \(state.event.rawValue)."
+                    )
+                }
+            }
+        }
     }
 
     private func applyAuthenticatedState(supabaseSession: Session, userProfile: UserProfile) {
