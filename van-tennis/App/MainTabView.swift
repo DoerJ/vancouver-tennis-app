@@ -30,7 +30,9 @@ struct MainTabView: View {
             isMainTabBarHidden = isHidden
         }
         .sheet(isPresented: $isShowingProfile) {
-            UserProfileView()
+            UserProfileView {
+                isShowingProfile = false
+            }
                 .environmentObject(appState)
         }
         .sheet(isPresented: $isShowingNotifications) {

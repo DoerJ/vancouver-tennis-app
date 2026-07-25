@@ -2,11 +2,16 @@ import SwiftUI
 
 struct UserProfileView: View {
     @EnvironmentObject private var appState: AppState
+    let onSaveCompleted: () -> Void
     @StateObject private var viewModel = UserProfileViewModel()
     @State private var isSigningOut = false
     @State private var isShowingLogOutConfirmation = false
     @State private var isShowingDeleteAccountConfirmation = false
     @FocusState private var isDisplayNameFocused: Bool
+
+    init(onSaveCompleted: @escaping () -> Void = {}) {
+        self.onSaveCompleted = onSaveCompleted
+    }
 
     var body: some View {
         NavigationStack {
@@ -127,6 +132,7 @@ struct UserProfileView: View {
 
                     if didSave {
                         isDisplayNameFocused = false
+                        onSaveCompleted()
                     }
                 }
             } label: {
