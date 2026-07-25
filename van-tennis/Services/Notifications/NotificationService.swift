@@ -14,9 +14,38 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
     static let remoteNotificationDidArriveNotification = Notification.Name("RemoteNotificationDidArriveNotification")
     static private(set) var currentDeviceToken: String?
     static private(set) var activeChatEventID: UUID?
+    static private var isUserSignedIn = false
 
     static func setActiveChatEventID(_ eventID: UUID?) {
         activeChatEventID = eventID
+    }
+
+    static func setUserSignedIn(_ isSignedIn: Bool) {
+        isUserSignedIn = isSignedIn
+    }
+
+    static func requestRemoteNotificationRegistration() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { isGranted, error in
+            if let error {
+                print("NotificationService: notification permission request failed: \(error.localizedDescription)")
+            }
+
+            print("NotificationService: notification permission granted: \(isGranted)")
+
+            // Register with APNs even when alert permission is denied, so the app can still receive a device token.
+            DispatchQueue.main.async {
+                UIApplication.shared.registerForRemoteNotifications()
+            }
+        }
+    }
+
+    static func unregisterRemoteNotifications() {
+        currentDeviceToken = nil
+        activeChatEventID = nil
+
+        DispatchQueue.main.async {
+            UIApplication.shared.unregisterForRemoteNotifications()
+        }
     }
 
     func application(
@@ -24,7 +53,7 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
         UNUserNotificationCenter.current().delegate = self
-        requestRemoteNotificationRegistration()
+        Self.requestRemoteNotificationRegistration()
         return true
     }
 
@@ -68,6 +97,11 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
     ) async -> UNNotificationPresentationOptions {
         print("NotificationService: received foreground notification.")
 
+        guard Self.isUserSignedIn else {
+            print("NotificationService: suppressed notification while signed out.")
+            return []
+        }
+
         if shouldSuppressChatNotification(notification) {
             print("NotificationService: suppressed notification for active chat room.")
             return []
@@ -85,22 +119,12 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
         postRemoteNotificationDidArrive()
     }
 
-    private func requestRemoteNotificationRegistration() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { isGranted, error in
-            if let error {
-                print("NotificationService: notification permission request failed: \(error.localizedDescription)")
-            }
-
-            print("NotificationService: notification permission granted: \(isGranted)")
-
-            // Register with APNs even when alert permission is denied, so the app can still receive a device token.
-            DispatchQueue.main.async {
-                UIApplication.shared.registerForRemoteNotifications()
-            }
-        }
-    }
-
     private func postRemoteNotificationDidArrive() {
+        guard Self.isUserSignedIn else {
+            print("NotificationService: ignored remote notification while signed out.")
+            return
+        }
+
         NotificationCenter.default.post(
             name: Self.remoteNotificationDidArriveNotification,
             object: nil

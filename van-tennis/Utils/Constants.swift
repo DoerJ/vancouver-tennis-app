@@ -124,7 +124,7 @@ enum Constants {
     }
 
     enum Event {
-        static let creationWindowDays = 3
+        static let creationWindowDays = 7
         static let minimumPlayerLimit = 2
         static let maximumPlayerLimit = 6
         static let minimumStartOffsetHours = 1

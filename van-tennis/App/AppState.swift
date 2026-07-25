@@ -92,6 +92,7 @@ final class AppState: ObservableObject {
             let profile = try await profileService.findOrCreateProfile(for: session.user)
 
             applyAuthenticatedState(supabaseSession: session, userProfile: profile)
+            NotificationService.requestRemoteNotificationRegistration()
             await hydrateCachedNotificationReadState(currentUserID: session.user.id)
             await saveCurrentDeviceTokenIfPossible()
         } catch {
@@ -110,6 +111,7 @@ final class AppState: ObservableObject {
         applyAuthenticatedState(supabaseSession: supabaseSession, userProfile: userProfile)
 
         Task {
+            NotificationService.requestRemoteNotificationRegistration()
             await saveCurrentDeviceTokenIfPossible()
         }
     }
@@ -122,6 +124,7 @@ final class AppState: ObservableObject {
         applyAuthenticatedState(supabaseSession: supabaseSession, userProfile: userProfile)
 
         Task {
+            NotificationService.requestRemoteNotificationRegistration()
             await saveCurrentDeviceTokenIfPossible()
         }
     }
@@ -537,11 +540,19 @@ final class AppState: ObservableObject {
 
         try await profileService.deleteAccountProfileData()
         try await authService.signOut()
+        NotificationService.setUserSignedIn(false)
+
+        // Suppress foreground notifications after Supabase session is revoked
+        NotificationService.unregisterRemoteNotifications()
+        lastSavedDeviceToken = nil
         eventsRevision += 1
     }
 
     func finishDeletedAccountFlow() {
         stopChatMessagesRealtimeSubscription()
+        NotificationService.setUserSignedIn(false)
+        NotificationService.unregisterRemoteNotifications()
+        lastSavedDeviceToken = nil
         googleSession = nil
         supabaseSession = nil
         userProfile = nil
@@ -563,6 +574,7 @@ final class AppState: ObservableObject {
             // Local auth state should still be cleared if remote sign-out fails.
         }
 
+        NotificationService.setUserSignedIn(false)
         googleSession = nil
         supabaseSession = nil
         userProfile = nil
@@ -578,6 +590,7 @@ final class AppState: ObservableObject {
     private func applyAuthenticatedState(supabaseSession: Session, userProfile: UserProfile) {
         self.supabaseSession = supabaseSession
         self.userProfile = userProfile
+        NotificationService.setUserSignedIn(true)
         syncCachedNotifications(notificationIDs: userProfile.notifications)
         pruneUnreadChatCounts(validEventIDs: Set(userProfile.hostedEvents + userProfile.participatedEvents))
         authenticationState = userProfile.skillLevel == nil || userProfile.gender == nil ? .needsSkillLevel : .signedIn
