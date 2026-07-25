@@ -19,6 +19,7 @@ final class AppState: ObservableObject {
     private let profileService = ProfileService()
     private let eventService = EventService()
     private let chatMessageService = ChatMessageService()
+    private let notificationEventService = NotificationEventService()
     private let deviceTokenService = DeviceTokenService()
     private let authService = SupabaseAuthService()
     private var cancellables: Set<AnyCancellable> = []
@@ -91,6 +92,7 @@ final class AppState: ObservableObject {
             let profile = try await profileService.findOrCreateProfile(for: session.user)
 
             applyAuthenticatedState(supabaseSession: session, userProfile: profile)
+            await hydrateCachedNotificationReadState(currentUserID: session.user.id)
             await saveCurrentDeviceTokenIfPossible()
         } catch {
             supabaseSession = nil
@@ -199,6 +201,7 @@ final class AppState: ObservableObject {
         do {
             if let profile = try await profileService.findProfile(userID: supabaseSession.user.id) {
                 applyAuthenticatedState(supabaseSession: supabaseSession, userProfile: profile)
+                await hydrateCachedNotificationReadState(currentUserID: supabaseSession.user.id)
             }
         } catch {
             print("AppState: failed to refresh current profile: \(error.localizedDescription)")
@@ -591,6 +594,23 @@ final class AppState: ObservableObject {
                 id: notificationID,
                 read: existingReadStateByID[notificationID] ?? false
             )
+        }
+    }
+    // To handle app process termination and restore the existing session
+    // After restoring the existing session, the cached notification read state is hydrated from Supabase notifications table to ensure the read state is accurate for the current user.
+    private func hydrateCachedNotificationReadState(currentUserID: UUID) async {
+        let notificationIDs = userProfile?.notifications ?? []
+
+        guard !notificationIDs.isEmpty else {
+            cachedNotifications = []
+            return
+        }
+
+        do {
+            let notifications = try await notificationEventService.fetchNotifications(ids: notificationIDs)
+            updateCachedNotifications(notifications, currentUserID: currentUserID)
+        } catch {
+            print("AppState: failed to hydrate notification read state: \(error.localizedDescription)")
         }
     }
 
