@@ -61,6 +61,11 @@ struct NotificationEvent: Codable, Identifiable, Equatable, Hashable {
     }
 }
 
+struct CachedNotificationState: Identifiable, Equatable, Hashable {
+    let id: UUID
+    let read: Bool
+}
+
 struct NewNotificationEvent: Encodable {
     let sender: UUID
     let recipients: [UUID]

@@ -42,20 +42,38 @@ struct NotificationListView: View {
                                         VStack(spacing: 0) {
                                             NotificationCardView(
                                                 notification: notification,
+                                                isRead: appState.isCachedNotificationRead(notification.id),
                                                 isDeleting: viewModel.deletingNotificationIDs.contains(notification.id),
-                                                onTap: tapAction(for: notification)
-                                            ) {
-                                                Task {
-                                                    let didDeleteNotification = await viewModel.deleteNotification(
-                                                        notification,
-                                                        currentUserID: appState.userProfile?.id
-                                                    )
+                                                isMarkingRead: viewModel.markingReadNotificationIDs.contains(notification.id),
+                                                allowsSwipeToDelete: notification.notificationType != .eventJoined,
+                                                allowsSwipeToMarkRead: !appState.isCachedNotificationRead(notification.id),
+                                                onTap: tapAction(for: notification),
+                                                onMarkRead: {
+                                                    Task {
+                                                        let didMarkNotificationRead = await viewModel.markNotificationRead(
+                                                            notification,
+                                                            currentUserID: appState.userProfile?.id
+                                                        )
 
-                                                    if didDeleteNotification {
-                                                        appState.removeCachedNotification(notification.id)
+                                                        if didMarkNotificationRead {
+                                                            appState.markCachedNotificationRead(notification.id)
+                                                        }
+                                                    }
+                                                },
+                                                onDelete: {
+                                                    Task {
+                                                        let didDeleteNotification = await viewModel.deleteNotification(
+                                                            notification,
+                                                            currentUserID: appState.userProfile?.id
+                                                        )
+
+                                                        if didDeleteNotification {
+                                                            appState.removeCachedNotification(notification.id)
+                                                        }
                                                     }
                                                 }
-                                            }
+                                            )
+                                            .padding(.top, index == 0 ? 0 : 14)
 
                                             if index < viewModel.notifications.count - 1 {
                                                 notificationsDivider

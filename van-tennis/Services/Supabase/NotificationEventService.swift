@@ -68,6 +68,15 @@ struct NotificationEventService {
             .execute()
     }
 
+    func markNotificationRead(notificationID: UUID) async throws {
+        try await client
+            .rpc(
+                "mark_notification_read",
+                params: MarkNotificationReadParams(notificationID: notificationID)
+            )
+            .execute()
+    }
+
     func approveJoinRequest(notificationID: UUID) async throws {
         try await client
             .rpc(
@@ -79,6 +88,14 @@ struct NotificationEventService {
 }
 
 private struct DeleteNotificationForCurrentUserParams: Encodable {
+    let notificationID: UUID
+
+    enum CodingKeys: String, CodingKey {
+        case notificationID = "notification_id"
+    }
+}
+
+private struct MarkNotificationReadParams: Encodable {
     let notificationID: UUID
 
     enum CodingKeys: String, CodingKey {

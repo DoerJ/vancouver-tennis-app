@@ -5,6 +5,7 @@ import Foundation
 final class NotificationListViewModel: ObservableObject {
     @Published var notifications: [NotificationEvent] = []
     @Published var deletingNotificationIDs: Set<UUID> = []
+    @Published var markingReadNotificationIDs: Set<UUID> = []
     @Published var isLoading = false
     @Published var errorMessage: String?
 
@@ -13,31 +14,12 @@ final class NotificationListViewModel: ObservableObject {
     private var refreshTask: Task<Void, Never>?
 
     func refreshNotifications(appState: AppState, showsLoading: Bool = false) {
-        refreshNotifications(
-            currentUserID: appState.userProfile?.id,
-            showsLoading: showsLoading
-        ) { notificationIDs in
-            if let notificationIDs {
-                appState.updateCachedNotifications(notificationIDs)
-            }
-        }
-    }
-
-    func refreshNotifications(
-        currentUserID: UUID?,
-        showsLoading: Bool = false,
-        onComplete: (@MainActor ([UUID]?) async -> Void)? = nil
-    ) {
         guard refreshTask == nil else {
             return
         }
 
         refreshTask = Task { [weak self] in
-            let notificationIDs = await self?.loadNotifications(
-                currentUserID: currentUserID,
-                showsLoading: showsLoading
-            )
-            await onComplete?(notificationIDs)
+            await self?.loadNotifications(appState: appState, showsLoading: showsLoading)
             await MainActor.run {
                 self?.refreshTask = nil
             }
@@ -45,23 +27,16 @@ final class NotificationListViewModel: ObservableObject {
     }
 
     func loadNotifications(appState: AppState, showsLoading: Bool = false) async {
-        if let notificationIDs = await loadNotifications(
-            currentUserID: appState.userProfile?.id,
-            showsLoading: showsLoading
-        ) {
-            appState.updateCachedNotifications(notificationIDs)
-        }
-    }
-
-    func loadNotifications(currentUserID: UUID?, showsLoading: Bool = false) async -> [UUID]? {
         guard !isLoading else {
-            return nil
+            return
         }
+
+        let currentUserID = appState.userProfile?.id
 
         guard let currentUserID else {
             notifications = []
             errorMessage = AppContent.string("errors.noAuthenticatedUser")
-            return []
+            return
         }
 
         if showsLoading {
@@ -79,21 +54,21 @@ final class NotificationListViewModel: ObservableObject {
             guard let profile = try await profileService.findProfile(userID: currentUserID) else {
                 notifications = []
                 errorMessage = AppContent.string("errors.userProfileNotFound")
-                return []
+                return
             }
 
+            appState.updateCachedNotifications(profile.notifications)
+
             notifications = try await notificationEventService.fetchNotifications(
-                ids: profile.notifications
+                ids: appState.cachedNotifications.map(\.id)
             )
+            appState.updateCachedNotifications(notifications, currentUserID: currentUserID)
             print("NotificationListViewModel: loaded \(notifications.count) notifications.")
-            return profile.notifications
         } catch is CancellationError {
             print("NotificationListViewModel: notification load was cancelled.")
-            return nil
         } catch {
             print("NotificationListViewModel: failed to load notifications: \(error.localizedDescription)")
             errorMessage = error.localizedDescription
-            return nil
         }
     }
 
@@ -122,6 +97,35 @@ final class NotificationListViewModel: ObservableObject {
         }
 
         deletingNotificationIDs.remove(notification.id)
+        return false
+    }
+
+    func markNotificationRead(_ notification: NotificationEvent, currentUserID: UUID?) async -> Bool {
+        guard let currentUserID else {
+            errorMessage = AppContent.string("errors.noAuthenticatedUser")
+            return false
+        }
+
+        guard !notification.isRead(by: currentUserID),
+              !markingReadNotificationIDs.contains(notification.id) else {
+            return false
+        }
+
+        markingReadNotificationIDs.insert(notification.id)
+        errorMessage = nil
+        defer {
+            markingReadNotificationIDs.remove(notification.id)
+        }
+
+        do {
+            try await notificationEventService.markNotificationRead(notificationID: notification.id)
+            return true
+        } catch is CancellationError {
+            print("NotificationListViewModel: mark notification read was cancelled.")
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+
         return false
     }
 }

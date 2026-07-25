@@ -87,7 +87,7 @@ enum Constants {
             case .one:
                 return Color(hex: 0x91A857)
             case .oneFive:
-                return Color(hex: 0x2E3D1F)
+                return Color(hex: 0x335C1F)
             case .two:
                 return Color(hex: 0xF2DB21)
             case .twoFive:

@@ -11,6 +11,8 @@ final class AppState: ObservableObject {
     @Published var eventsRevision = 0
     @Published private(set) var chatMessagesRevision = 0
     @Published private(set) var unreadChatCountsByEventID: [UUID: Int] = [:]
+    // Cached notifications are stored in memory to track read/unread state for the current user.
+    @Published private(set) var cachedNotifications: [CachedNotificationState] = []
     @Published private(set) var cachedEventsByID: [UUID: TennisEvent] = [:]
     @Published private(set) var cachedChatMessagesByEventID: [UUID: [ChatRoomMessage]] = [:]
 
@@ -65,10 +67,13 @@ final class AppState: ObservableObject {
             }
             .store(in: &cancellables)
 
+        // Listen for remote notifications to refresh the current in-memory cached user profile
         NotificationCenter.default.publisher(for: NotificationService.remoteNotificationDidArriveNotification)
             .sink { [weak self] _ in
                 Task {
                     // Refresh the current user profile when a remote notification arrives
+                    // The profile stores notification IDs, while cachedNotifications stores app-only read state.
+                    // Full notification data are fetched when the user opens or refreshes the notification list page.
                     await self?.refreshCurrentProfile()
                 }
             }
@@ -202,6 +207,22 @@ final class AppState: ObservableObject {
 
     func updateCachedNotifications(_ notificationIDs: [UUID]) {
         userProfile = userProfile?.updatingNotifications(notificationIDs)
+        syncCachedNotifications(notificationIDs: notificationIDs)
+    }
+
+    func updateCachedNotifications(_ notifications: [NotificationEvent], currentUserID: UUID) {
+        let notificationIDs = notifications.map(\.id)
+        let readStateByID = notifications.reduce(into: [UUID: Bool]()) { states, notification in
+            states[notification.id] = notification.isRead(by: currentUserID)
+        }
+
+        userProfile = userProfile?.updatingNotifications(notificationIDs)
+        cachedNotifications = notificationIDs.map { notificationID in
+            CachedNotificationState(
+                id: notificationID,
+                read: readStateByID[notificationID] ?? isCachedNotificationRead(notificationID)
+            )
+        }
     }
 
     func updateCachedEvents(hostedEvents: [UUID], participatedEvents: [UUID]) {
@@ -237,6 +258,21 @@ final class AppState: ObservableObject {
         self.userProfile = userProfile.updatingNotifications(
             userProfile.notifications.filter { $0 != notificationID }
         )
+        cachedNotifications.removeAll { $0.id == notificationID }
+    }
+
+    func markCachedNotificationRead(_ notificationID: UUID) {
+        cachedNotifications = cachedNotifications.map { notification in
+            guard notification.id == notificationID else {
+                return notification
+            }
+
+            return CachedNotificationState(id: notification.id, read: true)
+        }
+    }
+
+    func isCachedNotificationRead(_ notificationID: UUID) -> Bool {
+        cachedNotifications.first { $0.id == notificationID }?.read ?? true
     }
 
     func cachedEvents(ids eventIDs: [UUID]) -> [TennisEvent] {
@@ -292,6 +328,11 @@ final class AppState: ObservableObject {
         return unreadChatCountsByEventID.contains { eventID, count in
             chatEventIDs.contains(eventID) && count > 0
         }
+    }
+
+    // Returns true if there is false value of read state in cachedNotifications
+    var hasUnreadNotifications: Bool {
+        cachedNotifications.contains { !$0.read }
     }
 
     func unreadChatCount(eventID: UUID) -> Int {
@@ -501,6 +542,7 @@ final class AppState: ObservableObject {
         googleSession = nil
         supabaseSession = nil
         userProfile = nil
+        cachedNotifications = []
         cachedEventsByID = [:]
         cachedChatMessagesByEventID = [:]
         unreadChatCountsByEventID = [:]
@@ -521,6 +563,7 @@ final class AppState: ObservableObject {
         googleSession = nil
         supabaseSession = nil
         userProfile = nil
+        cachedNotifications = []
         cachedEventsByID = [:]
         cachedChatMessagesByEventID = [:]
         unreadChatCountsByEventID = [:]
@@ -532,9 +575,23 @@ final class AppState: ObservableObject {
     private func applyAuthenticatedState(supabaseSession: Session, userProfile: UserProfile) {
         self.supabaseSession = supabaseSession
         self.userProfile = userProfile
+        syncCachedNotifications(notificationIDs: userProfile.notifications)
         pruneUnreadChatCounts(validEventIDs: Set(userProfile.hostedEvents + userProfile.participatedEvents))
         authenticationState = userProfile.skillLevel == nil || userProfile.gender == nil ? .needsSkillLevel : .signedIn
         startChatMessagesRealtimeSubscriptions(eventIDs: Array(Set(userProfile.hostedEvents + userProfile.participatedEvents)))
+    }
+
+    private func syncCachedNotifications(notificationIDs: [UUID]) {
+        let existingReadStateByID = cachedNotifications.reduce(into: [UUID: Bool]()) { states, notification in
+            states[notification.id] = notification.read
+        }
+
+        cachedNotifications = notificationIDs.map { notificationID in
+            CachedNotificationState(
+                id: notificationID,
+                read: existingReadStateByID[notificationID] ?? false
+            )
+        }
     }
 
     @discardableResult
