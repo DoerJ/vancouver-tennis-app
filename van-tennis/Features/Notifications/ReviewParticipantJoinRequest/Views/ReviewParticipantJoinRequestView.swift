@@ -113,54 +113,88 @@ struct ReviewParticipantJoinRequestView: View {
         VStack(spacing: 24) {
             RallyDivider(width: 301)
 
-            HStack(spacing: 28) {
-                Button {
-                    Task {
-                        let didCompleteReview = await viewModel.approveJoinRequest(
-                            notification: notification,
-                            currentUser: appState.userProfile
-                        )
+            if viewModel.canReviewJoinRequest {
+                HStack(spacing: 28) {
+                    Button {
+                        Task {
+                            let didCompleteReview = await viewModel.approveJoinRequest(
+                                notification: notification,
+                                currentUser: appState.userProfile
+                            )
 
-                        if didCompleteReview {
-                            dismiss()
+                            if didCompleteReview {
+                                dismiss()
+                            }
+                        }
+                    } label: {
+                        if viewModel.isApproving {
+                            ProgressView()
+                                .tint(.white)
+                                .frame(maxWidth: .infinity)
+                        } else {
+                            Text(AppContent.string("joinRequest.approve"))
+                                .frame(maxWidth: .infinity)
                         }
                     }
-                } label: {
-                    if viewModel.isApproving {
-                        ProgressView()
-                            .tint(.white)
-                            .frame(maxWidth: .infinity)
-                    } else {
-                        Text(AppContent.string("joinRequest.approve"))
-                            .frame(maxWidth: .infinity)
-                    }
-                }
-                .buttonStyle(RallyCompactPrimaryButtonStyle())
-                .disabled(actionButtonsAreDisabled)
+                    .buttonStyle(RallyCompactPrimaryButtonStyle())
+                    .disabled(actionButtonsAreDisabled)
 
+                    Button(role: .destructive) {
+                        Task {
+                            let didCompleteReview = await viewModel.rejectJoinRequest(
+                                notification: notification,
+                                currentUser: appState.userProfile
+                            )
+
+                            if didCompleteReview {
+                                dismiss()
+                            }
+                        }
+                    } label: {
+                        if viewModel.isDisapproving {
+                            ProgressView()
+                                .tint(.white)
+                                .frame(maxWidth: .infinity)
+                        } else {
+                            Text(AppContent.string("joinRequest.reject"))
+                                .frame(maxWidth: .infinity)
+                        }
+                    }
+                    .buttonStyle(RallyCompactMutedButtonStyle())
+                    .disabled(actionButtonsAreDisabled)
+                }
+            } else {
                 Button(role: .destructive) {
                     Task {
-                        let didCompleteReview = await viewModel.rejectJoinRequest(
+                        let didDeleteNotification = await viewModel.deleteJoinRequestNotification(
                             notification: notification,
                             currentUser: appState.userProfile
                         )
 
-                        if didCompleteReview {
+                        if didDeleteNotification {
+                            appState.removeCachedNotification(notification.id)
                             dismiss()
                         }
                     }
                 } label: {
-                    if viewModel.isDisapproving {
-                        ProgressView()
-                            .tint(.white)
-                            .frame(maxWidth: .infinity)
-                    } else {
-                        Text(AppContent.string("joinRequest.reject"))
-                            .frame(maxWidth: .infinity)
+                    HStack(spacing: 10) {
+                        if viewModel.isDeleting {
+                            ProgressView()
+                                .tint(.white)
+                        } else {
+                            Image("delete_forever")
+                                .resizable()
+                                .renderingMode(.template)
+                                .scaledToFit()
+                                .frame(width: 24, height: 24)
+
+                            Text(AppContent.string("common.delete"))
+                        }
                     }
+                    .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(RallyCompactMutedButtonStyle())
-                .disabled(actionButtonsAreDisabled)
+                .buttonStyle(RallyDestructiveActionButtonStyle())
+                .disabled(deleteButtonIsDisabled)
             }
         }
         .frame(maxWidth: .infinity)
@@ -171,6 +205,13 @@ struct ReviewParticipantJoinRequestView: View {
             || viewModel.isDisapproving
             || viewModel.hasCompletedReview
             || !viewModel.canReviewJoinRequest
+    }
+
+    private var deleteButtonIsDisabled: Bool {
+        viewModel.isLoading
+            || viewModel.isDeleting
+            || viewModel.hasCompletedReview
+            || viewModel.canReviewJoinRequest
     }
 }
 

@@ -144,7 +144,9 @@ struct NotificationListView: View {
         RallyEmptyState(
             iconName: "Bell",
             title: AppContent.string("notifications.empty.title"),
-            description: AppContent.string("notifications.empty.description")
+            description: AppContent.string("notifications.empty.description"),
+            titleFontSize: 17,
+            descriptionFontSize: 15
         )
     }
 

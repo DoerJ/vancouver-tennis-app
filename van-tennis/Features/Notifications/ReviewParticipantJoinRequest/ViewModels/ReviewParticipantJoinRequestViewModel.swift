@@ -8,6 +8,7 @@ final class ReviewParticipantJoinRequestViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var isApproving = false
     @Published var isDisapproving = false
+    @Published var isDeleting = false
     @Published var hasCompletedReview = false
     @Published var errorMessage: String?
 
@@ -138,6 +139,35 @@ final class ReviewParticipantJoinRequestViewModel: ObservableObject {
                 )
             )
 
+            try await notificationEventService.deleteNotificationForCurrentUser(
+                notificationID: notification.id
+            )
+
+            hasCompletedReview = true
+            return true
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
+    }
+
+    func deleteJoinRequestNotification(notification: NotificationEvent, currentUser: UserProfile?) async -> Bool {
+        guard currentUser != nil else {
+            errorMessage = AppContent.string("errors.noAuthenticatedUser")
+            return false
+        }
+
+        guard !canReviewJoinRequest else {
+            return false
+        }
+
+        isDeleting = true
+        errorMessage = nil
+        defer {
+            isDeleting = false
+        }
+
+        do {
             try await notificationEventService.deleteNotificationForCurrentUser(
                 notificationID: notification.id
             )
