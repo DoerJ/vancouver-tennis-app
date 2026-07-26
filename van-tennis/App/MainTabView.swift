@@ -19,6 +19,7 @@ struct MainTabView: View {
             if !isMainTabBarHidden {
                 MainTabBar(
                     selectedTab: selectedTab,
+                    hasUnreadMyEvents: appState.userProfile?.isAllEventsRead == false,
                     hasUnreadChats: appState.hasUnreadChats
                 ) { tab in
                     selectTab(tab)
@@ -155,6 +156,7 @@ private enum MainTab: Hashable, CaseIterable {
 
 private struct MainTabBar: View {
     let selectedTab: MainTab
+    let hasUnreadMyEvents: Bool
     let hasUnreadChats: Bool
     let onSelect: (MainTab) -> Void
 
@@ -200,7 +202,7 @@ private struct MainTabBar: View {
         case .find:
             return false
         case .myEvents:
-            return false
+            return hasUnreadMyEvents
         case .chat:
             return hasUnreadChats
         }

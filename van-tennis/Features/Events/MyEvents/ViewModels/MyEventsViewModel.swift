@@ -23,6 +23,7 @@ final class MyEventsViewModel: ObservableObject {
                     hostedEvents: eventIDs.hostedEvents,
                     participatedEvents: eventIDs.participatedEvents
                 )
+                appState.updateCachedAllEventsRead(true)
             }
         }
     }
@@ -57,6 +58,7 @@ final class MyEventsViewModel: ObservableObject {
                 hostedEvents: eventIDs.hostedEvents,
                 participatedEvents: eventIDs.participatedEvents
             )
+            appState.updateCachedAllEventsRead(true)
         }
     }
 
@@ -99,6 +101,10 @@ final class MyEventsViewModel: ObservableObject {
                 .filter { $0.endTime > now }
 
             await loadMissingHostProfiles(for: events, currentUserID: currentUserID)
+            _ = try await profileService.updateProfile(
+                userID: currentUserID,
+                isAllEventsRead: true
+            )
 
             return MyEventsProfileEventIDs(
                 hostedEvents: events

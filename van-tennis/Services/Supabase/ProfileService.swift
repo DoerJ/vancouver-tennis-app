@@ -26,7 +26,8 @@ struct ProfileService {
             hostedEvents: [],
             participatedEvents: [],
             notifications: [],
-            socialTags: []
+            socialTags: [],
+            isAllEventsRead: true
         )
 
         let createdProfile: UserProfile = try await client
@@ -87,7 +88,8 @@ struct ProfileService {
         hostedEvents: [UUID]? = nil,
         participatedEvents: [UUID]? = nil,
         notifications: [UUID]? = nil,
-        socialTags: [String]? = nil
+        socialTags: [String]? = nil,
+        isAllEventsRead: Bool? = nil
     ) async throws -> UserProfile {
         try await client
             .from("profiles")
@@ -99,7 +101,8 @@ struct ProfileService {
                     hostedEvents: hostedEvents,
                     participatedEvents: participatedEvents,
                     notifications: notifications,
-                    socialTags: socialTags
+                    socialTags: socialTags,
+                    isAllEventsRead: isAllEventsRead
                 )
             )
             .eq("id", value: userID.uuidString)
@@ -122,7 +125,8 @@ struct ProfileService {
 
         return try await updateProfile(
             userID: userID,
-            hostedEvents: hostedEvents
+            hostedEvents: hostedEvents,
+            isAllEventsRead: false
         )
     }
 

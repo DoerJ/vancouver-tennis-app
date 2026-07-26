@@ -11,6 +11,7 @@ struct UserProfile: Codable, Identifiable, Equatable {
     let participatedEvents: [UUID]
     let notifications: [UUID]
     let socialTags: [String]
+    let isAllEventsRead: Bool
     let createdAt: Date?
     let updatedAt: Date?
 
@@ -25,6 +26,7 @@ struct UserProfile: Codable, Identifiable, Equatable {
         case participatedEvents = "participated_events"
         case notifications
         case socialTags = "social_tags"
+        case isAllEventsRead = "is_all_events_read"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
@@ -43,6 +45,25 @@ extension UserProfile {
             participatedEvents: participatedEvents,
             notifications: notifications,
             socialTags: socialTags,
+            isAllEventsRead: isAllEventsRead,
+            createdAt: createdAt,
+            updatedAt: updatedAt
+        )
+    }
+
+    func updatingAllEventsRead(_ isAllEventsRead: Bool) -> UserProfile {
+        UserProfile(
+            id: id,
+            email: email,
+            displayName: displayName,
+            avatarURL: avatarURL,
+            skillLevel: skillLevel,
+            gender: gender,
+            hostedEvents: hostedEvents,
+            participatedEvents: participatedEvents,
+            notifications: notifications,
+            socialTags: socialTags,
+            isAllEventsRead: isAllEventsRead,
             createdAt: createdAt,
             updatedAt: updatedAt
         )
@@ -60,6 +81,7 @@ extension UserProfile {
             participatedEvents: participatedEvents,
             notifications: notifications,
             socialTags: socialTags,
+            isAllEventsRead: isAllEventsRead,
             createdAt: createdAt,
             updatedAt: updatedAt
         )
@@ -77,6 +99,7 @@ struct NewUserProfile: Encodable {
     let participatedEvents: [UUID]
     let notifications: [UUID]
     let socialTags: [String]
+    let isAllEventsRead: Bool
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -89,6 +112,7 @@ struct NewUserProfile: Encodable {
         case participatedEvents = "participated_events"
         case notifications
         case socialTags = "social_tags"
+        case isAllEventsRead = "is_all_events_read"
     }
 }
 
@@ -100,6 +124,7 @@ struct UpdateUserProfile: Encodable {
     let participatedEvents: [UUID]?
     let notifications: [UUID]?
     let socialTags: [String]?
+    let isAllEventsRead: Bool?
 
     enum CodingKeys: String, CodingKey {
         case displayName = "display_name"
@@ -109,6 +134,7 @@ struct UpdateUserProfile: Encodable {
         case participatedEvents = "participated_events"
         case notifications
         case socialTags = "social_tags"
+        case isAllEventsRead = "is_all_events_read"
     }
 
     func encode(to encoder: Encoder) throws {
@@ -121,5 +147,6 @@ struct UpdateUserProfile: Encodable {
         try container.encodeIfPresent(participatedEvents, forKey: .participatedEvents)
         try container.encodeIfPresent(notifications, forKey: .notifications)
         try container.encodeIfPresent(socialTags, forKey: .socialTags)
+        try container.encodeIfPresent(isAllEventsRead, forKey: .isAllEventsRead)
     }
 }

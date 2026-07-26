@@ -249,6 +249,10 @@ final class AppState: ObservableObject {
         startChatMessagesRealtimeSubscriptions(eventIDs: Array(Set(hostedEvents + participatedEvents)))
     }
 
+    func updateCachedAllEventsRead(_ isAllEventsRead: Bool) {
+        userProfile = userProfile?.updatingAllEventsRead(isAllEventsRead)
+    }
+
     func removeCachedEvent(_ eventID: UUID) {
         guard let userProfile else {
             return
