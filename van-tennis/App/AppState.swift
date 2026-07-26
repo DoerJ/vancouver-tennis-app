@@ -28,6 +28,7 @@ final class AppState: ObservableObject {
     private var chatMessagesRealtimeChannel: RealtimeChannelV2?
     private var subscribedChatEventIDs: Set<UUID> = []
     private var activeChatEventID: UUID?
+    private var countedUnreadChatMessageIDsByEventID: [UUID: Set<UUID>] = [:]
     private var lastSavedDeviceToken: String?
     private static let supabaseRealtimeDecoder: JSONDecoder = {
         let decoder = JSONDecoder()
@@ -72,12 +73,10 @@ final class AppState: ObservableObject {
 
         // Listen for remote notifications to refresh the current in-memory cached user profile
         NotificationCenter.default.publisher(for: NotificationService.remoteNotificationDidArriveNotification)
-            .sink { [weak self] _ in
+            .sink { [weak self] notification in
+                let context = notification.object as? NotificationService.RemoteNotificationContext
                 Task {
-                    // Refresh the current user profile when a remote notification arrives
-                    // The profile stores notification IDs, while cachedNotifications stores app-only read state.
-                    // Full notification data are fetched when the user opens or refreshes the notification list page.
-                    await self?.refreshCurrentProfile()
+                    await self?.handleRemoteNotificationArrival(context)
                 }
             }
             .store(in: &cancellables)
@@ -362,6 +361,7 @@ final class AppState: ObservableObject {
         activeChatEventID = eventID
         NotificationService.setActiveChatEventID(eventID)
         clearUnreadChatCount(eventID: eventID)
+        markCachedChatMessagesRead(eventID: eventID)
         startChatMessagesRealtimeSubscription(eventID: eventID)
     }
 
@@ -417,10 +417,12 @@ final class AppState: ObservableObject {
 
     private func clearUnreadChatCount(eventID: UUID) {
         guard unreadChatCountsByEventID[eventID] != nil else {
+            countedUnreadChatMessageIDsByEventID[eventID] = nil
             return
         }
 
         unreadChatCountsByEventID[eventID] = nil
+        countedUnreadChatMessageIDsByEventID[eventID] = nil
         persistUnreadChatCounts()
     }
 
@@ -434,19 +436,81 @@ final class AppState: ObservableObject {
         }
 
         unreadChatCountsByEventID = prunedCounts
+        countedUnreadChatMessageIDsByEventID = countedUnreadChatMessageIDsByEventID.filter { eventID, _ in
+            validEventIDs.contains(eventID)
+        }
         persistUnreadChatCounts()
     }
 
     private func recordIncomingRealtimeChatMessage(_ message: ChatRoomMessage, eventID: UUID) {
-        guard message.senderID != userProfile?.id else {
+        recordIncomingChatMessage(
+            eventID: eventID,
+            messageID: message.id,
+            senderID: message.senderID
+        )
+    }
+
+    private func recordIncomingChatPush(_ context: NotificationService.RemoteNotificationContext) -> UUID? {
+        guard context.notificationType == Constants.Chat.messageNotificationType,
+              let eventID = context.relatedEventID else {
+            return nil
+        }
+
+        recordIncomingChatMessage(
+            eventID: eventID,
+            messageID: context.chatMessageID,
+            senderID: context.senderID
+        )
+
+        return eventID
+    }
+
+    private func recordIncomingChatMessage(eventID: UUID, messageID: UUID?, senderID: UUID?) {
+        guard senderID != userProfile?.id else {
             return
         }
 
         guard activeChatEventID != eventID else {
+            markCachedChatMessagesRead(eventID: eventID)
             return
         }
 
+        if let messageID {
+            let countedMessageIDs = countedUnreadChatMessageIDsByEventID[eventID] ?? []
+
+            guard !countedMessageIDs.contains(messageID) else {
+                return
+            }
+
+            countedUnreadChatMessageIDsByEventID[eventID, default: []].insert(messageID)
+        }
+
+        userProfile = userProfile?.updatingChatMessageReadState(eventID: eventID, read: false)
         incrementUnreadChatCount(eventID: eventID)
+    }
+
+    private func markCachedChatMessagesRead(eventID: UUID) {
+        userProfile = userProfile?.updatingChatMessageReadState(eventID: eventID, read: true)
+
+        Task {
+            do {
+                try await profileService.markCurrentUserChatMessagesRead(eventID: eventID)
+            } catch {
+                print("AppState: failed to mark chat messages read: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private func handleRemoteNotificationArrival(_ context: NotificationService.RemoteNotificationContext?) async {
+        if let context,
+           let chatEventID = recordIncomingChatPush(context) {
+            await refreshCachedChatMessages(eventID: chatEventID)
+        }
+
+        // Refresh the current user profile when a remote notification arrives.
+        // The profile stores notification IDs, while cachedNotifications stores app-only read state.
+        // Full notification data are fetched when the user opens or refreshes the notification list page.
+        await refreshCurrentProfile()
     }
 
     func preloadCachedChatMessages(eventIDs: [UUID]) async {
@@ -573,6 +637,7 @@ final class AppState: ObservableObject {
         cachedEventsByID = [:]
         cachedChatMessagesByEventID = [:]
         unreadChatCountsByEventID = [:]
+        countedUnreadChatMessageIDsByEventID = [:]
         persistUnreadChatCounts()
         chatMessagesRevision += 1
         authenticationState = .signedOut
@@ -604,6 +669,7 @@ final class AppState: ObservableObject {
         cachedEventsByID = [:]
         cachedChatMessagesByEventID = [:]
         unreadChatCountsByEventID = [:]
+        countedUnreadChatMessageIDsByEventID = [:]
         persistUnreadChatCounts()
         chatMessagesRevision += 1
         authenticationState = .signedOut
@@ -631,6 +697,7 @@ final class AppState: ObservableObject {
         self.userProfile = userProfile
         NotificationService.setUserSignedIn(true)
         syncCachedNotifications(notificationIDs: userProfile.notifications)
+        hydrateUnreadChatCountsFromProfile(userProfile)
         pruneUnreadChatCounts(validEventIDs: Set(userProfile.hostedEvents + userProfile.participatedEvents))
         authenticationState = userProfile.skillLevel == nil || userProfile.gender == nil ? .needsSkillLevel : .signedIn
         startChatMessagesRealtimeSubscriptions(eventIDs: Array(Set(userProfile.hostedEvents + userProfile.participatedEvents)))
@@ -648,6 +715,30 @@ final class AppState: ObservableObject {
             )
         }
     }
+
+    private func hydrateUnreadChatCountsFromProfile(_ profile: UserProfile) {
+        let validEventIDs = Set(profile.hostedEvents + profile.participatedEvents)
+        var hydratedCounts = unreadChatCountsByEventID.filter { eventID, count in
+            validEventIDs.contains(eventID) && count > 0
+        }
+
+        for readState in profile.chatMessageReadStates where validEventIDs.contains(readState.id) {
+            if readState.read {
+                hydratedCounts[readState.id] = nil
+                countedUnreadChatMessageIDsByEventID[readState.id] = nil
+            } else {
+                hydratedCounts[readState.id] = max(hydratedCounts[readState.id] ?? 0, 1)
+            }
+        }
+
+        guard hydratedCounts != unreadChatCountsByEventID else {
+            return
+        }
+
+        unreadChatCountsByEventID = hydratedCounts
+        persistUnreadChatCounts()
+    }
+
     // To handle app process termination and restore the existing session
     // After restoring the existing session, the cached notification read state is hydrated from Supabase notifications table to ensure the read state is accurate for the current user.
     private func hydrateCachedNotificationReadState(currentUserID: UUID) async {

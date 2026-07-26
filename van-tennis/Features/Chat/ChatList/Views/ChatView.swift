@@ -3,15 +3,24 @@ import SwiftUI
 struct ChatView: View {
     @EnvironmentObject private var appState: AppState
     @StateObject private var viewModel = ChatListViewModel()
+    @State private var navigationPath: [TennisEvent] = []
 
+    let requestedChatEventID: UUID?
+    let onRequestedChatEventOpened: () -> Void
     let onOpenProfile: () -> Void
 
-    init(onOpenProfile: @escaping () -> Void = {}) {
+    init(
+        requestedChatEventID: UUID? = nil,
+        onRequestedChatEventOpened: @escaping () -> Void = {},
+        onOpenProfile: @escaping () -> Void = {}
+    ) {
+        self.requestedChatEventID = requestedChatEventID
+        self.onRequestedChatEventOpened = onRequestedChatEventOpened
         self.onOpenProfile = onOpenProfile
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             ZStack {
                 Color.white
                     .ignoresSafeArea()
@@ -40,9 +49,7 @@ struct ChatView: View {
                             .padding(.top, 48)
                         } else {
                             List(conversationPreviews) { preview in
-                                NavigationLink {
-                                    ChatRoomView(event: preview.event)
-                                } label: {
+                                NavigationLink(value: preview.event) {
                                     ChatConversationCard(preview: preview)
                                 }
                                 .listRowBackground(Color.white)
@@ -60,16 +67,27 @@ struct ChatView: View {
             .toolbar(.hidden, for: .navigationBar)
             .task {
                 await viewModel.loadEvents(appState: appState)
+                await openRequestedChatEventIfNeeded()
             }
             .onChange(of: appState.userProfile?.hostedEvents) { _, _ in
                 Task {
                     await viewModel.loadEvents(appState: appState)
+                    await openRequestedChatEventIfNeeded()
                 }
             }
             .onChange(of: appState.userProfile?.participatedEvents) { _, _ in
                 Task {
                     await viewModel.loadEvents(appState: appState)
+                    await openRequestedChatEventIfNeeded()
                 }
+            }
+            .onChange(of: requestedChatEventID) { _, _ in
+                Task {
+                    await openRequestedChatEventIfNeeded()
+                }
+            }
+            .navigationDestination(for: TennisEvent.self) { event in
+                ChatRoomView(event: event)
             }
         }
     }
@@ -120,17 +138,42 @@ struct ChatView: View {
             return ChatConversationPreview(
                 event: event,
                 latestMessage: latestMessage,
-                unreadCount: appState.unreadChatCount(eventID: event.id)
+                hasUnreadMessages: appState.unreadChatCount(eventID: event.id) > 0
             )
         }
         .sorted { $0.latestMessage.sentAt > $1.latestMessage.sentAt }
+    }
+
+    private func openRequestedChatEventIfNeeded() async {
+        guard let requestedChatEventID else {
+            return
+        }
+
+        if let event = viewModel.events.first(where: { $0.id == requestedChatEventID }) {
+            openChatEvent(event)
+            return
+        }
+
+        await viewModel.loadEvents(appState: appState)
+
+        if let event = viewModel.events.first(where: { $0.id == requestedChatEventID }) {
+            openChatEvent(event)
+        }
+    }
+
+    private func openChatEvent(_ event: TennisEvent) {
+        if navigationPath.last?.id != event.id {
+            navigationPath.append(event)
+        }
+
+        onRequestedChatEventOpened()
     }
 }
 
 private struct ChatConversationPreview: Identifiable {
     let event: TennisEvent
     let latestMessage: ChatRoomMessage
-    let unreadCount: Int
+    let hasUnreadMessages: Bool
 
     var id: UUID {
         event.id
@@ -145,38 +188,29 @@ private struct ChatConversationCard: View {
     let preview: ChatConversationPreview
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .firstTextBaseline, spacing: 12) {
-                Text(preview.eventDisplayName)
-                    .font(.headline)
-                    .foregroundStyle(RallyDiscoverStyle.ink)
-                    .lineLimit(1)
+        HStack(alignment: .top, spacing: 10) {
+            unreadIndicator
+                .padding(.top, 14)
 
-                Spacer(minLength: 8)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
+                    Text(preview.eventDisplayName)
+                        .font(.headline)
+                        .foregroundStyle(RallyDiscoverStyle.ink)
+                        .lineLimit(1)
 
-                if preview.unreadCount > 0 {
-                    Text(
-                        preview.unreadCount > Constants.Chat.maximumDisplayedUnreadCount
-                            ? Constants.Chat.maximumDisplayedUnreadText
-                            : "\(preview.unreadCount)"
-                    )
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 3)
-                        .background(Color.red, in: Capsule())
-                        .accessibilityLabel(AppContent.string("chat.unreadAccessibility", preview.unreadCount))
+                    Spacer(minLength: 8)
+
+                    Text(DateFormattingHelper.shortDateTimeString(from: preview.latestMessage.sentAt))
+                        .font(.caption)
+                        .foregroundStyle(RallyDiscoverStyle.mutedText)
                 }
 
-                Text(DateFormattingHelper.shortDateTimeString(from: preview.latestMessage.sentAt))
-                    .font(.caption)
+                Text(latestMessagePreviewText)
+                    .font(.subheadline)
                     .foregroundStyle(RallyDiscoverStyle.mutedText)
+                    .lineLimit(2)
             }
-
-            Text(latestMessagePreviewText)
-                .font(.subheadline)
-                .foregroundStyle(RallyDiscoverStyle.mutedText)
-                .lineLimit(2)
         }
         .padding(.top, 8)
         .padding(.bottom, 16)
@@ -185,6 +219,16 @@ private struct ChatConversationCard: View {
             RallyDivider(width: 301)
         }
         .accessibilityElement(children: .combine)
+    }
+
+    @ViewBuilder
+    private var unreadIndicator: some View {
+        if preview.hasUnreadMessages {
+            Circle()
+                .fill(Color(red: 0.20, green: 0.36, blue: 0.12))
+                .frame(width: 8, height: 8)
+                .accessibilityHidden(true)
+        }
     }
 
     private var latestMessagePreviewText: String {

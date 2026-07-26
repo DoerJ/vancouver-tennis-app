@@ -215,7 +215,7 @@ struct ChatRoomView: View {
     }
 
     private func systemMessageRow(_ message: ChatRoomMessage) -> some View {
-        Text(Constants.Chat.displayBody(for: message.body))
+        Text(systemMessageDisplayText(message))
             .font(.caption)
             .foregroundStyle(RallyDiscoverStyle.mutedText)
             .multilineTextAlignment(.center)
@@ -224,6 +224,24 @@ struct ChatRoomView: View {
             .background(RallyDiscoverStyle.surface)
             .clipShape(Capsule())
             .frame(maxWidth: .infinity, alignment: .center)
+    }
+
+    private func systemMessageDisplayText(_ message: ChatRoomMessage) -> String {
+        let displayBody = Constants.Chat.displayBody(for: message.body)
+
+        guard message.senderID == appState.userProfile?.id else {
+            return displayBody
+        }
+
+        if displayBody.hasSuffix(" has joined the room.") {
+            return "You joined the room."
+        }
+
+        if displayBody.hasSuffix(" has left the room.") {
+            return "You left the room."
+        }
+
+        return displayBody
     }
 
     private func scrollToLatestMessage(with proxy: ScrollViewProxy, messages: [ChatRoomMessage]) {

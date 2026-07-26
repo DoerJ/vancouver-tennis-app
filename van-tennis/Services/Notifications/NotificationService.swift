@@ -16,10 +16,20 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
     static private(set) var currentDeviceToken: String?
     static private(set) var activeChatEventID: UUID?
     static private var isUserSignedIn = false
+    static private var pendingOpenedNotificationContext: OpenedNotificationContext?
 
     struct OpenedNotificationContext {
         let notificationID: UUID?
         let notificationType: NotificationType?
+        let rawNotificationType: String?
+        let relatedEventID: UUID?
+    }
+
+    struct RemoteNotificationContext {
+        let notificationType: String?
+        let relatedEventID: UUID?
+        let chatMessageID: UUID?
+        let senderID: UUID?
     }
 
     static func setActiveChatEventID(_ eventID: UUID?) {
@@ -28,6 +38,15 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
 
     static func setUserSignedIn(_ isSignedIn: Bool) {
         isUserSignedIn = isSignedIn
+    }
+
+    // When the main tab view appears and the app is signed in, consume any pending notification open context and return it to the app for handling.
+    static func consumePendingOpenedNotificationContext() -> OpenedNotificationContext? {
+        defer {
+            pendingOpenedNotificationContext = nil
+        }
+
+        return pendingOpenedNotificationContext
     }
 
     static func requestRemoteNotificationRegistration() {
@@ -93,7 +112,7 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
         fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
     ) {
         print("NotificationService: received remote notification.")
-        postRemoteNotificationDidArrive()
+        postRemoteNotificationDidArrive(userInfo)
         completionHandler(.newData)
     }
 
@@ -113,7 +132,7 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
             return []
         }
 
-        postRemoteNotificationDidArrive()
+        postRemoteNotificationDidArrive(notification.request.content.userInfo)
         return [.banner, .badge, .sound]
     }
 
@@ -122,11 +141,11 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
         didReceive response: UNNotificationResponse
     ) async {
         print("NotificationService: user opened notification.")
-        postRemoteNotificationDidArrive()
+        postRemoteNotificationDidArrive(response.notification.request.content.userInfo)
         postRemoteNotificationDidOpen(response.notification.request.content.userInfo)
     }
 
-    private func postRemoteNotificationDidArrive() {
+    private func postRemoteNotificationDidArrive(_ userInfo: [AnyHashable: Any]) {
         guard Self.isUserSignedIn else {
             print("NotificationService: ignored remote notification while signed out.")
             return
@@ -134,37 +153,53 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
 
         NotificationCenter.default.post(
             name: Self.remoteNotificationDidArriveNotification,
-            object: nil
+            object: remoteNotificationContext(from: userInfo)
         )
     }
 
     private func postRemoteNotificationDidOpen(_ userInfo: [AnyHashable: Any]) {
-        guard Self.isUserSignedIn else {
-            print("NotificationService: ignored notification open while signed out.")
-            return
+        if !Self.isUserSignedIn {
+            print("NotificationService: stored notification open while signed out.")
         }
 
         let notificationID = (userInfo["notification_id"] as? String).flatMap(UUID.init(uuidString:))
-        let notificationType = (userInfo["notification_type"] as? String).flatMap(NotificationType.init(rawValue:))
+        let rawNotificationType = userInfo["notification_type"] as? String
+        let notificationType = rawNotificationType.flatMap(NotificationType.init(rawValue:))
+        let relatedEventID = (userInfo["related_event_id"] as? String).flatMap(UUID.init(uuidString:))
+
+        // Store the tapped notification payload so it can be consumed by the app when the app process is restored
+        let context = OpenedNotificationContext(
+            notificationID: notificationID,
+            notificationType: notificationType,
+            rawNotificationType: rawNotificationType,
+            relatedEventID: relatedEventID
+        )
+        Self.pendingOpenedNotificationContext = context
 
         NotificationCenter.default.post(
             name: Self.remoteNotificationDidOpenNotification,
-            object: OpenedNotificationContext(
-                notificationID: notificationID,
-                notificationType: notificationType
-            )
+            object: context
         )
     }
 
     private func shouldSuppressChatNotification(_ notification: UNNotification) -> Bool {
         let userInfo = notification.request.content.userInfo
 
-        guard userInfo["notification_type"] as? String == "chat_message_received",
+        guard userInfo["notification_type"] as? String == Constants.Chat.messageNotificationType,
               let eventIDString = userInfo["related_event_id"] as? String,
               let eventID = UUID(uuidString: eventIDString) else {
             return false
         }
 
         return eventID == Self.activeChatEventID
+    }
+
+    private func remoteNotificationContext(from userInfo: [AnyHashable: Any]) -> RemoteNotificationContext {
+        RemoteNotificationContext(
+            notificationType: userInfo["notification_type"] as? String,
+            relatedEventID: (userInfo["related_event_id"] as? String).flatMap(UUID.init(uuidString:)),
+            chatMessageID: (userInfo["chat_message_id"] as? String).flatMap(UUID.init(uuidString:)),
+            senderID: (userInfo["sender"] as? String).flatMap(UUID.init(uuidString:))
+        )
     }
 }

@@ -27,7 +27,8 @@ struct ProfileService {
             participatedEvents: [],
             notifications: [],
             socialTags: [],
-            isAllEventsRead: true
+            isAllEventsRead: true,
+            chatMessageReadStates: []
         )
 
         let createdProfile: UserProfile = try await client
@@ -89,7 +90,8 @@ struct ProfileService {
         participatedEvents: [UUID]? = nil,
         notifications: [UUID]? = nil,
         socialTags: [String]? = nil,
-        isAllEventsRead: Bool? = nil
+        isAllEventsRead: Bool? = nil,
+        chatMessageReadStates: [ChatMessageReadState]? = nil
     ) async throws -> UserProfile {
         try await client
             .from("profiles")
@@ -102,7 +104,8 @@ struct ProfileService {
                     participatedEvents: participatedEvents,
                     notifications: notifications,
                     socialTags: socialTags,
-                    isAllEventsRead: isAllEventsRead
+                    isAllEventsRead: isAllEventsRead,
+                    chatMessageReadStates: chatMessageReadStates
                 )
             )
             .eq("id", value: userID.uuidString)
@@ -141,6 +144,15 @@ struct ProfileService {
             userID: userID,
             hostedEvents: hostedEvents
         )
+    }
+
+    func markCurrentUserChatMessagesRead(eventID: UUID) async throws {
+        try await client
+            .rpc(
+                "mark_current_user_chat_messages_read",
+                params: MarkCurrentUserChatMessagesReadParams(eventID: eventID)
+            )
+            .execute()
     }
 
     func deleteAccountProfileData() async throws {
@@ -190,6 +202,14 @@ struct ProfileService {
         }
 
         return nil
+    }
+}
+
+private struct MarkCurrentUserChatMessagesReadParams: Encodable {
+    let eventID: UUID
+
+    enum CodingKeys: String, CodingKey {
+        case eventID = "event_id"
     }
 }
 

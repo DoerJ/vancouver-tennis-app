@@ -143,8 +143,7 @@ enum Constants {
     }
 
     enum Chat {
-        static let maximumDisplayedUnreadCount = 99
-        static let maximumDisplayedUnreadText = "99+"
+        static let messageNotificationType = "chat_message_received"
         static let maximumMessageLength = 1000
         static let systemMessagePrefix = "__van_tennis_system__ "
 

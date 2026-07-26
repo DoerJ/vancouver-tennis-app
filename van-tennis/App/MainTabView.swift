@@ -7,6 +7,7 @@ struct MainTabView: View {
     @State private var isShowingProfile = false
     @State private var isShowingNotifications = false
     @State private var selectedJoinRequestNotificationID: UUID?
+    @State private var requestedChatEventID: UUID?
     @State private var isMainTabBarHidden = false
 
     var body: some View {
@@ -55,12 +56,20 @@ struct MainTabView: View {
                 return
             }
 
-            let context = notification.object as? NotificationService.OpenedNotificationContext
-            selectedJoinRequestNotificationID = context?.notificationType == .eventJoined
-                ? context?.notificationID
-                : nil
-            isShowingProfile = false
-            isShowingNotifications = true
+            guard let context = notification.object as? NotificationService.OpenedNotificationContext else {
+                return
+            }
+
+            _ = NotificationService.consumePendingOpenedNotificationContext()
+            handleOpenedNotification(context)
+        }
+        .onAppear {
+            guard appState.authenticationState == .signedIn,
+                  let context = NotificationService.consumePendingOpenedNotificationContext() else {
+                return
+            }
+
+            handleOpenedNotification(context)
         }
     }
 
@@ -82,7 +91,12 @@ struct MainTabView: View {
                 isShowingProfile = true
             }
         case .chat:
-            ChatView {
+            ChatView(
+                requestedChatEventID: requestedChatEventID,
+                onRequestedChatEventOpened: {
+                    requestedChatEventID = nil
+                }
+            ) {
                 isShowingProfile = true
             }
         }
@@ -94,6 +108,24 @@ struct MainTabView: View {
         if tab == .find {
             findResetTrigger += 1
         }
+    }
+
+    private func handleOpenedNotification(_ context: NotificationService.OpenedNotificationContext) {
+        if context.rawNotificationType == Constants.Chat.messageNotificationType,
+           let relatedEventID = context.relatedEventID {
+            isShowingProfile = false
+            isShowingNotifications = false
+            selectedJoinRequestNotificationID = nil
+            requestedChatEventID = relatedEventID
+            selectedTab = .chat
+            return
+        }
+
+        selectedJoinRequestNotificationID = context.notificationType == .eventJoined
+            ? context.notificationID
+            : nil
+        isShowingProfile = false
+        isShowingNotifications = true
     }
 
 }
