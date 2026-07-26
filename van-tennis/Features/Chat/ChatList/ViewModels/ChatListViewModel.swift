@@ -9,7 +9,11 @@ final class ChatListViewModel: ObservableObject {
 
     private let eventService = EventService()
 
-    func loadEvents(appState: AppState) async {
+    func loadEvents(appState: AppState, refreshFromSupabase: Bool = false) async {
+        if refreshFromSupabase {
+            await appState.refreshCurrentProfile()
+        }
+
         guard let profile = appState.userProfile else {
             events = []
             isLoading = false
@@ -34,19 +38,26 @@ final class ChatListViewModel: ObservableObject {
         do {
             updateEventsFromCache(eventIDs: eventIDs, appState: appState)
 
-            let missingEventIDs = appState.missingCachedEventIDs(ids: eventIDs)
-            if !missingEventIDs.isEmpty {
-                let fetchedEvents = try await eventService.fetchEvents(ids: missingEventIDs)
+            let eventIDsToFetch = refreshFromSupabase
+                ? eventIDs
+                : appState.missingCachedEventIDs(ids: eventIDs)
+            if !eventIDsToFetch.isEmpty {
+                let fetchedEvents = try await eventService.fetchEvents(ids: eventIDsToFetch)
                 appState.updateCachedEvents(fetchedEvents)
                 updateEventsFromCache(eventIDs: eventIDs, appState: appState)
             }
 
-            let uncachedMessageEventIDs = events
-                .map(\.id)
-                .filter { appState.cachedChatMessages(eventID: $0) == nil }
+            let messageEventIDs = events.map(\.id)
 
-            if !uncachedMessageEventIDs.isEmpty {
-                await appState.preloadCachedChatMessages(eventIDs: uncachedMessageEventIDs)
+            if refreshFromSupabase {
+                await appState.refreshCachedChatMessages(eventIDs: messageEventIDs)
+            } else {
+                let uncachedMessageEventIDs = messageEventIDs
+                    .filter { appState.cachedChatMessages(eventID: $0) == nil }
+
+                if !uncachedMessageEventIDs.isEmpty {
+                    await appState.preloadCachedChatMessages(eventIDs: uncachedMessageEventIDs)
+                }
             }
         } catch is CancellationError {
             // Expected if the view disappears while the list is loading.

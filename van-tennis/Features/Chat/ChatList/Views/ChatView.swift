@@ -4,6 +4,7 @@ struct ChatView: View {
     @EnvironmentObject private var appState: AppState
     @StateObject private var viewModel = ChatListViewModel()
     @State private var navigationPath: [TennisEvent] = []
+    @State private var hasLoadedInitialChats = false
 
     let requestedChatEventID: UUID?
     let onRequestedChatEventOpened: () -> Void
@@ -66,19 +67,28 @@ struct ChatView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
             .task {
-                await viewModel.loadEvents(appState: appState)
-                await openRequestedChatEventIfNeeded()
+                // When enter chat list view, always refresh the chat list from Supabase to ensure the latest events are displayed.
+                // This is to handle the case where the user turned off APNs
+                await loadChats(refreshFromSupabase: true)
+                hasLoadedInitialChats = true
+            }
+            .onAppear {
+                guard hasLoadedInitialChats else {
+                    return
+                }
+
+                Task {
+                    await loadChats(refreshFromSupabase: true)
+                }
             }
             .onChange(of: appState.userProfile?.hostedEvents) { _, _ in
                 Task {
-                    await viewModel.loadEvents(appState: appState)
-                    await openRequestedChatEventIfNeeded()
+                    await loadChats(refreshFromSupabase: false)
                 }
             }
             .onChange(of: appState.userProfile?.participatedEvents) { _, _ in
                 Task {
-                    await viewModel.loadEvents(appState: appState)
-                    await openRequestedChatEventIfNeeded()
+                    await loadChats(refreshFromSupabase: false)
                 }
             }
             .onChange(of: requestedChatEventID) { _, _ in
@@ -131,17 +141,29 @@ struct ChatView: View {
                 return nil
             }
 
-            guard let latestMessage = appState.cachedChatMessages(eventID: event.id)?.last else {
-                return nil
-            }
-
             return ChatConversationPreview(
                 event: event,
-                latestMessage: latestMessage,
+                latestMessage: appState.cachedChatMessages(eventID: event.id)?.last,
                 hasUnreadMessages: appState.unreadChatCount(eventID: event.id) > 0
             )
         }
-        .sorted { $0.latestMessage.sentAt > $1.latestMessage.sentAt }
+        .sorted { first, second in
+            switch (first.latestMessage?.sentAt, second.latestMessage?.sentAt) {
+            case let (firstDate?, secondDate?):
+                return firstDate > secondDate
+            case (_?, nil):
+                return true
+            case (nil, _?):
+                return false
+            case (nil, nil):
+                return first.event.startTime < second.event.startTime
+            }
+        }
+    }
+
+    private func loadChats(refreshFromSupabase: Bool) async {
+        await viewModel.loadEvents(appState: appState, refreshFromSupabase: refreshFromSupabase)
+        await openRequestedChatEventIfNeeded()
     }
 
     private func openRequestedChatEventIfNeeded() async {
@@ -172,7 +194,7 @@ struct ChatView: View {
 
 private struct ChatConversationPreview: Identifiable {
     let event: TennisEvent
-    let latestMessage: ChatRoomMessage
+    let latestMessage: ChatRoomMessage?
     let hasUnreadMessages: Bool
 
     var id: UUID {
@@ -201,9 +223,11 @@ private struct ChatConversationCard: View {
 
                     Spacer(minLength: 8)
 
-                    Text(DateFormattingHelper.shortDateTimeString(from: preview.latestMessage.sentAt))
-                        .font(.caption)
-                        .foregroundStyle(RallyDiscoverStyle.mutedText)
+                    if let sentAt = preview.latestMessage?.sentAt {
+                        Text(DateFormattingHelper.shortDateTimeString(from: sentAt))
+                            .font(.caption)
+                            .foregroundStyle(RallyDiscoverStyle.mutedText)
+                    }
                 }
 
                 Text(latestMessagePreviewText)
@@ -232,13 +256,17 @@ private struct ChatConversationCard: View {
     }
 
     private var latestMessagePreviewText: String {
-        let body = Constants.Chat.displayBody(for: preview.latestMessage.body)
+        guard let latestMessage = preview.latestMessage else {
+            return AppContent.string("chat.emptyRoom.title")
+        }
 
-        if Constants.Chat.isSystemMessage(preview.latestMessage.body) {
+        let body = Constants.Chat.displayBody(for: latestMessage.body)
+
+        if Constants.Chat.isSystemMessage(latestMessage.body) {
             return body
         }
 
-        return "\(preview.latestMessage.senderDisplayName): \(body)"
+        return "\(latestMessage.senderDisplayName): \(body)"
     }
 }
 

@@ -20,4 +20,5 @@ struct DeviceTokenService {
             )
             .execute()
     }
+
 }

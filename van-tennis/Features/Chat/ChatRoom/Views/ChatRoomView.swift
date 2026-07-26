@@ -81,7 +81,7 @@ struct ChatRoomView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
         .task {
-            await viewModel.loadMessagesIfNeeded(eventID: event.id, appState: appState)
+            await viewModel.loadMessages(eventID: event.id, appState: appState)
         }
         .onChange(of: appState.chatMessagesRevision) { _, _ in
             viewModel.syncMessagesFromCache(eventID: event.id, appState: appState)

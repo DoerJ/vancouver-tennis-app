@@ -117,6 +117,31 @@ final class EventDiscoveryListViewModel: ObservableObject {
         return true
     }
 
+    func eventForNavigation(id eventID: UUID, appState: AppState) async -> TennisEvent? {
+        if let cachedEvent = appState.cachedEvents(ids: [eventID]).first {
+            return cachedEvent
+        }
+
+        do {
+            guard let event = try await eventService.fetchEventDetails(id: eventID) else {
+                return nil
+            }
+
+            appState.updateCachedEvents([event])
+            await loadMissingHostProfiles(for: [event])
+
+            if Self.hasFutureEndTime(event), !events.contains(where: { $0.id == event.id }) {
+                events.append(event)
+                events.sort { $0.startTime < $1.startTime }
+            }
+
+            return event
+        } catch {
+            errorMessage = error.localizedDescription
+            return nil
+        }
+    }
+
     private func appendPage(_ page: [TennisEvent]) {
         for event in page where Self.hasFutureEndTime(event) && !events.contains(where: { $0.id == event.id }) {
             events.append(event)

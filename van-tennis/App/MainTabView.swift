@@ -8,6 +8,7 @@ struct MainTabView: View {
     @State private var isShowingNotifications = false
     @State private var selectedJoinRequestNotificationID: UUID?
     @State private var requestedChatEventID: UUID?
+    @State private var requestedEventDetailID: UUID?
     @State private var isMainTabBarHidden = false
 
     var body: some View {
@@ -79,6 +80,10 @@ struct MainTabView: View {
         case .find:
             EventDiscoveryListView(
                 resetTrigger: findResetTrigger,
+                requestedEventDetailID: requestedEventDetailID,
+                onRequestedEventDetailOpened: {
+                    requestedEventDetailID = nil
+                },
                 onOpenProfile: {
                     isShowingProfile = true
                 },
@@ -116,14 +121,28 @@ struct MainTabView: View {
             isShowingProfile = false
             isShowingNotifications = false
             selectedJoinRequestNotificationID = nil
+            requestedEventDetailID = nil
             requestedChatEventID = relatedEventID
             selectedTab = .chat
+            return
+        }
+
+        if (context.notificationType == .approveJoinRequest || context.notificationType == .rejectJoinRequest),
+           let relatedEventID = context.relatedEventID {
+            isShowingProfile = false
+            isShowingNotifications = false
+            selectedJoinRequestNotificationID = nil
+            requestedChatEventID = nil
+            requestedEventDetailID = relatedEventID
+            selectedTab = .find
             return
         }
 
         selectedJoinRequestNotificationID = context.notificationType == .eventJoined
             ? context.notificationID
             : nil
+        requestedChatEventID = nil
+        requestedEventDetailID = nil
         isShowingProfile = false
         isShowingNotifications = true
     }

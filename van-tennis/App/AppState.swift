@@ -519,6 +519,12 @@ final class AppState: ObservableObject {
         }
     }
 
+    func refreshCachedChatMessages(eventIDs: [UUID]) async {
+        for eventID in eventIDs {
+            await refreshCachedChatMessages(eventID: eventID)
+        }
+    }
+
     func startChatMessagesRealtimeSubscriptions(eventIDs: [UUID]) {
         subscribedChatEventIDs.formUnion(eventIDs)
 
@@ -541,6 +547,7 @@ final class AppState: ObservableObject {
         }
 
         let client = SupabaseClientProvider.shared
+        // Subscribe to the "chat-messages" channel to receive realtime updates for chat messages.
         let channel = client.realtimeV2.channel("chat-messages")
         chatMessagesRealtimeChannel = channel
 
@@ -571,15 +578,18 @@ final class AppState: ObservableObject {
                         continue
                     }
 
-                    let messages = await self?.refreshCachedChatMessages(eventID: chatMessage.eventID) ?? []
+                    do {
+                        let message = try await self?.chatRoomMessage(from: chatMessage)
 
-                    guard let latestMessage = messages.last else {
-                        continue
-                    }
-
-                    await MainActor.run {
-                        // Increment unread chat count if the incoming message is not from the current user and the chat room is not currently active
-                        self?.recordIncomingRealtimeChatMessage(latestMessage, eventID: chatMessage.eventID)
+                        await MainActor.run {
+                            if let message {
+                                self?.appendCachedChatMessage(message, eventID: chatMessage.eventID)
+                                // Increment unread chat count if the incoming message is not from the current user and the chat room is not currently active.
+                                self?.recordIncomingRealtimeChatMessage(message, eventID: chatMessage.eventID)
+                            }
+                        }
+                    } catch {
+                        print("AppState: failed to map realtime chat message: \(error.localizedDescription)")
                     }
                 }
             } catch is CancellationError {
@@ -662,6 +672,8 @@ final class AppState: ObservableObject {
 
         stopChatMessagesRealtimeSubscription()
         NotificationService.setUserSignedIn(false)
+        NotificationService.unregisterRemoteNotifications()
+        lastSavedDeviceToken = nil
         googleSession = nil
         supabaseSession = nil
         userProfile = nil
@@ -784,6 +796,19 @@ final class AppState: ObservableObject {
             print("AppState: failed to refresh cached chat messages: \(error.localizedDescription)")
             return []
         }
+    }
+
+    private func chatRoomMessage(from chatMessage: ChatMessage) async throws -> ChatRoomMessage {
+        let profiles = try await profileService.fetchProfiles(userIDs: [chatMessage.senderID])
+        let displayName = profiles.first?.displayName ?? AppContent.string("chat.unknownPlayer")
+
+        return ChatRoomMessage(
+            id: chatMessage.id,
+            senderID: chatMessage.senderID,
+            senderDisplayName: displayName,
+            body: chatMessage.body,
+            sentAt: chatMessage.createdAt
+        )
     }
 
     private func saveCurrentDeviceTokenIfPossible() async {

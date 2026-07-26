@@ -5,15 +5,21 @@ struct EventDiscoveryListView: View {
     @StateObject private var viewModel = EventDiscoveryListViewModel()
     @State private var navigationPath: [EventDiscoveryRoute] = []
     let resetTrigger: Int
+    let requestedEventDetailID: UUID?
+    let onRequestedEventDetailOpened: () -> Void
     let onOpenProfile: () -> Void
     let onOpenNotifications: () -> Void
 
     init(
         resetTrigger: Int = 0,
+        requestedEventDetailID: UUID? = nil,
+        onRequestedEventDetailOpened: @escaping () -> Void = {},
         onOpenProfile: @escaping () -> Void = {},
         onOpenNotifications: @escaping () -> Void = {}
     ) {
         self.resetTrigger = resetTrigger
+        self.requestedEventDetailID = requestedEventDetailID
+        self.onRequestedEventDetailOpened = onRequestedEventDetailOpened
         self.onOpenProfile = onOpenProfile
         self.onOpenNotifications = onOpenNotifications
     }
@@ -109,6 +115,7 @@ struct EventDiscoveryListView: View {
         .onAppear {
             Task {
                 await viewModel.loadInitialEventsIfNeeded()
+                await openRequestedEventDetailIfNeeded()
             }
         }
         .onChange(of: viewModel.selectedCityFilter) {
@@ -145,6 +152,11 @@ struct EventDiscoveryListView: View {
         }
         .onChange(of: resetTrigger) {
             navigationPath = []
+        }
+        .onChange(of: requestedEventDetailID) {
+            Task {
+                await openRequestedEventDetailIfNeeded()
+            }
         }
     }
 
@@ -301,6 +313,26 @@ struct EventDiscoveryListView: View {
         viewModel.selectedCityFilter != .all
             || viewModel.selectedSkillLevelFilter != .all
             || viewModel.selectedEventTypeFilter != .all
+    }
+
+    private func openRequestedEventDetailIfNeeded() async {
+        guard let requestedEventDetailID else {
+            return
+        }
+
+        guard let event = await viewModel.eventForNavigation(
+            id: requestedEventDetailID,
+            appState: appState
+        ) else {
+            onRequestedEventDetailOpened()
+            return
+        }
+
+        if navigationPath.last != .eventDetail(event) {
+            navigationPath.append(.eventDetail(event))
+        }
+
+        onRequestedEventDetailOpened()
     }
 
     @ViewBuilder
