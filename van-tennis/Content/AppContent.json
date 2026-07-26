@@ -309,7 +309,8 @@
     "displayNameRequired": "Display name is required.",
     "displayNameTaken": "This profile name has been taken. Choose another one.",
     "termsOfService": "Terms of Service",
-    "privacyPolicy": "Privacy Policy"
+    "privacyPolicy": "Privacy Policy",
+    "socialTagsLimit": "Choose up to %d tags."
   },
   "terms": {
     "effectiveDate": "Effective date:",

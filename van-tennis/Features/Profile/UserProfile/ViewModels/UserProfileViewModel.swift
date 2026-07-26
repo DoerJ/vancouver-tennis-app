@@ -13,6 +13,7 @@ final class UserProfileViewModel: ObservableObject {
     @Published private(set) var isSavingProfile = false
     @Published private(set) var displayNameErrorMessage: String?
     @Published private(set) var skillLevelErrorMessage: String?
+    @Published private(set) var socialTagsErrorMessage: String?
     @Published private(set) var isDeletingAccount = false
     @Published private(set) var deleteAccountErrorMessage: String?
     private var hasLoadedSocialTags = false
@@ -62,8 +63,15 @@ final class UserProfileViewModel: ObservableObject {
     func toggleSocialTag(_ tag: String) {
         if selectedSocialTags.contains(tag) {
             selectedSocialTags.remove(tag)
+            socialTagsErrorMessage = nil
+        } else if selectedSocialTags.count >= Constants.SocialProfile.maximumSelectedTags {
+            socialTagsErrorMessage = AppContent.string(
+                "profile.socialTagsLimit",
+                Constants.SocialProfile.maximumSelectedTags
+            )
         } else {
             selectedSocialTags.insert(tag)
+            socialTagsErrorMessage = nil
         }
     }
 
@@ -101,6 +109,14 @@ final class UserProfileViewModel: ObservableObject {
             return false
         }
 
+        guard selectedSocialTags.count <= Constants.SocialProfile.maximumSelectedTags else {
+            socialTagsErrorMessage = AppContent.string(
+                "profile.socialTagsLimit",
+                Constants.SocialProfile.maximumSelectedTags
+            )
+            return false
+        }
+
         let shouldUpdateDisplayName = hasDisplayNameChange(currentDisplayName: currentProfile.displayName)
         let shouldUpdateSkillLevel = hasSkillLevelChange(currentSkillLevel: currentProfile.skillLevel)
         let shouldUpdateGender = hasGenderChange(currentGender: currentProfile.gender)
@@ -116,6 +132,7 @@ final class UserProfileViewModel: ObservableObject {
         isSavingProfile = true
         displayNameErrorMessage = nil
         skillLevelErrorMessage = nil
+        socialTagsErrorMessage = nil
 
         defer {
             isSavingProfile = false

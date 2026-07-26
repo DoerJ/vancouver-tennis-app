@@ -6,6 +6,7 @@ struct OnboardingProfileView: View {
     @State private var selectedLevel: SkillLevel?
     @State private var selectedGender: Gender?
     @State private var selectedSocialTags: Set<String> = []
+    @State private var socialTagsErrorMessage: String?
 
     private var canCreateProfile: Bool {
         selectedLevel != nil && selectedGender != nil && !viewModel.isSaving
@@ -52,12 +53,13 @@ struct OnboardingProfileView: View {
                     socialTagsSection
                         .padding(.top, 24)
 
+                    if let socialTagsErrorMessage {
+                        inlineError(socialTagsErrorMessage)
+                            .padding(.top, 12)
+                    }
+
                     if let errorMessage = viewModel.errorMessage {
-                        Text(errorMessage)
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(RallyDiscoverStyle.redBadge)
-                            .multilineTextAlignment(.center)
-                            .frame(maxWidth: .infinity)
+                        inlineError(errorMessage)
                             .padding(.top, 20)
                     }
                 }
@@ -250,9 +252,24 @@ struct OnboardingProfileView: View {
     private func toggleSocialTag(_ tag: String) {
         if selectedSocialTags.contains(tag) {
             selectedSocialTags.remove(tag)
+            socialTagsErrorMessage = nil
+        } else if selectedSocialTags.count >= Constants.SocialProfile.maximumSelectedTags {
+            socialTagsErrorMessage = AppContent.string(
+                "profile.socialTagsLimit",
+                Constants.SocialProfile.maximumSelectedTags
+            )
         } else {
             selectedSocialTags.insert(tag)
+            socialTagsErrorMessage = nil
         }
+    }
+
+    private func inlineError(_ message: String) -> some View {
+        Text(message)
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(RallyDiscoverStyle.redBadge)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity)
     }
 
     private func selectSkillLevel(at xPosition: CGFloat, width: CGFloat) {

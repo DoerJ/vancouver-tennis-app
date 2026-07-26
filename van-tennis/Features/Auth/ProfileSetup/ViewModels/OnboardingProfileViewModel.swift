@@ -20,6 +20,14 @@ final class OnboardingProfileViewModel: ObservableObject {
             return
         }
 
+        guard selectedSocialTags.count <= Constants.SocialProfile.maximumSelectedTags else {
+            errorMessage = AppContent.string(
+                "profile.socialTagsLimit",
+                Constants.SocialProfile.maximumSelectedTags
+            )
+            return
+        }
+
         isSaving = true
         errorMessage = nil
         defer {

@@ -38,6 +38,8 @@ enum Constants {
     ]
 
     enum SocialProfile {
+        static let maximumSelectedTags = 5
+
         static let tagOptions = [
             "Friendly",
             "Engineer",

@@ -40,6 +40,7 @@ struct UserProfileView: View {
                                     .foregroundStyle(RallyDiscoverStyle.redBadge)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                             }
+
                         }
                         .padding(.top, 56)
 
@@ -247,6 +248,13 @@ struct UserProfileView: View {
                     }
                 }
                 .padding(.top, -8)
+
+                if let socialTagsErrorMessage = viewModel.socialTagsErrorMessage {
+                    Text(socialTagsErrorMessage)
+                        .font(.footnote.weight(.medium))
+                        .foregroundStyle(RallyDiscoverStyle.redBadge)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
             }
         }
     }
