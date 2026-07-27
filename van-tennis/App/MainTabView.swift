@@ -21,7 +21,7 @@ struct MainTabView: View {
             if !isMainTabBarHidden {
                 MainTabBar(
                     selectedTab: selectedTab,
-                    hasUnreadMyEvents: appState.userProfile?.isAllEventsRead == false,
+                    hasUnreadMyEvents: appState.hasUnreadMyEvents,
                     hasUnreadChats: appState.hasUnreadChats
                 ) { tab in
                     selectTab(tab)

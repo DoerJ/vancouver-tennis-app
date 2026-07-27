@@ -12,6 +12,7 @@ struct UserProfile: Codable, Identifiable, Equatable {
     let notifications: [UUID]
     let socialTags: [String]
     let isAllEventsRead: Bool
+    let isAllNotificationsRead: Bool
     let chatMessageReadStates: [ChatMessageReadState]
     let createdAt: Date?
     let updatedAt: Date?
@@ -28,6 +29,7 @@ struct UserProfile: Codable, Identifiable, Equatable {
         case notifications
         case socialTags = "social_tags"
         case isAllEventsRead = "is_all_events_read"
+        case isAllNotificationsRead = "is_all_notifications_read"
         case chatMessageReadStates = "is_all_chat_messages_read"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
@@ -53,6 +55,7 @@ extension UserProfile {
             notifications: notifications,
             socialTags: socialTags,
             isAllEventsRead: isAllEventsRead,
+            isAllNotificationsRead: isAllNotificationsRead,
             chatMessageReadStates: chatMessageReadStates,
             createdAt: createdAt,
             updatedAt: updatedAt
@@ -72,6 +75,27 @@ extension UserProfile {
             notifications: notifications,
             socialTags: socialTags,
             isAllEventsRead: isAllEventsRead,
+            isAllNotificationsRead: isAllNotificationsRead,
+            chatMessageReadStates: chatMessageReadStates,
+            createdAt: createdAt,
+            updatedAt: updatedAt
+        )
+    }
+
+    func updatingAllNotificationsRead(_ isAllNotificationsRead: Bool) -> UserProfile {
+        UserProfile(
+            id: id,
+            email: email,
+            displayName: displayName,
+            avatarURL: avatarURL,
+            skillLevel: skillLevel,
+            gender: gender,
+            hostedEvents: hostedEvents,
+            participatedEvents: participatedEvents,
+            notifications: notifications,
+            socialTags: socialTags,
+            isAllEventsRead: isAllEventsRead,
+            isAllNotificationsRead: isAllNotificationsRead,
             chatMessageReadStates: chatMessageReadStates,
             createdAt: createdAt,
             updatedAt: updatedAt
@@ -91,6 +115,7 @@ extension UserProfile {
             notifications: notifications,
             socialTags: socialTags,
             isAllEventsRead: isAllEventsRead,
+            isAllNotificationsRead: isAllNotificationsRead,
             chatMessageReadStates: chatMessageReadStates,
             createdAt: createdAt,
             updatedAt: updatedAt
@@ -112,6 +137,7 @@ extension UserProfile {
             notifications: notifications,
             socialTags: socialTags,
             isAllEventsRead: isAllEventsRead,
+            isAllNotificationsRead: isAllNotificationsRead,
             chatMessageReadStates: otherStates + [ChatMessageReadState(id: eventID, read: read)],
             createdAt: createdAt,
             updatedAt: updatedAt
@@ -131,6 +157,7 @@ struct NewUserProfile: Encodable {
     let notifications: [UUID]
     let socialTags: [String]
     let isAllEventsRead: Bool
+    let isAllNotificationsRead: Bool
     let chatMessageReadStates: [ChatMessageReadState]
 
     enum CodingKeys: String, CodingKey {
@@ -145,6 +172,7 @@ struct NewUserProfile: Encodable {
         case notifications
         case socialTags = "social_tags"
         case isAllEventsRead = "is_all_events_read"
+        case isAllNotificationsRead = "is_all_notifications_read"
         case chatMessageReadStates = "is_all_chat_messages_read"
     }
 }
@@ -158,6 +186,7 @@ struct UpdateUserProfile: Encodable {
     let notifications: [UUID]?
     let socialTags: [String]?
     let isAllEventsRead: Bool?
+    let isAllNotificationsRead: Bool?
     let chatMessageReadStates: [ChatMessageReadState]?
 
     enum CodingKeys: String, CodingKey {
@@ -169,6 +198,7 @@ struct UpdateUserProfile: Encodable {
         case notifications
         case socialTags = "social_tags"
         case isAllEventsRead = "is_all_events_read"
+        case isAllNotificationsRead = "is_all_notifications_read"
         case chatMessageReadStates = "is_all_chat_messages_read"
     }
 
@@ -183,6 +213,7 @@ struct UpdateUserProfile: Encodable {
         try container.encodeIfPresent(notifications, forKey: .notifications)
         try container.encodeIfPresent(socialTags, forKey: .socialTags)
         try container.encodeIfPresent(isAllEventsRead, forKey: .isAllEventsRead)
+        try container.encodeIfPresent(isAllNotificationsRead, forKey: .isAllNotificationsRead)
         try container.encodeIfPresent(chatMessageReadStates, forKey: .chatMessageReadStates)
     }
 }

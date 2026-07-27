@@ -22,6 +22,7 @@ final class AppState: ObservableObject {
     private let notificationEventService = NotificationEventService()
     private let deviceTokenService = DeviceTokenService()
     private let authService = SupabaseAuthService()
+    private let realtimeSubscriptionManager = RealtimeSubscriptionManager()
     private var cancellables: Set<AnyCancellable> = []
     private var authStateChangesTask: Task<Void, Never>?
     private var chatMessagesRealtimeTask: Task<Void, Never>?
@@ -245,11 +246,16 @@ final class AppState: ObservableObject {
             participatedEvents: participatedEvents
         )
         pruneUnreadChatCounts(validEventIDs: Set(hostedEvents + participatedEvents))
-        startChatMessagesRealtimeSubscriptions(eventIDs: Array(Set(hostedEvents + participatedEvents)))
+        // Temporarily disabled while debugging the profiles realtime subscription.
+        // startChatMessagesRealtimeSubscriptions(eventIDs: Array(Set(hostedEvents + participatedEvents)))
     }
 
     func updateCachedAllEventsRead(_ isAllEventsRead: Bool) {
         userProfile = userProfile?.updatingAllEventsRead(isAllEventsRead)
+    }
+
+    func updateCachedAllNotificationsRead(_ isAllNotificationsRead: Bool) {
+        userProfile = userProfile?.updatingAllNotificationsRead(isAllNotificationsRead)
     }
 
     func removeCachedEvent(_ eventID: UUID) {
@@ -348,9 +354,12 @@ final class AppState: ObservableObject {
         }
     }
 
-    // Returns true if there is false value of read state in cachedNotifications
+    var hasUnreadMyEvents: Bool {
+        userProfile?.isAllEventsRead == false
+    }
+
     var hasUnreadNotifications: Bool {
-        cachedNotifications.contains { !$0.read }
+        userProfile?.isAllNotificationsRead == false
     }
 
     func unreadChatCount(eventID: UUID) -> Int {
@@ -362,7 +371,8 @@ final class AppState: ObservableObject {
         NotificationService.setActiveChatEventID(eventID)
         clearUnreadChatCount(eventID: eventID)
         markCachedChatMessagesRead(eventID: eventID)
-        startChatMessagesRealtimeSubscription(eventID: eventID)
+        // Temporarily disabled while debugging the profiles realtime subscription.
+        // startChatMessagesRealtimeSubscription(eventID: eventID)
     }
 
     func closeChat(eventID: UUID) {
@@ -532,12 +542,14 @@ final class AppState: ObservableObject {
             return
         }
 
-        startChatMessagesRealtimeSubscriptionIfNeeded()
+        // Temporarily disabled while debugging the profiles realtime subscription.
+        // startChatMessagesRealtimeSubscriptionIfNeeded()
     }
 
     func startChatMessagesRealtimeSubscription(eventID: UUID) {
         subscribedChatEventIDs.insert(eventID)
-        startChatMessagesRealtimeSubscriptionIfNeeded()
+        // Temporarily disabled while debugging the profiles realtime subscription.
+        // startChatMessagesRealtimeSubscriptionIfNeeded()
     }
 
     private func startChatMessagesRealtimeSubscriptionIfNeeded() {
@@ -625,6 +637,7 @@ final class AppState: ObservableObject {
             throw AppStateError.missingAuthenticatedUser
         }
 
+        realtimeSubscriptionManager.stopAll()
         try await profileService.deleteAccountProfileData()
         try await authService.signOut()
         NotificationService.setUserSignedIn(false)
@@ -636,6 +649,7 @@ final class AppState: ObservableObject {
     }
 
     func finishDeletedAccountFlow() {
+        realtimeSubscriptionManager.stopAll()
         stopChatMessagesRealtimeSubscription()
         NotificationService.setUserSignedIn(false)
         NotificationService.unregisterRemoteNotifications()
@@ -654,6 +668,7 @@ final class AppState: ObservableObject {
     }
 
     func signOut() async {
+        realtimeSubscriptionManager.stopAll()
         stopChatMessagesRealtimeSubscription()
 
         do {
@@ -670,6 +685,7 @@ final class AppState: ObservableObject {
             print(reason)
         }
 
+        realtimeSubscriptionManager.stopAll()
         stopChatMessagesRealtimeSubscription()
         NotificationService.setUserSignedIn(false)
         NotificationService.unregisterRemoteNotifications()
@@ -706,13 +722,40 @@ final class AppState: ObservableObject {
 
     private func applyAuthenticatedState(supabaseSession: Session, userProfile: UserProfile) {
         self.supabaseSession = supabaseSession
-        self.userProfile = userProfile
+        applyProfileState(userProfile)
         NotificationService.setUserSignedIn(true)
-        syncCachedNotifications(notificationIDs: userProfile.notifications)
-        hydrateUnreadChatCountsFromProfile(userProfile)
-        pruneUnreadChatCounts(validEventIDs: Set(userProfile.hostedEvents + userProfile.participatedEvents))
         authenticationState = userProfile.skillLevel == nil || userProfile.gender == nil ? .needsSkillLevel : .signedIn
-        startChatMessagesRealtimeSubscriptions(eventIDs: Array(Set(userProfile.hostedEvents + userProfile.participatedEvents)))
+        realtimeSubscriptionManager.startSubscriptions(
+            userID: userProfile.id,
+            eventIDs: Array(Set(userProfile.hostedEvents + userProfile.participatedEvents))
+        ) { [weak self] updatedProfile in
+            self?.applyRealtimeProfileUpdate(updatedProfile)
+        }
+    }
+
+    private func applyRealtimeProfileUpdate(_ updatedProfile: UserProfile) {
+        guard updatedProfile.id == userProfile?.id else {
+            print("AppState: ignored realtime profile update for a different user.")
+            return
+        }
+
+        let oldEventIDs = Set((userProfile?.hostedEvents ?? []) + (userProfile?.participatedEvents ?? []))
+        let updatedEventIDs = Set(updatedProfile.hostedEvents + updatedProfile.participatedEvents)
+        let addedEventIDs = updatedEventIDs.subtracting(oldEventIDs)
+
+        print(
+            "AppState: applying realtime profile update. isAllEventsRead=\(updatedProfile.isAllEventsRead), addedEventIDs=\(Array(addedEventIDs))."
+        )
+        applyProfileState(updatedProfile)
+    }
+
+    private func applyProfileState(_ profile: UserProfile) {
+        userProfile = profile
+        syncCachedNotifications(notificationIDs: profile.notifications)
+        hydrateUnreadChatCountsFromProfile(profile)
+        pruneUnreadChatCounts(validEventIDs: Set(profile.hostedEvents + profile.participatedEvents))
+        // Temporarily disabled while debugging the profiles realtime subscription.
+        // startChatMessagesRealtimeSubscriptions(eventIDs: Array(Set(profile.hostedEvents + profile.participatedEvents)))
     }
 
     private func syncCachedNotifications(notificationIDs: [UUID]) {

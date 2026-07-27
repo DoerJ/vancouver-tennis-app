@@ -63,6 +63,15 @@ final class NotificationListViewModel: ObservableObject {
                 ids: appState.cachedNotifications.map(\.id)
             )
             appState.updateCachedNotifications(notifications, currentUserID: currentUserID)
+
+            if profile.isAllNotificationsRead == false {
+                _ = try await profileService.updateProfile(
+                    userID: currentUserID,
+                    isAllNotificationsRead: true
+                )
+                appState.updateCachedAllNotificationsRead(true)
+            }
+
             print("NotificationListViewModel: loaded \(notifications.count) notifications.")
         } catch is CancellationError {
             print("NotificationListViewModel: notification load was cancelled.")

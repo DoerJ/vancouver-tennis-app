@@ -126,6 +126,18 @@ struct NotificationListView: View {
                 await openPendingJoinRequestIfNeeded()
             }
         }
+        .onChange(of: appState.userProfile) { oldProfile, updatedProfile in
+            guard updatedProfile?.isAllNotificationsRead == false else {
+                return
+            }
+
+            guard oldProfile?.notifications != updatedProfile?.notifications
+                    || oldProfile?.isAllNotificationsRead != updatedProfile?.isAllNotificationsRead else {
+                return
+            }
+
+            viewModel.refreshNotifications(appState: appState, showsLoading: viewModel.notifications.isEmpty)
+        }
     }
 
     private var notificationsHeader: some View {

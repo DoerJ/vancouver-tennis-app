@@ -96,6 +96,13 @@ struct MyEventsView: View {
                     await viewModel.loadEvents(appState: appState, showsLoading: true)
                 }
             }
+            .onChange(of: appState.userProfile) { _, updatedProfile in
+                guard updatedProfile?.isAllEventsRead == false else {
+                    return
+                }
+
+                viewModel.refreshEvents(appState: appState, showsLoading: viewModel.events.isEmpty)
+            }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
         }

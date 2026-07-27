@@ -28,6 +28,7 @@ struct ProfileService {
             notifications: [],
             socialTags: [],
             isAllEventsRead: true,
+            isAllNotificationsRead: true,
             chatMessageReadStates: []
         )
 
@@ -91,6 +92,7 @@ struct ProfileService {
         notifications: [UUID]? = nil,
         socialTags: [String]? = nil,
         isAllEventsRead: Bool? = nil,
+        isAllNotificationsRead: Bool? = nil,
         chatMessageReadStates: [ChatMessageReadState]? = nil
     ) async throws -> UserProfile {
         try await client
@@ -105,6 +107,7 @@ struct ProfileService {
                     notifications: notifications,
                     socialTags: socialTags,
                     isAllEventsRead: isAllEventsRead,
+                    isAllNotificationsRead: isAllNotificationsRead,
                     chatMessageReadStates: chatMessageReadStates
                 )
             )
