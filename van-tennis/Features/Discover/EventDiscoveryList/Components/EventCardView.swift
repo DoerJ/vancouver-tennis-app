@@ -40,7 +40,7 @@ struct EventCardView: View {
                             .foregroundStyle(.white)
                             .padding(.horizontal, 9)
                             .padding(.vertical, 5)
-                            .background(RallyDiscoverStyle.redBadge)
+                            .background(RallyDiscoverStyle.orangeBadge)
                             .clipShape(Capsule())
                     }
 
