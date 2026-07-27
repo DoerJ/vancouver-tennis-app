@@ -15,7 +15,7 @@ struct DeviceTokenService {
             .from("device_tokens")
             .upsert(
                 newDeviceToken,
-                onConflict: "user_id,device_token",
+                onConflict: "user_id,platform",
                 ignoreDuplicates: false
             )
             .execute()
