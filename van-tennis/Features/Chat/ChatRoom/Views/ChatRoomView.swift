@@ -105,12 +105,20 @@ struct ChatRoomView: View {
 
     private var chatHeader: some View {
         ZStack {
-            Text(event.court.displayName)
-                .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(RallyDiscoverStyle.ink)
-                .lineLimit(1)
-                .minimumScaleFactor(0.78)
-                .padding(.horizontal, 70)
+            VStack(spacing: 4) {
+                Text(event.court.displayName)
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(RallyDiscoverStyle.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+
+                Text(DateFormattingHelper.eventDateWithWeekdayString(from: event.startTime))
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(RallyDiscoverStyle.mutedText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.82)
+            }
+            .padding(.horizontal, 70)
 
             HStack {
                 RallyCircularBackButton {
@@ -126,24 +134,24 @@ struct ChatRoomView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 10) {
             Image("chat_lined")
                 .resizable()
                 .renderingMode(.template)
                 .scaledToFit()
-                .foregroundStyle(RallyDiscoverStyle.mutedText)
+                .foregroundStyle(RallyDiscoverStyle.ink)
                 .frame(width: 34, height: 34)
                 .accessibilityHidden(true)
 
             Text(AppContent.string("chat.emptyRoom.title"))
-                .font(.system(size: 15, weight: .semibold))
+                .font(.system(size: 17, weight: .semibold))
                 .lineSpacing(2)
-                .foregroundStyle(Color.black.opacity(0.5))
+                .foregroundStyle(RallyDiscoverStyle.ink)
 
             Text(AppContent.string("chat.emptyRoom.description"))
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 15, weight: .medium))
                 .lineSpacing(2)
-                .foregroundStyle(Color.black.opacity(0.5))
+                .foregroundStyle(RallyDiscoverStyle.mutedText)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)

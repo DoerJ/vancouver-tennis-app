@@ -119,6 +119,20 @@ enum EventTimeDisplayHelper {
     }
 }
 
+enum EventOverlapHelper {
+    static func overlaps(startTime: Date, endTime: Date, existingEvent: TennisEvent) -> Bool {
+        startTime < existingEvent.endTime && existingEvent.startTime < endTime
+    }
+
+    static func overlaps(draft: TennisEventDraft, existingEvent: TennisEvent) -> Bool {
+        overlaps(
+            startTime: draft.startTime,
+            endTime: draft.endTime,
+            existingEvent: existingEvent
+        )
+    }
+}
+
 enum NotificationTimeDisplayHelper {
     static func relativeCreatedAtText(_ createdAt: Date?, now: Date) -> String {
         guard let createdAt else {

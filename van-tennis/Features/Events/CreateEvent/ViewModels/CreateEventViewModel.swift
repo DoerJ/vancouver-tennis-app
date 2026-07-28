@@ -149,8 +149,8 @@ final class CreateEventViewModel: ObservableObject {
         }
 
         do {
-            let activeHostedEvents = try await appState.activeHostedEventsForCurrentUser()
-            guard let event = try await save(activeHostedEvents: activeHostedEvents) else {
+            let activeEvents = try await appState.activeEventsForCurrentUser()
+            guard let event = try await save(activeEvents: activeEvents) else {
                 return nil
             }
 
@@ -163,20 +163,16 @@ final class CreateEventViewModel: ObservableObject {
         }
     }
 
-    private func save(activeHostedEvents: [TennisEvent]) async throws -> TennisEvent? {
+    private func save(activeEvents: [TennisEvent]) async throws -> TennisEvent? {
         guard let draft else {
             return nil
         }
 
-        if activeHostedEvents.contains(where: { overlaps(draft: draft, existingEvent: $0) }) {
+        if activeEvents.contains(where: { EventOverlapHelper.overlaps(draft: draft, existingEvent: $0) }) {
             errorMessage = AppContent.string("events.create.overlap")
             return nil
         }
 
         return try await eventService.createEvent(draft)
-    }
-
-    private func overlaps(draft: TennisEventDraft, existingEvent: TennisEvent) -> Bool {
-        draft.startTime < existingEvent.endTime && existingEvent.startTime < draft.endTime
     }
 }

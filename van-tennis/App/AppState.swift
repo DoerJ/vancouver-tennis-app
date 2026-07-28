@@ -222,6 +222,16 @@ final class AppState: ObservableObject {
         userProfile = userProfile?.updatingAllNotificationsRead(isAllNotificationsRead)
     }
 
+    func appendCachedPendingEvent(_ eventID: UUID) {
+        guard let userProfile,
+              !userProfile.pendingEvents.contains(eventID)
+        else {
+            return
+        }
+
+        self.userProfile = userProfile.updatingPendingEvents(userProfile.pendingEvents + [eventID])
+    }
+
     func startProfileRealtimeFromMainTabIfNeeded() {
         guard authenticationState == .signedIn,
               let userID = userProfile?.id,
@@ -319,6 +329,23 @@ final class AppState: ObservableObject {
         let hostedEventIDs = userProfile.hostedEvents
         let cachedEvents = cachedEvents(ids: hostedEventIDs)
         let missingEventIDs = missingCachedEventIDs(ids: hostedEventIDs)
+        let fetchedEvents = try await eventService.fetchEvents(ids: missingEventIDs)
+
+        updateCachedEvents(fetchedEvents)
+
+        let now = Date()
+        return (cachedEvents + fetchedEvents)
+            .filter { $0.endTime > now }
+    }
+
+    func activeEventsForCurrentUser() async throws -> [TennisEvent] {
+        guard let userProfile else {
+            throw AppStateError.missingAuthenticatedUser
+        }
+
+        let eventIDs = Array(Set(userProfile.hostedEvents + userProfile.participatedEvents + userProfile.pendingEvents))
+        let cachedEvents = cachedEvents(ids: eventIDs)
+        let missingEventIDs = missingCachedEventIDs(ids: eventIDs)
         let fetchedEvents = try await eventService.fetchEvents(ids: missingEventIDs)
 
         updateCachedEvents(fetchedEvents)

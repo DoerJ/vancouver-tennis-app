@@ -243,6 +243,7 @@
       "cancelConfirmation": "This will delete the event and remove it from your hosted events.",
       "joinEvent": "Join Event",
       "waitingApproval": "Waiting for host to approve",
+      "overlap": "This event overlaps with one of your hosted or joined events.",
       "leaveEventTitle": "Leave this event?",
       "leaveEvent": "Leave Event",
       "stayEvent": "Stay",

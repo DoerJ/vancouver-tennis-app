@@ -9,6 +9,7 @@ struct UserProfile: Codable, Identifiable, Equatable {
     let gender: Gender?
     let hostedEvents: [UUID]
     let participatedEvents: [UUID]
+    let pendingEvents: [UUID]
     let notifications: [UUID]
     let socialTags: [String]
     let isAllEventsRead: Bool
@@ -26,6 +27,7 @@ struct UserProfile: Codable, Identifiable, Equatable {
         case gender
         case hostedEvents = "hosted_events"
         case participatedEvents = "participated_events"
+        case pendingEvents = "pending_events"
         case notifications
         case socialTags = "social_tags"
         case isAllEventsRead = "is_all_events_read"
@@ -52,6 +54,7 @@ extension UserProfile {
             gender: gender,
             hostedEvents: hostedEvents,
             participatedEvents: participatedEvents,
+            pendingEvents: pendingEvents,
             notifications: notifications,
             socialTags: socialTags,
             isAllEventsRead: isAllEventsRead,
@@ -72,6 +75,7 @@ extension UserProfile {
             gender: gender,
             hostedEvents: hostedEvents,
             participatedEvents: participatedEvents,
+            pendingEvents: pendingEvents,
             notifications: notifications,
             socialTags: socialTags,
             isAllEventsRead: isAllEventsRead,
@@ -92,6 +96,7 @@ extension UserProfile {
             gender: gender,
             hostedEvents: hostedEvents,
             participatedEvents: participatedEvents,
+            pendingEvents: pendingEvents,
             notifications: notifications,
             socialTags: socialTags,
             isAllEventsRead: isAllEventsRead,
@@ -112,6 +117,28 @@ extension UserProfile {
             gender: gender,
             hostedEvents: hostedEvents,
             participatedEvents: participatedEvents,
+            pendingEvents: pendingEvents,
+            notifications: notifications,
+            socialTags: socialTags,
+            isAllEventsRead: isAllEventsRead,
+            isAllNotificationsRead: isAllNotificationsRead,
+            chatMessageReadStates: chatMessageReadStates,
+            createdAt: createdAt,
+            updatedAt: updatedAt
+        )
+    }
+
+    func updatingPendingEvents(_ pendingEvents: [UUID]) -> UserProfile {
+        UserProfile(
+            id: id,
+            email: email,
+            displayName: displayName,
+            avatarURL: avatarURL,
+            skillLevel: skillLevel,
+            gender: gender,
+            hostedEvents: hostedEvents,
+            participatedEvents: participatedEvents,
+            pendingEvents: pendingEvents,
             notifications: notifications,
             socialTags: socialTags,
             isAllEventsRead: isAllEventsRead,
@@ -134,6 +161,7 @@ extension UserProfile {
             gender: gender,
             hostedEvents: hostedEvents,
             participatedEvents: participatedEvents,
+            pendingEvents: pendingEvents,
             notifications: notifications,
             socialTags: socialTags,
             isAllEventsRead: isAllEventsRead,
@@ -154,6 +182,7 @@ struct NewUserProfile: Encodable {
     let gender: Gender?
     let hostedEvents: [UUID]
     let participatedEvents: [UUID]
+    let pendingEvents: [UUID]
     let notifications: [UUID]
     let socialTags: [String]
     let isAllEventsRead: Bool
@@ -169,6 +198,7 @@ struct NewUserProfile: Encodable {
         case gender
         case hostedEvents = "hosted_events"
         case participatedEvents = "participated_events"
+        case pendingEvents = "pending_events"
         case notifications
         case socialTags = "social_tags"
         case isAllEventsRead = "is_all_events_read"
@@ -183,6 +213,7 @@ struct UpdateUserProfile: Encodable {
     let gender: Gender?
     let hostedEvents: [UUID]?
     let participatedEvents: [UUID]?
+    let pendingEvents: [UUID]?
     let notifications: [UUID]?
     let socialTags: [String]?
     let isAllEventsRead: Bool?
@@ -195,6 +226,7 @@ struct UpdateUserProfile: Encodable {
         case gender
         case hostedEvents = "hosted_events"
         case participatedEvents = "participated_events"
+        case pendingEvents = "pending_events"
         case notifications
         case socialTags = "social_tags"
         case isAllEventsRead = "is_all_events_read"
@@ -210,6 +242,7 @@ struct UpdateUserProfile: Encodable {
         try container.encodeIfPresent(gender, forKey: .gender)
         try container.encodeIfPresent(hostedEvents, forKey: .hostedEvents)
         try container.encodeIfPresent(participatedEvents, forKey: .participatedEvents)
+        try container.encodeIfPresent(pendingEvents, forKey: .pendingEvents)
         try container.encodeIfPresent(notifications, forKey: .notifications)
         try container.encodeIfPresent(socialTags, forKey: .socialTags)
         try container.encodeIfPresent(isAllEventsRead, forKey: .isAllEventsRead)

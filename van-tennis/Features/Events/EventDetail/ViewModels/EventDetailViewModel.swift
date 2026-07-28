@@ -45,23 +45,6 @@ final class EventDetailViewModel: ObservableObject {
         }
     }
 
-    func hasRequestedToJoin(event: TennisEvent, currentUserID: UUID?) async -> Bool {
-        guard let currentUserID else {
-            return false
-        }
-
-        do {
-            return try await notificationEventService.hasJoinRequest(
-                senderID: currentUserID,
-                hostID: event.hostID,
-                eventID: event.id
-            )
-        } catch {
-            print("EventDetailViewModel: failed to check join request: \(error.localizedDescription)")
-            return false
-        }
-    }
-
     func requestToJoinEvent(_ event: TennisEvent, appState: AppState) async -> Bool {
         guard let currentUser = appState.userProfile else {
             errorMessage = AppContent.string("errors.noAuthenticatedUser")
@@ -69,7 +52,7 @@ final class EventDetailViewModel: ObservableObject {
         }
 
         do {
-            try await joinEvent(event, currentUser: currentUser)
+            try await joinEvent(event, currentUser: currentUser, appState: appState)
             return true
         } catch {
             errorMessage = error.localizedDescription
@@ -77,7 +60,7 @@ final class EventDetailViewModel: ObservableObject {
         }
     }
 
-    private func joinEvent(_ event: TennisEvent, currentUser: UserProfile) async throws {
+    private func joinEvent(_ event: TennisEvent, currentUser: UserProfile, appState: AppState) async throws {
         guard let latestEvent = try await eventService.fetchEventDetails(id: event.id) else {
             throw EventDetailViewModelError.eventNotFound
         }
@@ -88,6 +71,18 @@ final class EventDetailViewModel: ObservableObject {
 
         if latestEvent.isFull {
             throw EventDetailViewModelError.eventIsFull
+        }
+
+        let activeEvents = try await appState.activeEventsForCurrentUser()
+        if activeEvents.contains(where: { existingEvent in
+            existingEvent.id != latestEvent.id
+                && EventOverlapHelper.overlaps(
+                    startTime: latestEvent.startTime,
+                    endTime: latestEvent.endTime,
+                    existingEvent: existingEvent
+                )
+        }) {
+            throw EventDetailViewModelError.eventOverlapsExistingEvent
         }
 
         isJoining = true
@@ -110,6 +105,7 @@ final class EventDetailViewModel: ObservableObject {
                 relatedEventID: latestEvent.id
             )
         )
+        appState.appendCachedPendingEvent(latestEvent.id)
     }
 
     func leaveEvent(_ event: TennisEvent, appState: AppState) async -> Bool {
@@ -275,6 +271,7 @@ enum EventDetailViewModelError: LocalizedError {
     case eventNotFound
     case eventIsFull
     case maxPlayersBelowCurrentPlayerCount(Int)
+    case eventOverlapsExistingEvent
 
     var errorDescription: String? {
         switch self {
@@ -284,6 +281,8 @@ enum EventDetailViewModelError: LocalizedError {
             return AppContent.string("errors.eventFull")
         case .maxPlayersBelowCurrentPlayerCount(let playerCount):
             return AppContent.string("events.errors.maxPlayersBelowCurrentCount", playerCount)
+        case .eventOverlapsExistingEvent:
+            return AppContent.string("events.detail.overlap")
         }
     }
 }

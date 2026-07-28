@@ -41,6 +41,9 @@ struct EventDetailView: View {
                 }
                 .padding(.bottom, 118)
             }
+            .refreshable {
+                await loadEventDetails()
+            }
             .ignoresSafeArea(edges: .top)
 
             floatingBackButton
@@ -101,6 +104,18 @@ struct EventDetailView: View {
             Button(AppContent.string("common.ok")) {}
         } message: {
             Text(AppContent.string("events.detail.reportReceivedMessage"))
+        }
+        .onChange(of: appState.userProfile) { previousProfile, updatedProfile in
+            guard shouldRefreshAfterPendingRequestResolution(
+                previousProfile: previousProfile,
+                updatedProfile: updatedProfile
+            ) else {
+                return
+            }
+
+            Task {
+                await loadEventDetails()
+            }
         }
     }
 
@@ -528,10 +543,21 @@ struct EventDetailView: View {
 
         event = latestEvent
         pendingMaxPlayers = nil
-        hasRequestedToJoin = await viewModel.hasRequestedToJoin(
-            event: latestEvent,
-            currentUserID: appState.userProfile?.id
-        )
+        hasRequestedToJoin = appState.userProfile?.pendingEvents.contains(latestEvent.id) == true
+    }
+
+    private func shouldRefreshAfterPendingRequestResolution(
+        previousProfile: UserProfile?,
+        updatedProfile: UserProfile?
+    ) -> Bool {
+        guard hasRequestedToJoin,
+              previousProfile?.pendingEvents.contains(event.id) == true,
+              updatedProfile?.pendingEvents.contains(event.id) == false
+        else {
+            return false
+        }
+
+        return true
     }
 
     private func prepareReportSheet() {
