@@ -63,6 +63,18 @@ struct EventService {
         return events.first
     }
 
+    func fetchPendingParticipants(eventID: UUID) async throws -> [UUID] {
+        let rows: [PendingParticipantsRow] = try await client
+            .from("tennis_events")
+            .select("pending_participants")
+            .eq("id", value: eventID.uuidString)
+            .limit(1)
+            .execute()
+            .value
+
+        return rows.first?.pendingParticipants ?? []
+    }
+
     func createEvent(_ draft: TennisEventDraft) async throws -> TennisEvent {
         try await client
             .rpc(
@@ -139,6 +151,14 @@ struct EventService {
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return formatter
     }()
+}
+
+private struct PendingParticipantsRow: Decodable {
+    let pendingParticipants: [UUID]
+
+    enum CodingKeys: String, CodingKey {
+        case pendingParticipants = "pending_participants"
+    }
 }
 
 private struct LeaveEventParams: Encodable {

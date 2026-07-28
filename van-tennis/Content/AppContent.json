@@ -347,6 +347,8 @@
     "missingPlayer": "This join request is missing a player.",
     "eventUnavailable": "This event is no longer available.",
     "eventEnded": "This event has already ended. Join requests can no longer be reviewed.",
+    "requestCancelledTitle": "Join request cancelled",
+    "requestCancelled": "This player has cancelled their join request. The action cannot be performed.",
     "approvedTitle": "Join request approved",
     "approvedBody": "%@ approved your request to join the event.",
     "declinedTitle": "Join request declined",

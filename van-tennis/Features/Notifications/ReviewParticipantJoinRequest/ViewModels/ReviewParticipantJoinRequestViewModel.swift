@@ -11,6 +11,7 @@ final class ReviewParticipantJoinRequestViewModel: ObservableObject {
     @Published var isDeleting = false
     @Published var hasCompletedReview = false
     @Published var errorMessage: String?
+    @Published var requestCancelledMessage: String?
 
     private let profileService = ProfileService()
     private let eventService = EventService()
@@ -75,6 +76,11 @@ final class ReviewParticipantJoinRequestViewModel: ObservableObject {
         }
 
         do {
+            guard try await isRequesterStillPending(requesterID: requesterID, eventID: relatedEventID) else {
+                requestCancelledMessage = AppContent.string("joinRequest.requestCancelled")
+                return false
+            }
+
             try await notificationEventService.approveJoinRequest(notificationID: notification.id)
 
             _ = try await notificationEventService.createNotification(
@@ -128,6 +134,11 @@ final class ReviewParticipantJoinRequestViewModel: ObservableObject {
         }
 
         do {
+            guard try await isRequesterStillPending(requesterID: requesterID, eventID: relatedEventID) else {
+                requestCancelledMessage = AppContent.string("joinRequest.requestCancelled")
+                return false
+            }
+
             _ = try await notificationEventService.createNotification(
                 NewNotificationEvent(
                     sender: currentUser.id,
@@ -157,10 +168,6 @@ final class ReviewParticipantJoinRequestViewModel: ObservableObject {
             return false
         }
 
-        guard !canReviewJoinRequest else {
-            return false
-        }
-
         isDeleting = true
         errorMessage = nil
         defer {
@@ -186,6 +193,11 @@ final class ReviewParticipantJoinRequestViewModel: ObservableObject {
         }
 
         return relatedEvent.endTime > Date()
+    }
+
+    private func isRequesterStillPending(requesterID: UUID, eventID: UUID) async throws -> Bool {
+        let pendingParticipants = try await eventService.fetchPendingParticipants(eventID: eventID)
+        return pendingParticipants.contains(requesterID)
     }
 
     private var reviewUnavailableMessage: String? {

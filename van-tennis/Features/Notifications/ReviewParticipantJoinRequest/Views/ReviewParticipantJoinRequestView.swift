@@ -38,6 +38,18 @@ struct ReviewParticipantJoinRequestView: View {
         .task {
             await viewModel.loadReviewDetails(notification: notification)
         }
+        .alert(
+            AppContent.string("joinRequest.requestCancelledTitle"),
+            isPresented: requestCancelledAlertIsPresented
+        ) {
+            Button(AppContent.string("common.delete")) {
+                Task {
+                    await deleteCurrentNotificationAndDismiss()
+                }
+            }
+        } message: {
+            Text(viewModel.requestCancelledMessage ?? AppContent.string("joinRequest.requestCancelled"))
+        }
     }
 
     @ViewBuilder
@@ -212,6 +224,31 @@ struct ReviewParticipantJoinRequestView: View {
             || viewModel.isDeleting
             || viewModel.hasCompletedReview
             || viewModel.canReviewJoinRequest
+    }
+
+    private var requestCancelledAlertIsPresented: Binding<Bool> {
+        Binding(
+            get: {
+                viewModel.requestCancelledMessage != nil
+            },
+            set: { isPresented in
+                if !isPresented {
+                    viewModel.requestCancelledMessage = nil
+                }
+            }
+        )
+    }
+
+    private func deleteCurrentNotificationAndDismiss() async {
+        let didDeleteNotification = await viewModel.deleteJoinRequestNotification(
+            notification: notification,
+            currentUser: appState.userProfile
+        )
+
+        if didDeleteNotification {
+            appState.removeCachedNotification(notification.id)
+            dismiss()
+        }
     }
 }
 
