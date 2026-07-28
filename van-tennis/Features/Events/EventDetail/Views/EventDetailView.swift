@@ -452,9 +452,14 @@ struct EventDetailView: View {
     private var eventDetailSpecs: [EventDetailSpec] {
         [
             EventDetailSpec(
-                title: detailDateTitle,
-                value: detailStartTimeText,
-                systemImage: "calendar"
+                title: AppContent.string("events.detail.date"),
+                value: DateFormattingHelper.eventDateWithWeekdayString(from: event.startTime),
+                imageName: "today"
+            ),
+            EventDetailSpec(
+                title: AppContent.string("events.detail.time"),
+                value: detailTimeRangeText,
+                systemImage: "clock"
             ),
             EventDetailSpec(
                 title: AppContent.string("events.detail.court"),
@@ -476,22 +481,8 @@ struct EventDetailView: View {
         )
     }
 
-    private var detailDateTitle: String {
-        let calendar = Calendar.current
-
-        if calendar.isDateInToday(event.startTime) {
-            return AppContent.string("events.card.today")
-        }
-
-        if calendar.isDateInTomorrow(event.startTime) {
-            return AppContent.string("events.card.tomorrow")
-        }
-
-        return DateFormattingHelper.monthDayString(from: event.startTime)
-    }
-
-    private var detailStartTimeText: String {
-        DateFormattingHelper.timeString(from: event.startTime)
+    private var detailTimeRangeText: String {
+        "\(DateFormattingHelper.timeString(from: event.startTime)) - \(DateFormattingHelper.timeString(from: event.endTime))"
     }
 
     private func detailInfoRow(title: String, value: String, systemImage: String? = nil, imageName: String? = nil) -> some View {

@@ -109,6 +109,22 @@ struct EventCardView: View {
                 }
 
                 HStack(spacing: 10) {
+                    Image("today")
+                        .resizable()
+                        .renderingMode(.template)
+                        .scaledToFit()
+                        .frame(width: 24, height: 24)
+                        .foregroundStyle(RallyDiscoverStyle.ink)
+                        .accessibilityHidden(true)
+
+                    Text(AppContent.string("events.card.dateLabel", dateText))
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(RallyDiscoverStyle.mutedText)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.82)
+                }
+
+                HStack(spacing: 10) {
                     Image(systemName: "clock")
                         .font(.system(size: 19, weight: .regular))
                         .frame(width: 24)
@@ -130,8 +146,12 @@ struct EventCardView: View {
         .shadow(color: RallyDiscoverStyle.shadow.opacity(0.58), radius: 18, x: 0, y: 8)
     }
 
+    private var dateText: String {
+        DateFormattingHelper.eventDateWithWeekdayString(from: event.startTime)
+    }
+
     private var timeRangeText: String {
-        "\(DateFormattingHelper.eventDateTimeString(from: event.startTime)) - \(DateFormattingHelper.timeString(from: event.endTime))"
+        "\(DateFormattingHelper.timeString(from: event.startTime)) - \(DateFormattingHelper.timeString(from: event.endTime))"
     }
 
     private var hostLabel: String {

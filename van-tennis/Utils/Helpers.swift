@@ -17,6 +17,10 @@ enum DateFormattingHelper {
         fullDateBadgeFormatter.string(from: date)
     }
 
+    static func eventDateWithWeekdayString(from date: Date) -> String {
+        eventDateWithWeekdayFormatter.string(from: date)
+    }
+
     static func timeBadgeString(from date: Date) -> String {
         timeBadgeFormatter.string(from: date)
     }
@@ -52,6 +56,12 @@ enum DateFormattingHelper {
     private static let fullDateBadgeFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM d, yyyy"
+        return formatter
+    }()
+
+    private static let eventDateWithWeekdayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d, yyyy, EEEE"
         return formatter
     }()
 

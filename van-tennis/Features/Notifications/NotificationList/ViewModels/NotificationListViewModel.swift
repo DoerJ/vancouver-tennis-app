@@ -72,7 +72,6 @@ final class NotificationListViewModel: ObservableObject {
                 appState.updateCachedAllNotificationsRead(true)
             }
 
-            print("NotificationListViewModel: loaded \(notifications.count) notifications.")
         } catch is CancellationError {
             print("NotificationListViewModel: notification load was cancelled.")
         } catch {

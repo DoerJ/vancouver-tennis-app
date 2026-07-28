@@ -9,8 +9,11 @@ struct ProfileService {
     func findOrCreateProfile(for user: User) async throws -> UserProfile {
         // uuid is used as the primary key to query the profile
         if let existingProfile = try await findProfile(userID: user.id) {
+            print("ProfileService: found existing profile. userID=\(user.id).")
             return existingProfile
         }
+
+        print("ProfileService: no existing profile found. creating new profile. userID=\(user.id), hasCurrentDeviceToken=\(NotificationService.currentDeviceToken != nil).")
 
         if try await blacklistService.isCurrentUserEmailBlacklisted() {
             throw ProfileServiceError.emailBlacklisted
@@ -40,6 +43,7 @@ struct ProfileService {
             .execute()
             .value
 
+        print("ProfileService: created new profile. userID=\(createdProfile.id), hasCurrentDeviceToken=\(NotificationService.currentDeviceToken != nil).")
         await saveCurrentDeviceTokenIfAvailable(userID: createdProfile.id)
 
         return createdProfile
@@ -181,18 +185,19 @@ struct ProfileService {
 
     private func saveCurrentDeviceTokenIfAvailable(userID: UUID) async {
         guard let deviceToken = NotificationService.currentDeviceToken else {
-            print("ProfileService: no APNs device token available when creating profile.")
+            print("ProfileService: no APNs device token available when creating profile. userID=\(userID).")
             return
         }
 
         do {
+            print("ProfileService: saving device token for new profile. userID=\(userID), tokenSuffix=\(deviceToken.suffix(8)).")
             try await deviceTokenService.saveDeviceToken(
                 userID: userID,
                 deviceToken: deviceToken
             )
-            print("ProfileService: saved device token for new profile.")
+            print("ProfileService: saved device token for new profile. userID=\(userID), tokenSuffix=\(deviceToken.suffix(8)).")
         } catch {
-            print("ProfileService: failed to save device token for new profile: \(error.localizedDescription)")
+            print("ProfileService: failed to save device token for new profile. userID=\(userID), tokenSuffix=\(deviceToken.suffix(8)), error=\(error.localizedDescription).")
         }
     }
 

@@ -10,7 +10,6 @@ final class AppState: ObservableObject {
     @Published var userProfile: UserProfile?
     @Published var eventsRevision = 0
     @Published private(set) var chatMessagesRevision = 0
-    @Published private(set) var unreadChatCountsByEventID: [UUID: Int] = [:]
     // Cached notifications are stored in memory to track read/unread state for the current user.
     @Published private(set) var cachedNotifications: [CachedNotificationState] = []
     @Published private(set) var cachedEventsByID: [UUID: TennisEvent] = [:]
@@ -25,62 +24,28 @@ final class AppState: ObservableObject {
     private let realtimeSubscriptionManager = RealtimeSubscriptionManager()
     private var cancellables: Set<AnyCancellable> = []
     private var authStateChangesTask: Task<Void, Never>?
-    private var chatMessagesRealtimeTask: Task<Void, Never>?
-    private var chatMessagesRealtimeChannel: RealtimeChannelV2?
-    private var subscribedChatEventIDs: Set<UUID> = []
+    private var profileRealtimeHealthTask: Task<Void, Never>?
     private var activeChatEventID: UUID?
-    private var countedUnreadChatMessageIDsByEventID: [UUID: Set<UUID>] = [:]
     private var lastSavedDeviceToken: String?
-    private static let supabaseRealtimeDecoder: JSONDecoder = {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .custom { decoder in
-            let container = try decoder.singleValueContainer()
-            let dateString = try container.decode(String.self)
-
-            if let date = AppState.iso8601DateFormatter.date(from: dateString) {
-                return date
-            }
-
-            if let date = AppState.iso8601DateFormatterWithoutFractionalSeconds.date(from: dateString) {
-                return date
-            }
-
-            throw DecodingError.dataCorruptedError(
-                in: container,
-                debugDescription: "Invalid date format: \(dateString)"
-            )
-        }
-        return decoder
-    }()
-    private static let iso8601DateFormatter: ISO8601DateFormatter = {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return formatter
-    }()
-    private static let iso8601DateFormatterWithoutFractionalSeconds = ISO8601DateFormatter()
+    private var mainTabProfileRealtimeStartedUserID: UUID?
 
     init() {
-        unreadChatCountsByEventID = Self.loadUnreadChatCounts()
         startAuthStateChangesListener()
 
         NotificationCenter.default.publisher(for: NotificationService.deviceTokenDidUpdateNotification)
             .compactMap { $0.object as? String }
             .sink { [weak self] deviceToken in
                 Task {
+                    await MainActor.run {
+                        print(
+                            "AppState: received APNs token update notification. tokenSuffix=\(deviceToken.suffix(8)), hasUserProfile=\(self?.userProfile != nil), userID=\(self?.userProfile?.id.uuidString ?? "nil")."
+                        )
+                    }
                     await self?.saveDeviceTokenIfPossible(deviceToken)
                 }
             }
             .store(in: &cancellables)
 
-        // Listen for remote notifications to refresh the current in-memory cached user profile
-        NotificationCenter.default.publisher(for: NotificationService.remoteNotificationDidArriveNotification)
-            .sink { [weak self] notification in
-                let context = notification.object as? NotificationService.RemoteNotificationContext
-                Task {
-                    await self?.handleRemoteNotificationArrival(context)
-                }
-            }
-            .store(in: &cancellables)
     }
 
     func restoreExistingSession() async {
@@ -245,7 +210,6 @@ final class AppState: ObservableObject {
             hostedEvents: hostedEvents,
             participatedEvents: participatedEvents
         )
-        pruneUnreadChatCounts(validEventIDs: Set(hostedEvents + participatedEvents))
         // Temporarily disabled while debugging the profiles realtime subscription.
         // startChatMessagesRealtimeSubscriptions(eventIDs: Array(Set(hostedEvents + participatedEvents)))
     }
@@ -258,6 +222,29 @@ final class AppState: ObservableObject {
         userProfile = userProfile?.updatingAllNotificationsRead(isAllNotificationsRead)
     }
 
+    func startProfileRealtimeFromMainTabIfNeeded() {
+        guard authenticationState == .signedIn,
+              let userID = userProfile?.id,
+              supabaseSession != nil
+        else {
+            return
+        }
+
+        guard mainTabProfileRealtimeStartedUserID != userID else {
+            return
+        }
+
+        mainTabProfileRealtimeStartedUserID = userID
+        stopProfileRealtimeHealthMonitor()
+        print("AppState: starting profile realtime from main tab after socket cleanup. userID=\(userID).")
+        realtimeSubscriptionManager.startProfileRealtimeSubscriptionAfterSocketCleanup(
+            userID: userID
+        ) { [weak self] updatedProfile in
+            self?.applyRealtimeProfileUpdate(updatedProfile)
+        }
+        startProfileRealtimeHealthMonitor()
+    }
+
     func removeCachedEvent(_ eventID: UUID) {
         guard let userProfile else {
             return
@@ -265,8 +252,6 @@ final class AppState: ObservableObject {
 
         cachedEventsByID[eventID] = nil
         cachedChatMessagesByEventID[eventID] = nil
-        subscribedChatEventIDs.remove(eventID)
-        clearUnreadChatCount(eventID: eventID)
 
         self.userProfile = userProfile.updatingEvents(
             hostedEvents: userProfile.hostedEvents.filter { $0 != eventID },
@@ -344,14 +329,7 @@ final class AppState: ObservableObject {
     }
 
     var hasUnreadChats: Bool {
-        guard let userProfile else {
-            return false
-        }
-
-        let chatEventIDs = Set(userProfile.hostedEvents + userProfile.participatedEvents)
-        return unreadChatCountsByEventID.contains { eventID, count in
-            chatEventIDs.contains(eventID) && count > 0
-        }
+        !unreadChatEventIDs.isEmpty
     }
 
     var hasUnreadMyEvents: Bool {
@@ -362,28 +340,39 @@ final class AppState: ObservableObject {
         userProfile?.isAllNotificationsRead == false
     }
 
-    func unreadChatCount(eventID: UUID) -> Int {
-        unreadChatCountsByEventID[eventID] ?? 0
+    func hasUnreadChatMessages(eventID: UUID) -> Bool {
+        unreadChatEventIDs.contains(eventID)
     }
 
-    func openChat(eventID: UUID) {
-        activeChatEventID = eventID
-        NotificationService.setActiveChatEventID(eventID)
-        clearUnreadChatCount(eventID: eventID)
-        markCachedChatMessagesRead(eventID: eventID)
-        // Temporarily disabled while debugging the profiles realtime subscription.
-        // startChatMessagesRealtimeSubscription(eventID: eventID)
-    }
+    func openChatList() {
+        activeChatEventID = nil
+        NotificationService.setActiveChatEventID(nil)
 
-    func closeChat(eventID: UUID) {
-        if activeChatEventID == eventID {
-            activeChatEventID = nil
-            NotificationService.setActiveChatEventID(nil)
+        realtimeSubscriptionManager.startSharedChatMessagesRealtimeSubscription { [weak self] chatMessage in
+            self?.handleRealtimeChatMessage(chatMessage)
         }
     }
 
-    private func isSubscribedChatEvent(_ eventID: UUID) -> Bool {
-        subscribedChatEventIDs.contains(eventID)
+    func openChat(eventID: UUID) {
+        print("ChatDebug: [AppState] openChat called. eventID=\(eventID), currentUserID=\(userProfile?.id.uuidString ?? "none"), activeChatEventID=\(activeChatEventID?.uuidString ?? "none").")
+        activeChatEventID = eventID
+        NotificationService.setActiveChatEventID(eventID)
+        markCachedChatMessagesRead(eventID: eventID)
+        realtimeSubscriptionManager.startChatMessagesRealtimeSubscription(eventID: eventID) { [weak self] chatMessage in
+            print("ChatDebug: [AppState] realtime callback received. eventID=\(chatMessage.eventID), messageID=\(chatMessage.id), senderID=\(chatMessage.senderID).")
+            self?.handleRealtimeChatMessage(chatMessage)
+        }
+    }
+
+    func closeChat(eventID: UUID) {
+        print("ChatDebug: [AppState] closeChat called. eventID=\(eventID), activeChatEventID=\(activeChatEventID?.uuidString ?? "none").")
+        markCachedChatMessagesRead(eventID: eventID)
+
+        if activeChatEventID == eventID {
+            realtimeSubscriptionManager.stopChatMessagesRealtimeSubscription()
+            activeChatEventID = nil
+            NotificationService.setActiveChatEventID(nil)
+        }
     }
 
     func cachedChatMessages(eventID: UUID) -> [ChatRoomMessage]? {
@@ -400,17 +389,20 @@ final class AppState: ObservableObject {
             .sorted { $0.sentAt < $1.sentAt }
 
         guard cachedChatMessagesByEventID[eventID] != mergedMessages else {
+            print("ChatDebug: [AppState] cache merge skipped; no changes. eventID=\(eventID), incomingCount=\(messages.count), existingCount=\(existingMessages.count).")
             return
         }
 
         cachedChatMessagesByEventID[eventID] = mergedMessages
         chatMessagesRevision += 1
+        print("ChatDebug: [AppState] cache merged messages. eventID=\(eventID), incomingCount=\(messages.count), existingCount=\(existingMessages.count), mergedCount=\(mergedMessages.count), revision=\(chatMessagesRevision).")
     }
 
     func appendCachedChatMessage(_ message: ChatRoomMessage, eventID: UUID) {
         var messages = cachedChatMessagesByEventID[eventID] ?? []
 
         guard !messages.contains(where: { $0.id == message.id }) else {
+            print("ChatDebug: [AppState] cache append skipped; duplicate message. eventID=\(eventID), messageID=\(message.id), cachedCount=\(messages.count), revision=\(chatMessagesRevision).")
             return
         }
 
@@ -418,85 +410,7 @@ final class AppState: ObservableObject {
         messages.sort { $0.sentAt < $1.sentAt }
         cachedChatMessagesByEventID[eventID] = messages
         chatMessagesRevision += 1
-    }
-
-    private func incrementUnreadChatCount(eventID: UUID) {
-        unreadChatCountsByEventID[eventID, default: 0] += 1
-        persistUnreadChatCounts()
-    }
-
-    private func clearUnreadChatCount(eventID: UUID) {
-        guard unreadChatCountsByEventID[eventID] != nil else {
-            countedUnreadChatMessageIDsByEventID[eventID] = nil
-            return
-        }
-
-        unreadChatCountsByEventID[eventID] = nil
-        countedUnreadChatMessageIDsByEventID[eventID] = nil
-        persistUnreadChatCounts()
-    }
-
-    private func pruneUnreadChatCounts(validEventIDs: Set<UUID>) {
-        let prunedCounts = unreadChatCountsByEventID.filter { eventID, count in
-            validEventIDs.contains(eventID) && count > 0
-        }
-
-        guard prunedCounts != unreadChatCountsByEventID else {
-            return
-        }
-
-        unreadChatCountsByEventID = prunedCounts
-        countedUnreadChatMessageIDsByEventID = countedUnreadChatMessageIDsByEventID.filter { eventID, _ in
-            validEventIDs.contains(eventID)
-        }
-        persistUnreadChatCounts()
-    }
-
-    private func recordIncomingRealtimeChatMessage(_ message: ChatRoomMessage, eventID: UUID) {
-        recordIncomingChatMessage(
-            eventID: eventID,
-            messageID: message.id,
-            senderID: message.senderID
-        )
-    }
-
-    private func recordIncomingChatPush(_ context: NotificationService.RemoteNotificationContext) -> UUID? {
-        guard context.notificationType == Constants.Chat.messageNotificationType,
-              let eventID = context.relatedEventID else {
-            return nil
-        }
-
-        recordIncomingChatMessage(
-            eventID: eventID,
-            messageID: context.chatMessageID,
-            senderID: context.senderID
-        )
-
-        return eventID
-    }
-
-    private func recordIncomingChatMessage(eventID: UUID, messageID: UUID?, senderID: UUID?) {
-        guard senderID != userProfile?.id else {
-            return
-        }
-
-        guard activeChatEventID != eventID else {
-            markCachedChatMessagesRead(eventID: eventID)
-            return
-        }
-
-        if let messageID {
-            let countedMessageIDs = countedUnreadChatMessageIDsByEventID[eventID] ?? []
-
-            guard !countedMessageIDs.contains(messageID) else {
-                return
-            }
-
-            countedUnreadChatMessageIDsByEventID[eventID, default: []].insert(messageID)
-        }
-
-        userProfile = userProfile?.updatingChatMessageReadState(eventID: eventID, read: false)
-        incrementUnreadChatCount(eventID: eventID)
+        print("ChatDebug: [AppState] cache appended message. eventID=\(eventID), messageID=\(message.id), senderID=\(message.senderID), cachedCount=\(messages.count), revision=\(chatMessagesRevision).")
     }
 
     private func markCachedChatMessagesRead(eventID: UUID) {
@@ -511,18 +425,6 @@ final class AppState: ObservableObject {
         }
     }
 
-    private func handleRemoteNotificationArrival(_ context: NotificationService.RemoteNotificationContext?) async {
-        if let context,
-           let chatEventID = recordIncomingChatPush(context) {
-            await refreshCachedChatMessages(eventID: chatEventID)
-        }
-
-        // Refresh the current user profile when a remote notification arrives.
-        // The profile stores notification IDs, while cachedNotifications stores app-only read state.
-        // Full notification data are fetched when the user opens or refreshes the notification list page.
-        await refreshCurrentProfile()
-    }
-
     func preloadCachedChatMessages(eventIDs: [UUID]) async {
         for eventID in eventIDs where cachedChatMessagesByEventID[eventID] == nil {
             await refreshCachedChatMessages(eventID: eventID)
@@ -535,108 +437,12 @@ final class AppState: ObservableObject {
         }
     }
 
-    func startChatMessagesRealtimeSubscriptions(eventIDs: [UUID]) {
-        subscribedChatEventIDs.formUnion(eventIDs)
-
-        guard !subscribedChatEventIDs.isEmpty else {
-            return
-        }
-
-        // Temporarily disabled while debugging the profiles realtime subscription.
-        // startChatMessagesRealtimeSubscriptionIfNeeded()
-    }
-
-    func startChatMessagesRealtimeSubscription(eventID: UUID) {
-        subscribedChatEventIDs.insert(eventID)
-        // Temporarily disabled while debugging the profiles realtime subscription.
-        // startChatMessagesRealtimeSubscriptionIfNeeded()
-    }
-
-    private func startChatMessagesRealtimeSubscriptionIfNeeded() {
-        // Listen for realtime update of chat messages table to update the local cached chat messages
-        guard chatMessagesRealtimeTask == nil else {
-            return
-        }
-
-        let client = SupabaseClientProvider.shared
-        // Subscribe to the "chat-messages" channel to receive realtime updates for chat messages.
-        let channel = client.realtimeV2.channel("chat-messages")
-        chatMessagesRealtimeChannel = channel
-
-        chatMessagesRealtimeTask = Task { [weak self] in
-            let inserts = channel.postgresChange(
-                InsertAction.self,
-                schema: "public",
-                table: "chat_messages"
-            )
-
-            do {
-                await client.realtimeV2.setAuth()
-                await client.realtimeV2.connect()
-                try await channel.subscribeWithError()
-                print("AppState: subscribed to realtime chat messages.")
-
-                for await insert in inserts {
-                    guard !Task.isCancelled else {
-                        break
-                    }
-
-                    let chatMessage = try insert.decodeRecord(
-                        as: ChatMessage.self,
-                        decoder: Self.supabaseRealtimeDecoder
-                    )
-
-                    guard await self?.isSubscribedChatEvent(chatMessage.eventID) == true else {
-                        continue
-                    }
-
-                    do {
-                        let message = try await self?.chatRoomMessage(from: chatMessage)
-
-                        await MainActor.run {
-                            if let message {
-                                self?.appendCachedChatMessage(message, eventID: chatMessage.eventID)
-                                // Increment unread chat count if the incoming message is not from the current user and the chat room is not currently active.
-                                self?.recordIncomingRealtimeChatMessage(message, eventID: chatMessage.eventID)
-                            }
-                        }
-                    } catch {
-                        print("AppState: failed to map realtime chat message: \(error.localizedDescription)")
-                    }
-                }
-            } catch is CancellationError {
-                // Expected when signing out or deleting the account.
-            } catch {
-                print("AppState: chat messages realtime subscription failed: \(error.localizedDescription)")
-            }
-        }
-    }
-
-    func stopChatMessagesRealtimeSubscription() {
-        chatMessagesRealtimeTask?.cancel()
-        chatMessagesRealtimeTask = nil
-        subscribedChatEventIDs = []
-
-        guard let chatMessagesRealtimeChannel else {
-            activeChatEventID = nil
-            NotificationService.setActiveChatEventID(nil)
-            return
-        }
-
-        self.chatMessagesRealtimeChannel = nil
-        activeChatEventID = nil
-        NotificationService.setActiveChatEventID(nil)
-
-        Task {
-            await SupabaseClientProvider.shared.realtimeV2.removeChannel(chatMessagesRealtimeChannel)
-        }
-    }
-
     func deleteAccountProfileDataAndRevokeSession() async throws {
         guard supabaseSession != nil else {
             throw AppStateError.missingAuthenticatedUser
         }
 
+        stopProfileRealtimeHealthMonitor()
         realtimeSubscriptionManager.stopAll()
         try await profileService.deleteAccountProfileData()
         try await authService.signOut()
@@ -645,31 +451,30 @@ final class AppState: ObservableObject {
         // Suppress foreground notifications after Supabase session is revoked
         NotificationService.unregisterRemoteNotifications()
         lastSavedDeviceToken = nil
+        mainTabProfileRealtimeStartedUserID = nil
         eventsRevision += 1
     }
 
     func finishDeletedAccountFlow() {
+        stopProfileRealtimeHealthMonitor()
         realtimeSubscriptionManager.stopAll()
-        stopChatMessagesRealtimeSubscription()
         NotificationService.setUserSignedIn(false)
         NotificationService.unregisterRemoteNotifications()
         lastSavedDeviceToken = nil
+        mainTabProfileRealtimeStartedUserID = nil
         googleSession = nil
         supabaseSession = nil
         userProfile = nil
         cachedNotifications = []
         cachedEventsByID = [:]
         cachedChatMessagesByEventID = [:]
-        unreadChatCountsByEventID = [:]
-        countedUnreadChatMessageIDsByEventID = [:]
-        persistUnreadChatCounts()
         chatMessagesRevision += 1
         authenticationState = .signedOut
     }
 
     func signOut() async {
+        stopProfileRealtimeHealthMonitor()
         realtimeSubscriptionManager.stopAll()
-        stopChatMessagesRealtimeSubscription()
 
         do {
             try await authService.signOut()
@@ -685,20 +490,18 @@ final class AppState: ObservableObject {
             print(reason)
         }
 
+        stopProfileRealtimeHealthMonitor()
         realtimeSubscriptionManager.stopAll()
-        stopChatMessagesRealtimeSubscription()
         NotificationService.setUserSignedIn(false)
         NotificationService.unregisterRemoteNotifications()
         lastSavedDeviceToken = nil
+        mainTabProfileRealtimeStartedUserID = nil
         googleSession = nil
         supabaseSession = nil
         userProfile = nil
         cachedNotifications = []
         cachedEventsByID = [:]
         cachedChatMessagesByEventID = [:]
-        unreadChatCountsByEventID = [:]
-        countedUnreadChatMessageIDsByEventID = [:]
-        persistUnreadChatCounts()
         chatMessagesRevision += 1
         authenticationState = .signedOut
     }
@@ -721,16 +524,16 @@ final class AppState: ObservableObject {
     }
 
     private func applyAuthenticatedState(supabaseSession: Session, userProfile: UserProfile) {
+        let nextAuthenticationState: AuthenticationState = userProfile.skillLevel == nil || userProfile.gender == nil ? .needsSkillLevel : .signedIn
+
+        print(
+            "AppState: applying authenticated state. userID=\(userProfile.id), previousState=\(authenticationState), nextState=\(nextAuthenticationState), skillLevelSet=\(userProfile.skillLevel != nil), genderSet=\(userProfile.gender != nil)."
+        )
+
         self.supabaseSession = supabaseSession
         applyProfileState(userProfile)
         NotificationService.setUserSignedIn(true)
-        authenticationState = userProfile.skillLevel == nil || userProfile.gender == nil ? .needsSkillLevel : .signedIn
-        realtimeSubscriptionManager.startSubscriptions(
-            userID: userProfile.id,
-            eventIDs: Array(Set(userProfile.hostedEvents + userProfile.participatedEvents))
-        ) { [weak self] updatedProfile in
-            self?.applyRealtimeProfileUpdate(updatedProfile)
-        }
+        authenticationState = nextAuthenticationState
     }
 
     private func applyRealtimeProfileUpdate(_ updatedProfile: UserProfile) {
@@ -744,18 +547,78 @@ final class AppState: ObservableObject {
         let addedEventIDs = updatedEventIDs.subtracting(oldEventIDs)
 
         print(
-            "AppState: applying realtime profile update. isAllEventsRead=\(updatedProfile.isAllEventsRead), addedEventIDs=\(Array(addedEventIDs))."
+            "AppState: applying realtime profile update. userID=\(updatedProfile.id), isAllEventsRead=\(updatedProfile.isAllEventsRead), isAllNotificationsRead=\(updatedProfile.isAllNotificationsRead), unreadChatEventIDs=\(Array(unreadChatEventIDs(from: updatedProfile))), addedEventIDs=\(Array(addedEventIDs)), notificationCount=\(updatedProfile.notifications.count)."
         )
         applyProfileState(updatedProfile)
+        print(
+            "AppState: realtime profile update applied. hasUnreadChats=\(hasUnreadChats), hasUnreadMyEvents=\(hasUnreadMyEvents), hasUnreadNotifications=\(hasUnreadNotifications)."
+        )
     }
 
     private func applyProfileState(_ profile: UserProfile) {
         userProfile = profile
         syncCachedNotifications(notificationIDs: profile.notifications)
-        hydrateUnreadChatCountsFromProfile(profile)
-        pruneUnreadChatCounts(validEventIDs: Set(profile.hostedEvents + profile.participatedEvents))
         // Temporarily disabled while debugging the profiles realtime subscription.
         // startChatMessagesRealtimeSubscriptions(eventIDs: Array(Set(profile.hostedEvents + profile.participatedEvents)))
+    }
+
+    private func startProfileRealtimeHealthMonitor() {
+        profileRealtimeHealthTask?.cancel()
+        profileRealtimeHealthTask = Task { [weak self] in
+            while !Task.isCancelled {
+                do {
+                    try await Task.sleep(nanoseconds: 300_000_000_000)
+                } catch {
+                    return
+                }
+
+                await self?.refreshProfileRealtimeSubscriptionIfNeeded()
+            }
+        }
+    }
+
+    private func stopProfileRealtimeHealthMonitor() {
+        profileRealtimeHealthTask?.cancel()
+        profileRealtimeHealthTask = nil
+    }
+
+    private func refreshProfileRealtimeSubscriptionIfNeeded() {
+        guard let userID = userProfile?.id, supabaseSession != nil else {
+            return
+        }
+
+        guard activeChatEventID == nil else {
+            print("RealtimeSubscriptionManager: skipped profile realtime health check while chat is open. activeChatEventID=\(activeChatEventID?.uuidString ?? "none").")
+            return
+        }
+
+        realtimeSubscriptionManager.refreshProfileRealtimeSubscriptionIfNeeded(
+            userID: userID
+        ) { [weak self] updatedProfile in
+            self?.applyRealtimeProfileUpdate(updatedProfile)
+        }
+    }
+
+    private var unreadChatEventIDs: Set<UUID> {
+        guard let userProfile else {
+            return []
+        }
+
+        return unreadChatEventIDs(from: userProfile)
+    }
+
+    private func unreadChatEventIDs(from profile: UserProfile) -> Set<UUID> {
+        let chatEventIDs = Set(profile.hostedEvents + profile.participatedEvents)
+
+        return Set(
+            profile.chatMessageReadStates.compactMap { readState in
+                guard chatEventIDs.contains(readState.id), !readState.read else {
+                    return nil
+                }
+
+                return readState.id
+            }
+        )
     }
 
     private func syncCachedNotifications(notificationIDs: [UUID]) {
@@ -769,29 +632,6 @@ final class AppState: ObservableObject {
                 read: existingReadStateByID[notificationID] ?? false
             )
         }
-    }
-
-    private func hydrateUnreadChatCountsFromProfile(_ profile: UserProfile) {
-        let validEventIDs = Set(profile.hostedEvents + profile.participatedEvents)
-        var hydratedCounts = unreadChatCountsByEventID.filter { eventID, count in
-            validEventIDs.contains(eventID) && count > 0
-        }
-
-        for readState in profile.chatMessageReadStates where validEventIDs.contains(readState.id) {
-            if readState.read {
-                hydratedCounts[readState.id] = nil
-                countedUnreadChatMessageIDsByEventID[readState.id] = nil
-            } else {
-                hydratedCounts[readState.id] = max(hydratedCounts[readState.id] ?? 0, 1)
-            }
-        }
-
-        guard hydratedCounts != unreadChatCountsByEventID else {
-            return
-        }
-
-        unreadChatCountsByEventID = hydratedCounts
-        persistUnreadChatCounts()
     }
 
     // To handle app process termination and restore the existing session
@@ -854,62 +694,60 @@ final class AppState: ObservableObject {
         )
     }
 
+    private func handleRealtimeChatMessage(_ chatMessage: ChatMessage) {
+        print("ChatDebug: [AppState] handleRealtimeChatMessage started. eventID=\(chatMessage.eventID), messageID=\(chatMessage.id), senderID=\(chatMessage.senderID).")
+        Task { [weak self] in
+            do {
+                let message = try await self?.chatRoomMessage(from: chatMessage)
+
+                await MainActor.run {
+                    if let message {
+                        print("ChatDebug: [AppState] mapped realtime chat message. eventID=\(chatMessage.eventID), messageID=\(message.id), displayName=\(message.senderDisplayName).")
+                        self?.appendCachedChatMessage(message, eventID: chatMessage.eventID)
+                    } else {
+                        print("ChatDebug: [AppState] realtime chat message mapping returned nil. eventID=\(chatMessage.eventID), messageID=\(chatMessage.id).")
+                    }
+                }
+            } catch {
+                print("ChatDebug: [AppState] failed to map realtime chat message. eventID=\(chatMessage.eventID), messageID=\(chatMessage.id), error=\(error.localizedDescription).")
+            }
+        }
+    }
+
     private func saveCurrentDeviceTokenIfPossible() async {
         guard let deviceToken = NotificationService.currentDeviceToken else {
-            print("AppState: no APNs device token available to save.")
+            print("AppState: no APNs device token available to save. hasUserProfile=\(userProfile != nil), userID=\(userProfile?.id.uuidString ?? "nil").")
             return
         }
 
+        print("AppState: found current APNs device token to save. tokenSuffix=\(deviceToken.suffix(8)), userID=\(userProfile?.id.uuidString ?? "nil").")
         await saveDeviceTokenIfPossible(deviceToken)
     }
 
     private func saveDeviceTokenIfPossible(_ deviceToken: String) async {
         guard let userID = userProfile?.id else {
-            print("AppState: device token received before user profile was available.")
+            print("AppState: device token received before user profile was available. tokenSuffix=\(deviceToken.suffix(8)).")
             return
         }
 
         guard lastSavedDeviceToken != deviceToken else {
+            print("AppState: skipped APNs device token save because token is already saved in memory. userID=\(userID), tokenSuffix=\(deviceToken.suffix(8)).")
             return
         }
 
         do {
+            print("AppState: saving APNs device token. userID=\(userID), tokenSuffix=\(deviceToken.suffix(8)).")
             try await deviceTokenService.saveDeviceToken(
                 userID: userID,
                 deviceToken: deviceToken
             )
             lastSavedDeviceToken = deviceToken
-            print("AppState: saved APNs device token.")
+            print("AppState: saved APNs device token. userID=\(userID), tokenSuffix=\(deviceToken.suffix(8)).")
         } catch {
-            print("AppState: failed to save APNs device token: \(error.localizedDescription)")
+            print("AppState: failed to save APNs device token. userID=\(userID), tokenSuffix=\(deviceToken.suffix(8)), error=\(error.localizedDescription).")
         }
     }
 
-    private func persistUnreadChatCounts() {
-        let countsByID = unreadChatCountsByEventID.reduce(into: [String: Int]()) { result, item in
-            result[item.key.uuidString] = item.value
-        }
-
-        UserDefaults.standard.set(countsByID, forKey: Constants.StorageKey.unreadChatCountsByEventID)
-    }
-
-    private static func loadUnreadChatCounts() -> [UUID: Int] {
-        guard let storedCounts = UserDefaults.standard.dictionary(
-            forKey: Constants.StorageKey.unreadChatCountsByEventID
-        ) else {
-            return [:]
-        }
-
-        return storedCounts.reduce(into: [UUID: Int]()) { result, item in
-            let count = item.value as? Int ?? (item.value as? NSNumber)?.intValue ?? 0
-
-            guard let eventID = UUID(uuidString: item.key), count > 0 else {
-                return
-            }
-
-            result[eventID] = count
-        }
-    }
 }
 
 enum AuthenticationState {

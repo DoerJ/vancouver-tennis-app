@@ -81,15 +81,23 @@ struct ChatRoomView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
         .task {
+            print("ChatDebug: [RoomView] task started. eventID=\(event.id).")
             await viewModel.loadMessages(eventID: event.id, appState: appState)
-        }
-        .onChange(of: appState.chatMessagesRevision) { _, _ in
-            viewModel.syncMessagesFromCache(eventID: event.id, appState: appState)
-        }
-        .onAppear {
+            guard !Task.isCancelled else {
+                print("ChatDebug: [RoomView] task cancelled before opening chat subscription. eventID=\(event.id).")
+                return
+            }
+
+            print("ChatDebug: [RoomView] opening chat subscription after initial load. eventID=\(event.id).")
             appState.openChat(eventID: event.id)
         }
+        .onChange(of: appState.chatMessagesRevision) { _, _ in
+            print("ChatDebug: [RoomView] observed chatMessagesRevision change. eventID=\(event.id), revision=\(appState.chatMessagesRevision).")
+            let didSync = viewModel.syncMessagesFromCache(eventID: event.id, appState: appState)
+            print("ChatDebug: [RoomView] revision sync result. eventID=\(event.id), didSync=\(didSync), visibleCount=\(viewModel.messages.count).")
+        }
         .onDisappear {
+            print("ChatDebug: [RoomView] disappeared. eventID=\(event.id).")
             appState.closeChat(eventID: event.id)
         }
         .preference(key: MainTabBarHiddenPreferenceKey.self, value: true)
@@ -163,7 +171,9 @@ struct ChatRoomView: View {
 
             Button {
                 Task {
+                    print("ChatDebug: [RoomView] send tapped. eventID=\(event.id), draftLength=\(viewModel.trimmedDraftMessage.count).")
                     let didSend = await viewModel.sendMessage(eventID: event.id, appState: appState)
+                    print("ChatDebug: [RoomView] send completed. eventID=\(event.id), didSend=\(didSend), visibleCount=\(viewModel.messages.count).")
                     if didSend {
                         isComposerFocused = false
                     }

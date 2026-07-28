@@ -145,6 +145,7 @@ enum Constants {
     enum Chat {
         static let messageNotificationType = "chat_message_received"
         static let maximumMessageLength = 1000
+        static let subscribeTimeoutNanoseconds: UInt64 = 10_000_000_000
         static let systemMessagePrefix = "__van_tennis_system__ "
 
         static func eventLeftSystemMessage(displayName: String) -> String {
@@ -168,9 +169,6 @@ enum Constants {
         }
     }
 
-    enum StorageKey {
-        static let unreadChatCountsByEventID = "van-tennis.unreadChatCountsByEventID"
-    }
 }
 
 private extension Color {

@@ -67,6 +67,7 @@ struct ChatView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
             .task {
+                appState.openChatList()
                 // When enter chat list view, always refresh the chat list from Supabase to ensure the latest events are displayed.
                 // This is to handle the case where the user turned off APNs
                 await loadChats(refreshFromSupabase: true)
@@ -78,6 +79,7 @@ struct ChatView: View {
                 }
 
                 Task {
+                    appState.openChatList()
                     await loadChats(refreshFromSupabase: true)
                 }
             }
@@ -87,6 +89,11 @@ struct ChatView: View {
                 }
             }
             .onChange(of: appState.userProfile?.participatedEvents) { _, _ in
+                Task {
+                    await loadChats(refreshFromSupabase: false)
+                }
+            }
+            .onChange(of: appState.chatMessagesRevision) { _, _ in
                 Task {
                     await loadChats(refreshFromSupabase: false)
                 }
@@ -144,7 +151,8 @@ struct ChatView: View {
             return ChatConversationPreview(
                 event: event,
                 latestMessage: appState.cachedChatMessages(eventID: event.id)?.last,
-                hasUnreadMessages: appState.unreadChatCount(eventID: event.id) > 0
+                hasUnreadMessages: appState.hasUnreadChatMessages(eventID: event.id),
+                currentUserID: appState.userProfile?.id
             )
         }
         .sorted { first, second in
@@ -196,6 +204,7 @@ private struct ChatConversationPreview: Identifiable {
     let event: TennisEvent
     let latestMessage: ChatRoomMessage?
     let hasUnreadMessages: Bool
+    let currentUserID: UUID?
 
     var id: UUID {
         event.id
@@ -263,10 +272,26 @@ private struct ChatConversationCard: View {
         let body = Constants.Chat.displayBody(for: latestMessage.body)
 
         if Constants.Chat.isSystemMessage(latestMessage.body) {
-            return body
+            return systemMessagePreviewText(body: body, senderID: latestMessage.senderID)
         }
 
         return "\(latestMessage.senderDisplayName): \(body)"
+    }
+
+    private func systemMessagePreviewText(body: String, senderID: UUID) -> String {
+        guard senderID == preview.currentUserID else {
+            return body
+        }
+
+        if body.hasSuffix(" has joined the room.") {
+            return "You joined the room."
+        }
+
+        if body.hasSuffix(" has left the room.") {
+            return "You left the room."
+        }
+
+        return body
     }
 }
 

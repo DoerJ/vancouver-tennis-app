@@ -186,6 +186,7 @@
       "hostLabel": "Host: %@",
       "hostYou": "You",
       "hostFallback": "Host",
+      "dateLabel": "Date: %@",
       "timeLabel": "Time: %@",
       "skillLevel": "Skill Level %@",
       "inProgress": "In progress",
@@ -225,6 +226,7 @@
     "detail": {
       "title": "Event Detail",
       "event": "Event",
+      "date": "Date",
       "type": "Type",
       "time": "Time",
       "start": "Start",

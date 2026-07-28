@@ -8,10 +8,9 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
         2. Edge function fetches device token for the user to be notified
         3. Edge function sends notification payload to APNs
         4. APNs delivers notification to user's device
-        5. Refresh local user profile when notification is received
+        5. If the user taps the notification, route them to the related app screen
     */
     static let deviceTokenDidUpdateNotification = Notification.Name("DeviceTokenDidUpdateNotification")
-    static let remoteNotificationDidArriveNotification = Notification.Name("RemoteNotificationDidArriveNotification")
     static let remoteNotificationDidOpenNotification = Notification.Name("RemoteNotificationDidOpenNotification")
     static private(set) var currentDeviceToken: String?
     static private(set) var activeChatEventID: UUID?
@@ -23,13 +22,6 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
         let notificationType: NotificationType?
         let rawNotificationType: String?
         let relatedEventID: UUID?
-    }
-
-    struct RemoteNotificationContext {
-        let notificationType: String?
-        let relatedEventID: UUID?
-        let chatMessageID: UUID?
-        let senderID: UUID?
     }
 
     static func setActiveChatEventID(_ eventID: UUID?) {
@@ -50,6 +42,8 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
     }
 
     static func requestRemoteNotificationRegistration() {
+        print("NotificationService: requesting remote notification registration. hasCurrentToken=\(currentDeviceToken != nil).")
+
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { isGranted, error in
             if let error {
                 print("NotificationService: notification permission request failed: \(error.localizedDescription)")
@@ -59,6 +53,7 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
 
             // Register with APNs even when alert permission is denied, so the app can still receive a device token.
             DispatchQueue.main.async {
+                print("NotificationService: calling registerForRemoteNotifications.")
                 UIApplication.shared.registerForRemoteNotifications()
             }
         }
@@ -90,7 +85,7 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
         let token = deviceToken.map { String(format: "%02x", $0) }.joined()
         // The current device token is saved in notification service
         Self.currentDeviceToken = token
-        print("NotificationService: registered APNs device token.")
+        print("NotificationService: registered APNs device token. tokenSuffix=\(token.suffix(8)).")
 
         NotificationCenter.default.post(
             name: Self.deviceTokenDidUpdateNotification,
@@ -112,7 +107,6 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
         fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
     ) {
         print("NotificationService: received remote notification.")
-        postRemoteNotificationDidArrive(userInfo)
         completionHandler(.newData)
     }
 
@@ -132,7 +126,6 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
             return []
         }
 
-        postRemoteNotificationDidArrive(notification.request.content.userInfo)
         return [.banner, .badge, .sound]
     }
 
@@ -141,20 +134,7 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
         didReceive response: UNNotificationResponse
     ) async {
         print("NotificationService: user opened notification.")
-        postRemoteNotificationDidArrive(response.notification.request.content.userInfo)
         postRemoteNotificationDidOpen(response.notification.request.content.userInfo)
-    }
-
-    private func postRemoteNotificationDidArrive(_ userInfo: [AnyHashable: Any]) {
-        guard Self.isUserSignedIn else {
-            print("NotificationService: ignored remote notification while signed out.")
-            return
-        }
-
-        NotificationCenter.default.post(
-            name: Self.remoteNotificationDidArriveNotification,
-            object: remoteNotificationContext(from: userInfo)
-        )
     }
 
     private func postRemoteNotificationDidOpen(_ userInfo: [AnyHashable: Any]) {
@@ -192,14 +172,5 @@ final class NotificationService: NSObject, UIApplicationDelegate, UNUserNotifica
         }
 
         return eventID == Self.activeChatEventID
-    }
-
-    private func remoteNotificationContext(from userInfo: [AnyHashable: Any]) -> RemoteNotificationContext {
-        RemoteNotificationContext(
-            notificationType: userInfo["notification_type"] as? String,
-            relatedEventID: (userInfo["related_event_id"] as? String).flatMap(UUID.init(uuidString:)),
-            chatMessageID: (userInfo["chat_message_id"] as? String).flatMap(UUID.init(uuidString:)),
-            senderID: (userInfo["sender"] as? String).flatMap(UUID.init(uuidString:))
-        )
     }
 }
