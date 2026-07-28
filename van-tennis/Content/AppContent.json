@@ -98,7 +98,8 @@
       "eventUpdated": "Event Updated",
       "eventLeft": "Event Left",
       "joinRequestApproved": "Join Request Approved",
-      "joinRequestRejected": "Join Request Rejected"
+      "joinRequestRejected": "Join Request Rejected",
+      "joinRequestCancelled": "Join Request Cancelled"
     },
     "deleteAccessibility": "Delete notification",
     "unknownTime": "Unknown time",
@@ -243,6 +244,10 @@
       "cancelConfirmation": "This will delete the event and remove it from your hosted events.",
       "joinEvent": "Join Event",
       "waitingApproval": "Waiting for host to approve",
+      "cancelJoinRequestTitle": "Cancel join request?",
+      "cancelJoinRequest": "Cancel Request",
+      "keepJoinRequest": "Keep Request",
+      "cancelJoinRequestConfirmation": "This will remove your pending request and notify the host.",
       "overlap": "This event overlaps with one of your hosted or joined events.",
       "leaveEventTitle": "Leave this event?",
       "leaveEvent": "Leave Event",
@@ -279,6 +284,8 @@
     "notifications": {
       "joinRequestTitle": "Player wants to join your event",
       "joinRequestBody": "%@ wants to join your event at %@.",
+      "joinRequestCancelledTitle": "Join request cancelled",
+      "joinRequestCancelledBody": "%@ cancelled their request to join your event at %@.",
       "leftTitle": "Player left the event",
       "leftBody": "%@ left the event at %@."
     },

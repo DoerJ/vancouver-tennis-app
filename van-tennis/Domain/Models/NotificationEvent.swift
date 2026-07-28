@@ -7,6 +7,7 @@ enum NotificationType: String, CaseIterable, Codable, Identifiable {
     case eventLeft = "event_left"
     case approveJoinRequest = "approve_join_request"
     case rejectJoinRequest = "reject_join_request"
+    case cancelJoinRequest = "cancel_join_request"
 
     var id: String {
         rawValue
@@ -26,6 +27,8 @@ enum NotificationType: String, CaseIterable, Codable, Identifiable {
             return AppContent.string("notifications.types.joinRequestApproved")
         case .rejectJoinRequest:
             return AppContent.string("notifications.types.joinRequestRejected")
+        case .cancelJoinRequest:
+            return AppContent.string("notifications.types.joinRequestCancelled")
         }
     }
 }

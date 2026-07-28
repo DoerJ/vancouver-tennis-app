@@ -232,6 +232,18 @@ final class AppState: ObservableObject {
         self.userProfile = userProfile.updatingPendingEvents(userProfile.pendingEvents + [eventID])
     }
 
+    func removeCachedPendingEvent(_ eventID: UUID) {
+        guard let userProfile,
+              userProfile.pendingEvents.contains(eventID)
+        else {
+            return
+        }
+
+        self.userProfile = userProfile.updatingPendingEvents(
+            userProfile.pendingEvents.filter { $0 != eventID }
+        )
+    }
+
     func startProfileRealtimeFromMainTabIfNeeded() {
         guard authenticationState == .signedIn,
               let userID = userProfile?.id,

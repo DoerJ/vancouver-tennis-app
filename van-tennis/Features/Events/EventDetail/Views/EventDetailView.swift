@@ -9,6 +9,7 @@ struct EventDetailView: View {
     @StateObject private var viewModel = EventDetailViewModel()
     @State private var isShowingCancelConfirmation = false
     @State private var isShowingLeaveConfirmation = false
+    @State private var isShowingCancelJoinRequestConfirmation = false
     @State private var isShowingReportSheet = false
     @State private var isShowingReportSubmittedAlert = false
     @State private var isCancelling = false
@@ -84,6 +85,22 @@ struct EventDetailView: View {
             Button(AppContent.string("events.detail.stayEvent"), role: .cancel) {}
         } message: {
             Text(AppContent.string("events.detail.leaveConfirmation"))
+        }
+        .confirmationDialog(
+            AppContent.string("events.detail.cancelJoinRequestTitle"),
+            isPresented: $isShowingCancelJoinRequestConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button(AppContent.string("events.detail.cancelJoinRequest"), role: .destructive) {
+                Task {
+                    await cancelJoinRequest()
+                }
+            }
+            .disabled(isEventNotFound || isEventEnded || viewModel.isCancellingJoinRequest)
+
+            Button(AppContent.string("events.detail.keepJoinRequest"), role: .cancel) {}
+        } message: {
+            Text(AppContent.string("events.detail.cancelJoinRequestConfirmation"))
         }
         .task {
             await loadEventDetails()
@@ -338,25 +355,26 @@ struct EventDetailView: View {
             }
 
             if !isEventEnded && canJoinEvent {
-                Button {
-                    Task {
-                        await joinEvent()
+                if hasRequestedToJoin {
+                    pendingJoinRequestAction
+                } else {
+                    Button {
+                        Task {
+                            await joinEvent()
+                        }
+                    } label: {
+                        if viewModel.isJoining {
+                            ProgressView()
+                                .tint(.white)
+                                .frame(maxWidth: .infinity)
+                        } else {
+                            Text(AppContent.string("events.detail.joinEvent"))
+                                .frame(maxWidth: .infinity)
+                        }
                     }
-                } label: {
-                    if viewModel.isJoining {
-                        ProgressView()
-                            .tint(.white)
-                            .frame(maxWidth: .infinity)
-                    } else if hasRequestedToJoin {
-                        Text(AppContent.string("events.detail.waitingApproval"))
-                            .frame(maxWidth: .infinity)
-                    } else {
-                        Text(AppContent.string("events.detail.joinEvent"))
-                            .frame(maxWidth: .infinity)
-                    }
+                    .buttonStyle(RallyPrimaryActionButtonStyle())
+                    .disabled(viewModel.isJoining || isEventNotFound)
                 }
-                .buttonStyle(RallyPrimaryActionButtonStyle())
-                .disabled(viewModel.isJoining || hasRequestedToJoin || isEventNotFound)
             }
 
             if !isEventEnded && isCurrentUserHost {
@@ -408,6 +426,36 @@ struct EventDetailView: View {
                 .disabled(viewModel.isLeaving || isEventNotFound)
             }
 
+        }
+    }
+
+    private var pendingJoinRequestAction: some View {
+        HStack(spacing: 10) {
+            Text(AppContent.string("events.detail.waitingApproval"))
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity, minHeight: 52)
+                .padding(.horizontal, 16)
+                .background(RallyDiscoverStyle.primaryGreen.opacity(0.45), in: Capsule())
+
+            Button {
+                isShowingCancelJoinRequestConfirmation = true
+            } label: {
+                if viewModel.isCancellingJoinRequest {
+                    ProgressView()
+                        .tint(Color(red: 0.98, green: 0.28, blue: 0.13))
+                } else {
+                    Image("disabled_red")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 28, height: 28)
+                }
+            }
+            .frame(width: 52, height: 52)
+            .background(Color(red: 0.97, green: 0.97, blue: 0.96), in: Circle())
+            .shadow(color: RallyDiscoverStyle.shadow.opacity(0.65), radius: 14, x: 0, y: 6)
+            .disabled(isEventNotFound || viewModel.isCancellingJoinRequest)
+            .accessibilityLabel(AppContent.string("events.detail.cancelJoinRequest"))
         }
     }
 
@@ -604,6 +652,12 @@ struct EventDetailView: View {
     private func joinEvent() async {
         if await viewModel.requestToJoinEvent(event, appState: appState) {
             hasRequestedToJoin = true
+        }
+    }
+
+    private func cancelJoinRequest() async {
+        if await viewModel.cancelJoinRequest(event, appState: appState) {
+            hasRequestedToJoin = false
         }
     }
 

@@ -7,6 +7,7 @@ final class EventDetailViewModel: ObservableObject {
     @Published var participantProfiles: [UserProfile] = []
     @Published var isLoading = false
     @Published var isJoining = false
+    @Published var isCancellingJoinRequest = false
     @Published var isLeaving = false
     @Published var isUpdatingMaxPlayers = false
     @Published var isSubmittingReport = false
@@ -106,6 +107,42 @@ final class EventDetailViewModel: ObservableObject {
             )
         )
         appState.appendCachedPendingEvent(latestEvent.id)
+    }
+
+    func cancelJoinRequest(_ event: TennisEvent, appState: AppState) async -> Bool {
+        guard let currentUser = appState.userProfile else {
+            errorMessage = AppContent.string("errors.noAuthenticatedUser")
+            return false
+        }
+
+        isCancellingJoinRequest = true
+        errorMessage = nil
+        defer {
+            isCancellingJoinRequest = false
+        }
+
+        do {
+            _ = try await notificationEventService.createNotification(
+                NewNotificationEvent(
+                    sender: currentUser.id,
+                    recipients: [event.hostID],
+                    notificationType: .cancelJoinRequest,
+                    title: AppContent.string("events.notifications.joinRequestCancelledTitle"),
+                    body: AppContent.string(
+                        "events.notifications.joinRequestCancelledBody",
+                        currentUser.displayName,
+                        event.court.displayName
+                    ),
+                    relatedEventID: event.id
+                )
+            )
+            appState.removeCachedPendingEvent(event.id)
+
+            return true
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
     }
 
     func leaveEvent(_ event: TennisEvent, appState: AppState) async -> Bool {
