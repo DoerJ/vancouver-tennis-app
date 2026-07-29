@@ -20,15 +20,6 @@ final class ChatRoomViewModel: ObservableObject {
         draftMessage.count > Constants.Chat.maximumMessageLength
     }
 
-    func loadMessagesIfNeeded(eventID: UUID, appState: AppState) async {
-        // Load chat messages from cache first.
-        if syncMessagesFromCache(eventID: eventID, appState: appState) {
-            return
-        }
-
-        await loadMessages(eventID: eventID, appState: appState)
-    }
-
     func loadMessages(eventID: UUID, appState: AppState) async {
         print("ChatDebug: [RoomVM] loadMessages started. eventID=\(eventID).")
         isLoading = true

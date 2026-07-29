@@ -17,7 +17,7 @@ struct van_tennisApp: App {
                     }
 
                     Task {
-                        await appState.refreshCurrentProfile()
+                        await appState.handleAppBecameActive()
                     }
                 }
         }

@@ -85,15 +85,6 @@ struct EventService {
             .value
     }
 
-    func deleteEvent(eventID: UUID, hostID: UUID) async throws {
-        try await client
-            .from("tennis_events")
-            .delete()
-            .eq("id", value: eventID.uuidString)
-            .eq("host_id", value: hostID.uuidString)
-            .execute()
-    }
-
     func cancelHostedEvent(_ event: TennisEvent) async throws {
         try await client
             .rpc(
@@ -123,27 +114,6 @@ struct EventService {
             )
             .execute()
             .value
-    }
-
-    func deleteExpiredEvents() async throws {
-        try await client
-            .rpc("delete_expired_events")
-            .execute()
-    }
-
-    func cancelHostedEventsForAccountDeletion() async throws {
-        try await client
-            .rpc("cancel_hosted_events_for_account_deletion")
-            .execute()
-    }
-
-    func archiveEndedEvent(eventID: UUID) async throws {
-        try await client
-            .rpc(
-                "archive_ended_event",
-                params: ArchiveEndedEventParams(eventID: eventID)
-            )
-            .execute()
     }
 
     private static let supabaseTimestampFormatter: ISO8601DateFormatter = {

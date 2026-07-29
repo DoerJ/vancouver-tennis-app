@@ -4,9 +4,12 @@ import Supabase
 @MainActor
 final class RealtimeSubscriptionManager {
     private var profileRealtimeTask: Task<Void, Never>?
+    private var profileRealtimeHealthTask: Task<Void, Never>?
     private var profileRealtimeChannel: RealtimeChannelV2?
     private var subscribedProfileID: UUID?
     private var profileRealtimeSubscribedAt: Date?
+    private var profileRealtimeAttemptID: UUID?
+    private var mainTabProfileRealtimeStartedUserID: UUID?
     private var chatMessagesRealtimeTask: Task<Void, Never>?
     private var chatMessagesRealtimeChannel: RealtimeChannelV2?
     private var subscribedChatEventID: UUID?
@@ -43,8 +46,31 @@ final class RealtimeSubscriptionManager {
     private static let iso8601DateFormatterWithoutFractionalSeconds = ISO8601DateFormatter()
 
     func stopAll() {
+        stopProfileRealtimeHealthMonitor()
+        mainTabProfileRealtimeStartedUserID = nil
         stopProfileRealtimeSubscription()
         stopChatMessagesRealtimeSubscription()
+    }
+
+    func startProfileRealtimeFromMainTabIfNeeded(
+        userID: UUID,
+        onProfileUpdate: @escaping @MainActor (UserProfile) -> Void
+    ) {
+        guard mainTabProfileRealtimeStartedUserID != userID else {
+            return
+        }
+
+        mainTabProfileRealtimeStartedUserID = userID
+        stopProfileRealtimeHealthMonitor()
+        print("RealtimeSubscriptionManager: starting profile realtime from main tab after socket cleanup. userID=\(userID).")
+        startProfileRealtimeSubscriptionAfterSocketCleanup(
+            userID: userID,
+            onProfileUpdate: onProfileUpdate
+        )
+        startProfileRealtimeHealthMonitor(
+            userID: userID,
+            onProfileUpdate: onProfileUpdate
+        )
     }
 
     func refreshProfileRealtimeSubscriptionIfNeeded(
@@ -118,6 +144,41 @@ final class RealtimeSubscriptionManager {
                 )
             }
         }
+    }
+
+    // Health monitor to ensure that the profile realtime subscription is active and healthy. If the subscription is not healthy, it will be restarted.
+    // Subscirption is considered unhealthy if:
+    // - The task or channel is missing.
+    // - profileRealtimeSubscribedAt is nil.
+    // - The socket is not connected.
+    // - The channel is not subscribed.
+    private func startProfileRealtimeHealthMonitor(
+        userID: UUID,
+        onProfileUpdate: @escaping @MainActor (UserProfile) -> Void
+    ) {
+        profileRealtimeHealthTask?.cancel()
+        profileRealtimeHealthTask = Task { [weak self] in
+            while !Task.isCancelled {
+                do {
+                    try await Task.sleep(
+                        // Sleep for 3 minutes before checking the subscription health again.
+                        nanoseconds: Constants.Realtime.profileHealthMonitorIntervalNanoseconds
+                    )
+                } catch {
+                    return
+                }
+
+                await self?.refreshProfileRealtimeSubscriptionIfNeeded(
+                    userID: userID,
+                    onProfileUpdate: onProfileUpdate
+                )
+            }
+        }
+    }
+
+    private func stopProfileRealtimeHealthMonitor() {
+        profileRealtimeHealthTask?.cancel()
+        profileRealtimeHealthTask = nil
     }
 
     func startChatMessagesRealtimeSubscription(
@@ -247,6 +308,12 @@ final class RealtimeSubscriptionManager {
         self.chatMessagesRealtimeChannel = nil
     }
 
+    // The profile realtime subscription lifecycle is as follows:
+    // → profile created
+    // → onboarding completed
+    // → authenticationState becomes signedIn
+    // → MainTabView appears
+    // → profile realtime subscription starts
     private func startProfileRealtimeSubscription(
         userID: UUID,
         onProfileUpdate: @escaping @MainActor (UserProfile) -> Void
@@ -277,6 +344,8 @@ final class RealtimeSubscriptionManager {
         let client = SupabaseClientProvider.shared
         let channel = client.realtimeV2.channel("profile-\(userID.uuidString)")
         profileRealtimeChannel = channel
+        let attemptID = UUID()
+        profileRealtimeAttemptID = attemptID
 
         profileRealtimeTask = Task {
             let updates = channel.postgresChange(
@@ -294,6 +363,10 @@ final class RealtimeSubscriptionManager {
                 print("RealtimeSubscriptionManager: subscribing profile channel. userID=\(userID), socketStatus=\(client.realtimeV2.status), channelStatus=\(channel.status).")
                 try await channel.subscribeWithError()
                 await MainActor.run {
+                    guard self.profileRealtimeAttemptID == attemptID else {
+                        return
+                    }
+
                     self.profileRealtimeSubscribedAt = Date()
                 }
                 print("RealtimeSubscriptionManager: profile realtime subscription succeeded. userID=\(userID), socketStatus=\(client.realtimeV2.status), channelStatus=\(channel.status).")
@@ -318,11 +391,43 @@ final class RealtimeSubscriptionManager {
                         continue
                     }
                 }
+
+                await self.clearFailedProfileRealtimeAttempt(
+                    attemptID: attemptID,
+                    channel: channel
+                )
             } catch is CancellationError {
                 print("RealtimeSubscriptionManager: profile realtime subscription cancelled. userID=\(userID).")
+                await self.clearFailedProfileRealtimeAttempt(
+                    attemptID: attemptID,
+                    channel: channel
+                )
             } catch {
                 print("RealtimeSubscriptionManager: profile realtime subscription failed. userID=\(userID), socketStatus=\(client.realtimeV2.status), channelStatus=\(channel.status), error=\(error.localizedDescription).")
+                await self.clearFailedProfileRealtimeAttempt(
+                    attemptID: attemptID,
+                    channel: channel
+                )
             }
+        }
+    }
+
+    private func clearFailedProfileRealtimeAttempt(
+        attemptID: UUID,
+        channel: RealtimeChannelV2
+    ) {
+        guard profileRealtimeAttemptID == attemptID else {
+            return
+        }
+
+        profileRealtimeTask = nil
+        profileRealtimeChannel = nil
+        subscribedProfileID = nil
+        profileRealtimeSubscribedAt = nil
+        profileRealtimeAttemptID = nil
+
+        Task {
+            await SupabaseClientProvider.shared.realtimeV2.removeChannel(channel)
         }
     }
 
@@ -346,6 +451,7 @@ final class RealtimeSubscriptionManager {
         profileRealtimeTask = nil
         subscribedProfileID = nil
         profileRealtimeSubscribedAt = nil
+        profileRealtimeAttemptID = nil
 
         let channelToRemove = profileRealtimeChannel
         self.profileRealtimeChannel = nil

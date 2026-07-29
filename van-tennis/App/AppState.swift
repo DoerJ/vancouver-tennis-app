@@ -24,10 +24,8 @@ final class AppState: ObservableObject {
     private let realtimeSubscriptionManager = RealtimeSubscriptionManager()
     private var cancellables: Set<AnyCancellable> = []
     private var authStateChangesTask: Task<Void, Never>?
-    private var profileRealtimeHealthTask: Task<Void, Never>?
     private var activeChatEventID: UUID?
     private var lastSavedDeviceToken: String?
-    private var mainTabProfileRealtimeStartedUserID: UUID?
 
     init() {
         startAuthStateChangesListener()
@@ -185,6 +183,22 @@ final class AppState: ObservableObject {
         }
     }
 
+    func handleAppBecameActive() async {
+        await refreshCurrentProfile()
+        guard authenticationState == .signedIn,
+              let userID = userProfile?.id,
+              supabaseSession != nil
+        else {
+            return
+        }
+        // When the app becomes active, it refreshes the profile and immediately verifies the profile realtime channel
+        realtimeSubscriptionManager.refreshProfileRealtimeSubscriptionIfNeeded(
+            userID: userID
+        ) { [weak self] updatedProfile in
+            self?.applyRealtimeProfileUpdate(updatedProfile)
+        }
+    }
+
     func updateCachedNotifications(_ notificationIDs: [UUID]) {
         userProfile = userProfile?.updatingNotifications(notificationIDs)
         syncCachedNotifications(notificationIDs: notificationIDs)
@@ -244,7 +258,7 @@ final class AppState: ObservableObject {
         )
     }
 
-    func startProfileRealtimeFromMainTabIfNeeded() {
+    func handleMainTabAppeared() {
         guard authenticationState == .signedIn,
               let userID = userProfile?.id,
               supabaseSession != nil
@@ -252,19 +266,11 @@ final class AppState: ObservableObject {
             return
         }
 
-        guard mainTabProfileRealtimeStartedUserID != userID else {
-            return
-        }
-
-        mainTabProfileRealtimeStartedUserID = userID
-        stopProfileRealtimeHealthMonitor()
-        print("AppState: starting profile realtime from main tab after socket cleanup. userID=\(userID).")
-        realtimeSubscriptionManager.startProfileRealtimeSubscriptionAfterSocketCleanup(
+        realtimeSubscriptionManager.startProfileRealtimeFromMainTabIfNeeded(
             userID: userID
         ) { [weak self] updatedProfile in
             self?.applyRealtimeProfileUpdate(updatedProfile)
         }
-        startProfileRealtimeHealthMonitor()
     }
 
     func removeCachedEvent(_ eventID: UUID) {
@@ -329,25 +335,6 @@ final class AppState: ObservableObject {
     func applyUpdatedEvent(_ event: TennisEvent) {
         cachedEventsByID[event.id] = event
         eventsRevision += 1
-    }
-
-    func activeHostedEventsForCurrentUser() async throws -> [TennisEvent] {
-        guard let userProfile else {
-            throw AppStateError.missingAuthenticatedUser
-        }
-
-        // If the hosted event has already been cached, read from cache
-        // Otherwise, the missing hosted events will be fetched from Supabase
-        let hostedEventIDs = userProfile.hostedEvents
-        let cachedEvents = cachedEvents(ids: hostedEventIDs)
-        let missingEventIDs = missingCachedEventIDs(ids: hostedEventIDs)
-        let fetchedEvents = try await eventService.fetchEvents(ids: missingEventIDs)
-
-        updateCachedEvents(fetchedEvents)
-
-        let now = Date()
-        return (cachedEvents + fetchedEvents)
-            .filter { $0.endTime > now }
     }
 
     func activeEventsForCurrentUser() async throws -> [TennisEvent] {
@@ -481,7 +468,6 @@ final class AppState: ObservableObject {
             throw AppStateError.missingAuthenticatedUser
         }
 
-        stopProfileRealtimeHealthMonitor()
         realtimeSubscriptionManager.stopAll()
         try await profileService.deleteAccountProfileData()
         try await authService.signOut()
@@ -490,17 +476,14 @@ final class AppState: ObservableObject {
         // Suppress foreground notifications after Supabase session is revoked
         NotificationService.unregisterRemoteNotifications()
         lastSavedDeviceToken = nil
-        mainTabProfileRealtimeStartedUserID = nil
         eventsRevision += 1
     }
 
     func finishDeletedAccountFlow() {
-        stopProfileRealtimeHealthMonitor()
         realtimeSubscriptionManager.stopAll()
         NotificationService.setUserSignedIn(false)
         NotificationService.unregisterRemoteNotifications()
         lastSavedDeviceToken = nil
-        mainTabProfileRealtimeStartedUserID = nil
         googleSession = nil
         supabaseSession = nil
         userProfile = nil
@@ -512,7 +495,6 @@ final class AppState: ObservableObject {
     }
 
     func signOut() async {
-        stopProfileRealtimeHealthMonitor()
         realtimeSubscriptionManager.stopAll()
 
         do {
@@ -529,12 +511,10 @@ final class AppState: ObservableObject {
             print(reason)
         }
 
-        stopProfileRealtimeHealthMonitor()
         realtimeSubscriptionManager.stopAll()
         NotificationService.setUserSignedIn(false)
         NotificationService.unregisterRemoteNotifications()
         lastSavedDeviceToken = nil
-        mainTabProfileRealtimeStartedUserID = nil
         googleSession = nil
         supabaseSession = nil
         userProfile = nil
@@ -599,43 +579,6 @@ final class AppState: ObservableObject {
         syncCachedNotifications(notificationIDs: profile.notifications)
         // Temporarily disabled while debugging the profiles realtime subscription.
         // startChatMessagesRealtimeSubscriptions(eventIDs: Array(Set(profile.hostedEvents + profile.participatedEvents)))
-    }
-
-    private func startProfileRealtimeHealthMonitor() {
-        profileRealtimeHealthTask?.cancel()
-        profileRealtimeHealthTask = Task { [weak self] in
-            while !Task.isCancelled {
-                do {
-                    try await Task.sleep(nanoseconds: 300_000_000_000)
-                } catch {
-                    return
-                }
-
-                await self?.refreshProfileRealtimeSubscriptionIfNeeded()
-            }
-        }
-    }
-
-    private func stopProfileRealtimeHealthMonitor() {
-        profileRealtimeHealthTask?.cancel()
-        profileRealtimeHealthTask = nil
-    }
-
-    private func refreshProfileRealtimeSubscriptionIfNeeded() {
-        guard let userID = userProfile?.id, supabaseSession != nil else {
-            return
-        }
-
-        guard activeChatEventID == nil else {
-            print("RealtimeSubscriptionManager: skipped profile realtime health check while chat is open. activeChatEventID=\(activeChatEventID?.uuidString ?? "none").")
-            return
-        }
-
-        realtimeSubscriptionManager.refreshProfileRealtimeSubscriptionIfNeeded(
-            userID: userID
-        ) { [weak self] updatedProfile in
-            self?.applyRealtimeProfileUpdate(updatedProfile)
-        }
     }
 
     private var unreadChatEventIDs: Set<UUID> {

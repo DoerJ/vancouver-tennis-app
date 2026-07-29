@@ -65,7 +65,7 @@ struct MainTabView: View {
             handleOpenedNotification(context)
         }
         .onAppear {
-            appState.startProfileRealtimeFromMainTabIfNeeded()
+            appState.handleMainTabAppeared()
 
             guard appState.authenticationState == .signedIn,
                   let context = NotificationService.consumePendingOpenedNotificationContext() else {

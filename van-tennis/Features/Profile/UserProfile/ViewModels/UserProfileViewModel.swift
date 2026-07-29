@@ -90,10 +90,6 @@ final class UserProfileViewModel: ObservableObject {
             || hasSocialTagsChange(currentSocialTags: currentProfile.socialTags)
     }
 
-    func clearDisplayNameError() {
-        displayNameErrorMessage = nil
-    }
-
     func saveProfileChanges(
         currentProfile: UserProfile?,
         appState: AppState

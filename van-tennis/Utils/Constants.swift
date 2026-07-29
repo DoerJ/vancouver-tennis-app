@@ -148,14 +148,6 @@ enum Constants {
         static let subscribeTimeoutNanoseconds: UInt64 = 10_000_000_000
         static let systemMessagePrefix = "__van_tennis_system__ "
 
-        static func eventLeftSystemMessage(displayName: String) -> String {
-            "\(systemMessagePrefix)\(displayName) has left the room."
-        }
-
-        static func eventJoinedSystemMessage(displayName: String) -> String {
-            "\(systemMessagePrefix)\(displayName) has joined the room."
-        }
-
         static func displayBody(for messageBody: String) -> String {
             guard messageBody.hasPrefix(systemMessagePrefix) else {
                 return messageBody
@@ -167,6 +159,10 @@ enum Constants {
         static func isSystemMessage(_ messageBody: String) -> Bool {
             messageBody.hasPrefix(systemMessagePrefix)
         }
+    }
+
+    enum Realtime {
+        static let profileHealthMonitorIntervalNanoseconds: UInt64 = 180_000_000_000
     }
 
 }

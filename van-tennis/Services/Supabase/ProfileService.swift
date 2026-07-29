@@ -143,19 +143,6 @@ struct ProfileService {
         )
     }
 
-    func removeHostedEvent(userID: UUID, eventID: UUID) async throws -> UserProfile {
-        guard let profile = try await findProfile(userID: userID) else {
-            throw ProfileServiceError.profileNotFound
-        }
-
-        let hostedEvents = profile.hostedEvents.filter { $0 != eventID }
-
-        return try await updateProfile(
-            userID: userID,
-            hostedEvents: hostedEvents
-        )
-    }
-
     func markCurrentUserChatMessagesRead(eventID: UUID) async throws {
         try await client
             .rpc(

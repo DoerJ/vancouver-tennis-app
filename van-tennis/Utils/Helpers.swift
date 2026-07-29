@@ -9,10 +9,6 @@ enum DateFormattingHelper {
         eventDateFormatter.string(from: date)
     }
 
-    static func monthDayString(from date: Date) -> String {
-        monthDayFormatter.string(from: date)
-    }
-
     static func fullDateBadgeString(from date: Date) -> String {
         fullDateBadgeFormatter.string(from: date)
     }
