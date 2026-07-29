@@ -275,11 +275,25 @@ final class RealtimeSubscriptionManager {
                             onChatMessageInsert(chatMessage)
                         }
                     } catch {
+                        Logger.error(
+                            "Failed to decode chat realtime insert. "
+                                + "channelName=\(channelName), "
+                                + "eventID=\(eventID?.uuidString ?? "shared"), "
+                                + "error=\(error.localizedDescription)"
+                        )
                         continue
                     }
                 }
             } catch is CancellationError {
             } catch {
+                Logger.error(
+                    "Chat realtime subscription failed. "
+                        + "channelName=\(channelName), "
+                        + "eventID=\(eventID?.uuidString ?? "shared"), "
+                        + "socketStatus=\(client.realtimeV2.status), "
+                        + "channelStatus=\(channel.status), "
+                        + "error=\(error.localizedDescription)"
+                )
             }
         }
     }
@@ -387,7 +401,11 @@ final class RealtimeSubscriptionManager {
                             onProfileUpdate(updatedProfile)
                         }
                     } catch {
-                        print("RealtimeSubscriptionManager: failed to decode profile realtime update. userID=\(userID), error=\(error.localizedDescription).")
+                        Logger.error(
+                            "Failed to decode profile realtime update. "
+                                + "userID=\(userID), "
+                                + "error=\(error.localizedDescription)"
+                        )
                         continue
                     }
                 }
@@ -403,7 +421,13 @@ final class RealtimeSubscriptionManager {
                     channel: channel
                 )
             } catch {
-                print("RealtimeSubscriptionManager: profile realtime subscription failed. userID=\(userID), socketStatus=\(client.realtimeV2.status), channelStatus=\(channel.status), error=\(error.localizedDescription).")
+                Logger.error(
+                    "Profile realtime subscription failed. "
+                        + "userID=\(userID), "
+                        + "socketStatus=\(client.realtimeV2.status), "
+                        + "channelStatus=\(channel.status), "
+                        + "error=\(error.localizedDescription)"
+                )
                 await self.clearFailedProfileRealtimeAttempt(
                     attemptID: attemptID,
                     channel: channel
