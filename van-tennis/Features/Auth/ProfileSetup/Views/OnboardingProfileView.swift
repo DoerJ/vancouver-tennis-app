@@ -62,10 +62,13 @@ struct OnboardingProfileView: View {
                         inlineError(errorMessage)
                             .padding(.top, 20)
                     }
+
+                    createButton
+                        .padding(.top, 40)
                 }
                 .padding(.horizontal, 29)
                 .padding(.top, 88)
-                .padding(.bottom, 64)
+                .padding(.bottom, 128)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color.white)
             }
@@ -86,27 +89,26 @@ struct OnboardingProfileView: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             Spacer(minLength: 18)
-
-            Button {
-                Task {
-                    await viewModel.saveProfile(
-                        selectedLevel: selectedLevel,
-                        selectedGender: selectedGender,
-                        selectedSocialTags: selectedSocialTags,
-                        appState: appState
-                    )
-                }
-            } label: {
-                Text(viewModel.isSaving ? AppContent.string("common.saving") : AppContent.string("auth.onboarding.create"))
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 88, height: 28)
-                    .background(createButtonColor, in: Capsule())
-                    .shadow(color: RallyDiscoverStyle.shadow.opacity(canCreateProfile ? 1 : 0), radius: 18, x: 0, y: 8)
-            }
-            .buttonStyle(.plain)
-            .disabled(!canCreateProfile)
         }
+    }
+
+    private var createButton: some View {
+        Button {
+            Task {
+                await viewModel.saveProfile(
+                    selectedLevel: selectedLevel,
+                    selectedGender: selectedGender,
+                    selectedSocialTags: selectedSocialTags,
+                    appState: appState
+                )
+            }
+        } label: {
+            Text(viewModel.isSaving ? AppContent.string("common.saving") : AppContent.string("auth.onboarding.create"))
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(RallyPrimaryActionButtonStyle(isEnabled: canCreateProfile, showsShadow: canCreateProfile))
+        .disabled(!canCreateProfile)
+        .padding(.horizontal, 16)
     }
 
     private var skillLevelSelector: some View {
@@ -228,10 +230,6 @@ struct OnboardingProfileView: View {
 
     private var onboardingDivider: some View {
         RallyDivider(horizontalPadding: 14)
-    }
-
-    private var createButtonColor: Color {
-        canCreateProfile ? RallyDiscoverStyle.primaryGreen : Color.black.opacity(0.28)
     }
 
     private var selectedSkillProgress: CGFloat {

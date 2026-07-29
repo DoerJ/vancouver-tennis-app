@@ -139,6 +139,7 @@ struct CreateEventView: View {
         .buttonStyle(RallyPrimaryActionButtonStyle(showsShadow: true))
         .disabled(isSaving)
         .opacity(isSaving ? 0.7 : 1)
+        .padding(.horizontal, 16)
     }
 
     private var timeSection: some View {
