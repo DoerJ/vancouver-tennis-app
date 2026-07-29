@@ -51,6 +51,10 @@ struct EventDetailView: View {
                 .padding(.leading, 18)
                 .padding(.top, 24)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+
+            floatingSaveButton
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .ignoresSafeArea(edges: .top)
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
@@ -141,17 +145,22 @@ struct EventDetailView: View {
             showsSaveButton: shouldShowSaveButton,
             showsReportButton: shouldShowReportButton,
             isReportButtonEnabled: isReportButtonEnabled,
-            canSave: canSaveMaxPlayers,
-            isSaving: viewModel.isUpdatingMaxPlayers,
-            onReport: prepareReportSheet,
-            onSave: {
-                Task {
-                    await savePendingMaxPlayers()
-                }
-            }
+            onReport: prepareReportSheet
         )
         .frame(height: 430)
         .clipped()
+    }
+
+    private var floatingSaveButton: some View {
+        EventDetailFloatingSaveButton(
+            showsSaveButton: shouldShowSaveButton,
+            canSave: canSaveMaxPlayers,
+            isSaving: viewModel.isUpdatingMaxPlayers
+        ) {
+            Task {
+                await savePendingMaxPlayers()
+            }
+        }
     }
 
     private var floatingBackButton: some View {
@@ -219,13 +228,13 @@ struct EventDetailView: View {
             VStack(alignment: .leading, spacing: 14) {
                 detailInfoRow(
                     title: AppContent.string("events.detail.start"),
-                    value: DateFormattingHelper.eventDateTimeString(from: event.startTime),
+                    value: DateFormattingHelper.timeString(from: event.startTime),
                     systemImage: "clock"
                 )
 
                 detailInfoRow(
                     title: AppContent.string("events.detail.end"),
-                    value: DateFormattingHelper.eventDateTimeString(from: event.endTime),
+                    value: DateFormattingHelper.timeString(from: event.endTime),
                     systemImage: "clock.badge.checkmark"
                 )
 
@@ -520,11 +529,6 @@ struct EventDetailView: View {
                 imageName: "today"
             ),
             EventDetailSpec(
-                title: AppContent.string("events.detail.time"),
-                value: detailTimeRangeText,
-                systemImage: "clock"
-            ),
-            EventDetailSpec(
                 title: AppContent.string("events.detail.court"),
                 value: event.court.displayName,
                 systemImage: "sportscourt"
@@ -542,10 +546,6 @@ struct EventDetailView: View {
             "events.card.hostLabel",
             viewModel.hostProfile?.displayName ?? AppContent.string("events.card.hostFallback")
         )
-    }
-
-    private var detailTimeRangeText: String {
-        "\(DateFormattingHelper.timeString(from: event.startTime)) - \(DateFormattingHelper.timeString(from: event.endTime))"
     }
 
     private func detailInfoRow(title: String, value: String, systemImage: String? = nil, imageName: String? = nil) -> some View {
@@ -695,10 +695,7 @@ private struct EventDetailHeroView: View {
     let showsSaveButton: Bool
     let showsReportButton: Bool
     let isReportButtonEnabled: Bool
-    let canSave: Bool
-    let isSaving: Bool
     let onReport: () -> Void
-    let onSave: () -> Void
 
     var body: some View {
         GeometryReader { geometry in
@@ -709,31 +706,25 @@ private struct EventDetailHeroView: View {
                     .frame(width: geometry.size.width, height: geometry.size.height + 48)
                     .offset(y: 24)
                     .clipped()
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    .clipped()
 
-                EventDetailTopBarView(
-                    showsSaveButton: showsSaveButton,
+                EventDetailReportButton(
                     showsReportButton: showsReportButton,
                     isReportButtonEnabled: isReportButtonEnabled,
-                    canSave: canSave,
-                    isSaving: isSaving,
-                    onReport: onReport,
-                    onSave: onSave
+                    reservesSaveButtonSpace: showsSaveButton,
+                    onReport: onReport
                 )
             }
-            .frame(width: geometry.size.width, height: geometry.size.height)
-            .clipped()
         }
     }
 }
 
-private struct EventDetailTopBarView: View {
-    let showsSaveButton: Bool
+private struct EventDetailReportButton: View {
     let showsReportButton: Bool
     let isReportButtonEnabled: Bool
-    let canSave: Bool
-    let isSaving: Bool
+    let reservesSaveButtonSpace: Bool
     let onReport: () -> Void
-    let onSave: () -> Void
 
     var body: some View {
         HStack {
@@ -767,6 +758,23 @@ private struct EventDetailTopBarView: View {
                 .buttonStyle(.plain)
                 .disabled(!isReportButtonEnabled)
             }
+        }
+        .padding(.leading, 18)
+        .padding(.trailing, reservesSaveButtonSpace ? 94 : 18)
+        .padding(.top, 58)
+        .frame(maxWidth: .infinity, alignment: .top)
+    }
+}
+
+private struct EventDetailFloatingSaveButton: View {
+    let showsSaveButton: Bool
+    let canSave: Bool
+    let isSaving: Bool
+    let onSave: () -> Void
+
+    var body: some View {
+        HStack {
+            Spacer()
 
             if showsSaveButton {
                 Button {
@@ -784,7 +792,7 @@ private struct EventDetailTopBarView: View {
             }
         }
         .padding(.horizontal, 18)
-        .padding(.top, 72)
+        .padding(.top, 58)
         .frame(maxWidth: .infinity, alignment: .top)
     }
 }
@@ -796,7 +804,12 @@ private struct EventDetailSpec: Identifiable {
     let systemImage: String?
     let imageName: String?
 
-    init(title: String, value: String, systemImage: String? = nil, imageName: String? = nil) {
+    init(
+        title: String,
+        value: String,
+        systemImage: String? = nil,
+        imageName: String? = nil
+    ) {
         self.title = title
         self.value = value
         self.systemImage = systemImage
@@ -892,7 +905,22 @@ private struct EventDetailPlayersSpecCard: View {
     let isUpdating: Bool
     let onSelectMaxPlayers: (Int) -> Void
 
+    @ViewBuilder
     var body: some View {
+        if canEdit {
+            Menu {
+                playerLimitMenuItems
+            } label: {
+                cardContent
+            }
+            .buttonStyle(.plain)
+            .disabled(isUpdating)
+        } else {
+            cardContent
+        }
+    }
+
+    private var cardContent: some View {
         VStack(spacing: 8) {
             Image(systemName: spec.systemImage ?? "person.2")
                 .font(.system(size: 18, weight: .semibold))
@@ -912,7 +940,7 @@ private struct EventDetailPlayersSpecCard: View {
                     .minimumScaleFactor(0.74)
 
                 if canEdit {
-                    playerLimitMenu
+                    playerLimitIcon
                 }
             }
         }
@@ -929,34 +957,35 @@ private struct EventDetailPlayersSpecCard: View {
         )
     }
 
-    private var playerLimitMenu: some View {
-        Menu {
-            ForEach(availablePlayerLimits, id: \.self) { playerLimit in
-                Button {
-                    onSelectMaxPlayers(playerLimit)
-                } label: {
-                    if maxPlayers == playerLimit {
-                        Label("\(playerLimit)", systemImage: "checkmark")
-                    } else {
-                        Text("\(playerLimit)")
-                    }
+    @ViewBuilder
+    private var playerLimitMenuItems: some View {
+        ForEach(availablePlayerLimits, id: \.self) { playerLimit in
+            Button {
+                onSelectMaxPlayers(playerLimit)
+            } label: {
+                if maxPlayers == playerLimit {
+                    Label("\(playerLimit)", systemImage: "checkmark")
+                } else {
+                    Text("\(playerLimit)")
                 }
             }
-        } label: {
-            if isUpdating {
-                ProgressView()
-                    .controlSize(.small)
-            } else {
-                Image("pencil")
-                    .resizable()
-                    .renderingMode(.template)
-                    .scaledToFit()
-                    .foregroundStyle(.black)
-                    .frame(width: 14, height: 14)
-                    .accessibilityLabel(AppContent.string("events.detail.editMaxPlayers"))
-            }
         }
-        .disabled(isUpdating)
+    }
+
+    @ViewBuilder
+    private var playerLimitIcon: some View {
+        if isUpdating {
+            ProgressView()
+                .controlSize(.small)
+        } else {
+            Image("pencil")
+                .resizable()
+                .renderingMode(.template)
+                .scaledToFit()
+                .foregroundStyle(.black)
+                .frame(width: 14, height: 14)
+                .accessibilityLabel(AppContent.string("events.detail.editMaxPlayers"))
+        }
     }
 
     private var availablePlayerLimits: [Int] {
