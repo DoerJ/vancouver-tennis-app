@@ -26,6 +26,7 @@ final class AppState: ObservableObject {
     private var authStateChangesTask: Task<Void, Never>?
     private var activeChatEventID: UUID?
     private var lastSavedDeviceToken: String?
+    private var isAwaitingDeletedAccountAcknowledgement = false
 
     init() {
         startAuthStateChangesListener()
@@ -160,7 +161,9 @@ final class AppState: ObservableObject {
     }
 
     func refreshCurrentProfile() async {
-        guard supabaseSession != nil else {
+        guard supabaseSession != nil,
+              !isAwaitingDeletedAccountAcknowledgement
+        else {
             return
         }
 
@@ -184,6 +187,10 @@ final class AppState: ObservableObject {
     }
 
     func handleAppBecameActive() async {
+        guard !isAwaitingDeletedAccountAcknowledgement else {
+            return
+        }
+
         await refreshCurrentProfile()
         guard authenticationState == .signedIn,
               let userID = userProfile?.id,
@@ -468,10 +475,17 @@ final class AppState: ObservableObject {
             throw AppStateError.missingAuthenticatedUser
         }
 
-        realtimeSubscriptionManager.stopAll()
-        try await profileService.deleteAccountProfileData()
-        try await authService.signOut()
-        NotificationService.setUserSignedIn(false)
+        isAwaitingDeletedAccountAcknowledgement = true
+
+        do {
+            realtimeSubscriptionManager.stopAll()
+            try await profileService.deleteAccountProfileData()
+            try await authService.signOut()
+            NotificationService.setUserSignedIn(false)
+        } catch {
+            isAwaitingDeletedAccountAcknowledgement = false
+            throw error
+        }
 
         // Suppress foreground notifications after Supabase session is revoked
         NotificationService.unregisterRemoteNotifications()
@@ -480,6 +494,7 @@ final class AppState: ObservableObject {
     }
 
     func finishDeletedAccountFlow() {
+        isAwaitingDeletedAccountAcknowledgement = false
         realtimeSubscriptionManager.stopAll()
         NotificationService.setUserSignedIn(false)
         NotificationService.unregisterRemoteNotifications()
@@ -511,6 +526,7 @@ final class AppState: ObservableObject {
             print(reason)
         }
 
+        isAwaitingDeletedAccountAcknowledgement = false
         realtimeSubscriptionManager.stopAll()
         NotificationService.setUserSignedIn(false)
         NotificationService.unregisterRemoteNotifications()
@@ -534,6 +550,11 @@ final class AppState: ObservableObject {
                 }
 
                 await MainActor.run {
+                    guard self?.isAwaitingDeletedAccountAcknowledgement != true else {
+                        print("AppState: ignored \(state.event.rawValue) auth state while waiting for deleted-account acknowledgement.")
+                        return
+                    }
+
                     self?.forceLocalSignOut(
                         reason: "AppState: Supabase auth state changed to \(state.event.rawValue)."
                     )
