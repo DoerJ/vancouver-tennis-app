@@ -26,9 +26,20 @@ struct EventCardView: View {
                         .font(.system(size: 16, weight: .bold))
                         .foregroundStyle(RallyDiscoverStyle.ink)
 
-                    Text(event.city.displayName)
-                        .font(.system(size: 15, weight: .medium))
+                    HStack(spacing: 10) {
+                        Text(event.city.displayName)
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundStyle(RallyDiscoverStyle.mutedText)
+
+                        HStack(spacing: 4) {
+                            Image(systemName: "person.2")
+                                .font(.system(size: 15, weight: .medium))
+
+                            Text(maxPlayersText)
+                                .font(.system(size: 15, weight: .medium))
+                        }
                         .foregroundStyle(RallyDiscoverStyle.mutedText)
+                    }
                 }
 
                 Spacer()
@@ -152,6 +163,10 @@ struct EventCardView: View {
 
     private var timeRangeText: String {
         "\(DateFormattingHelper.timeString(from: event.startTime)) - \(DateFormattingHelper.timeString(from: event.endTime))"
+    }
+
+    private var maxPlayersText: String {
+        event.maxPlayers.map(String.init) ?? AppContent.string("events.card.unlimitedPlayers")
     }
 
     private var hostLabel: String {

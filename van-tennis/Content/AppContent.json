@@ -187,6 +187,7 @@
       "hostLabel": "Host: %@",
       "hostYou": "You",
       "hostFallback": "Host",
+      "unlimitedPlayers": "Unlimited",
       "dateLabel": "Date: %@",
       "timeLabel": "Time: %@",
       "skillLevel": "Skill Level %@",
