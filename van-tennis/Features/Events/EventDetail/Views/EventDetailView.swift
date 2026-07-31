@@ -264,7 +264,7 @@ struct EventDetailView: View {
     private var detailHeader: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline, spacing: 12) {
-                Text(event.court.displayName)
+                Text(event.courtDisplayName)
                     .font(.system(size: 28, weight: .bold))
                     .foregroundStyle(RallyDiscoverStyle.ink)
                     .lineLimit(2)
@@ -530,7 +530,7 @@ struct EventDetailView: View {
             ),
             EventDetailSpec(
                 title: AppContent.string("events.detail.court"),
-                value: event.court.displayName,
+                value: event.courtDisplayName,
                 systemImage: "sportscourt"
             ),
             EventDetailSpec(

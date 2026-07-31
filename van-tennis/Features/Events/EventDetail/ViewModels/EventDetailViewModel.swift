@@ -101,7 +101,7 @@ final class EventDetailViewModel: ObservableObject {
                 body: AppContent.string(
                     "events.notifications.joinRequestBody",
                     currentUser.displayName,
-                    latestEvent.court.displayName
+                    latestEvent.courtDisplayName
                 ),
                 relatedEventID: latestEvent.id
             )
@@ -131,7 +131,7 @@ final class EventDetailViewModel: ObservableObject {
                     body: AppContent.string(
                         "events.notifications.joinRequestCancelledBody",
                         currentUser.displayName,
-                        event.court.displayName
+                        event.courtDisplayName
                     ),
                     relatedEventID: event.id
                 )
@@ -193,7 +193,7 @@ final class EventDetailViewModel: ObservableObject {
                     body: AppContent.string(
                         "events.notifications.leftBody",
                         currentUser.displayName,
-                        latestEvent.court.displayName
+                        latestEvent.courtDisplayName
                     ),
                     relatedEventID: latestEvent.id
                 )

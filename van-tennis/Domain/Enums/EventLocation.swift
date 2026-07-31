@@ -1,6 +1,8 @@
 enum EventCity: String, CaseIterable, Codable, Identifiable, Hashable {
     case burnaby
     case richmond
+    case surrey
+    case vancouver
 
     var id: String {
         rawValue
@@ -12,6 +14,10 @@ enum EventCity: String, CaseIterable, Codable, Identifiable, Hashable {
             return AppContent.string("events.locations.burnaby")
         case .richmond:
             return AppContent.string("events.locations.richmond")
+        case .surrey:
+            return AppContent.string("events.locations.surrey")
+        case .vancouver:
+            return AppContent.string("events.locations.vancouver")
         }
     }
 
@@ -36,19 +42,110 @@ enum TennisCourt: String, CaseIterable, Codable, Identifiable, Hashable {
     case burnabyHeightsParkTennisCourt
     case burnabyLakeSportsComplexWest
     case brentwoodParkTennisCourts
+    case broadviewPark
     case moodyParkTennisCourt
+    case burnabySouthMemorialPark
     case confederationParkTennisCourts
+    case davidGrayPark
+    case eastGrovePark
     case ernieWinchParkTennisCourts
+    case forestGrovePark
+    case kensingtonPark
+    case louMoroPark
+    case maryAvenuePark
+    case maywoodSchoolSite
+    case ronMcLeanPark
     case sfuTennisCourts
     case slocanParkPublicTennisCourts
+    case squintLakePark
     case blundellParkTennisCourts
+    case burkevilleNeighbourhoodPark
+    case doverNeighbourhoodPark
+    case gardenCityNeighbourhoodPark
+    case hamiltonCommunityPark
+    case hughBoydCommunityPark
+    case katsuraNeighbourhoodPark
     case kingGeorgeTennisCourts
+    case mcNairNeighbourhoodPark
+    case minoruPark
+    case odlinNeighbourhoodPark
+    case odlinwoodNeighbourhoodPark
+    case rcPalmerSecondarySchool
     case richmondTennisClub
+    case stevestonCommunityPark
     case stevestonLondonTennisCourts
     case tennisBCHub
     case tennisBritishColumbia
+    case terraNovaNeighbourhoodPark
     case thompsonCommunityParkTennisCourts
     case southarmCourt
+    case alderwoodPark
+    case bellPark
+    case bobRutledgePark
+    case bridgeviewPark
+    case claytonPark
+    case cloverdaleAthleticPark
+    case cloverdaleHeightsPark
+    case crescentPark
+    case douglasPark
+    case fleetwoodPark
+    case fraserHeightsPark
+    case goldstonePark
+    case hazelgrovePark
+    case hummingbirdPark
+    case kennedyPark
+    case mapleGreenPark
+    case meridianByTheSea
+    case morganCreekPark
+    case newtonAthleticPark
+    case robsonPark
+    case royalKwantlenPark
+    case southSurreyAthleticPark
+    case sullivanPark
+    case sunnysidePark
+    case almondPark
+    case andyLivingstonePark
+    case brewersPark
+    case burrardViewPark
+    case captainCookPark
+    case champlainHeightsPark
+    case charlesonPark
+    case clarkPark
+    case davidLamPark
+    case eburnePark
+    case elmPark
+    case gardenPark
+    case granvilleLoopPark
+    case granvillePark
+    case graysPark
+    case guelphPark
+    case hastingsCommunityPark
+    case heatherPark
+    case hummPark
+    case jerichoBeachPark
+    case johnHendryTroutLakePark
+    case kasloPark
+    case kitsilanoBeachPark
+    case langaraGolfCourse
+    case macDonaldPark
+    case mcBridePark
+    case mcSpaddenPark
+    case melbournePark
+    case memorialSouthPark
+    case memorialWestPark
+    case moberlyPark
+    case oakPark
+    case pandoraPark
+    case queenElizabethPark
+    case riverfrontPark
+    case rupertPark
+    case stanleyPark
+    case strathconaPark
+    case sutcliffePark
+    case tatlowPark
+    case vancouverRobsonPark
+    case vancouverSlocanPark
+    case westPointGreyPark
 
     var id: String {
         rawValue
@@ -86,32 +183,214 @@ enum TennisCourt: String, CaseIterable, Codable, Identifiable, Hashable {
             return AppContent.string("events.locations.burnabyLakeSportsComplexWest")
         case .brentwoodParkTennisCourts:
             return AppContent.string("events.locations.brentwoodParkTennisCourts")
+        case .broadviewPark:
+            return AppContent.string("events.locations.broadviewPark")
         case .moodyParkTennisCourt:
             return AppContent.string("events.locations.moodyParkTennisCourt")
+        case .burnabySouthMemorialPark:
+            return AppContent.string("events.locations.burnabySouthMemorialPark")
         case .confederationParkTennisCourts:
             return AppContent.string("events.locations.confederationParkTennisCourts")
+        case .davidGrayPark:
+            return AppContent.string("events.locations.davidGrayPark")
+        case .eastGrovePark:
+            return AppContent.string("events.locations.eastGrovePark")
         case .ernieWinchParkTennisCourts:
             return AppContent.string("events.locations.ernieWinchParkTennisCourts")
+        case .forestGrovePark:
+            return AppContent.string("events.locations.forestGrovePark")
+        case .kensingtonPark:
+            return AppContent.string("events.locations.kensingtonPark")
+        case .louMoroPark:
+            return AppContent.string("events.locations.louMoroPark")
+        case .maryAvenuePark:
+            return AppContent.string("events.locations.maryAvenuePark")
+        case .maywoodSchoolSite:
+            return AppContent.string("events.locations.maywoodSchoolSite")
+        case .ronMcLeanPark:
+            return AppContent.string("events.locations.ronMcLeanPark")
         case .sfuTennisCourts:
             return AppContent.string("events.locations.sfuTennisCourts")
         case .slocanParkPublicTennisCourts:
             return AppContent.string("events.locations.slocanParkPublicTennisCourts")
+        case .squintLakePark:
+            return AppContent.string("events.locations.squintLakePark")
         case .blundellParkTennisCourts:
             return AppContent.string("events.locations.blundellParkTennisCourts")
+        case .burkevilleNeighbourhoodPark:
+            return AppContent.string("events.locations.burkevilleNeighbourhoodPark")
+        case .doverNeighbourhoodPark:
+            return AppContent.string("events.locations.doverNeighbourhoodPark")
+        case .gardenCityNeighbourhoodPark:
+            return AppContent.string("events.locations.gardenCityNeighbourhoodPark")
+        case .hamiltonCommunityPark:
+            return AppContent.string("events.locations.hamiltonCommunityPark")
+        case .hughBoydCommunityPark:
+            return AppContent.string("events.locations.hughBoydCommunityPark")
+        case .katsuraNeighbourhoodPark:
+            return AppContent.string("events.locations.katsuraNeighbourhoodPark")
         case .kingGeorgeTennisCourts:
             return AppContent.string("events.locations.kingGeorgeTennisCourts")
+        case .mcNairNeighbourhoodPark:
+            return AppContent.string("events.locations.mcNairNeighbourhoodPark")
+        case .minoruPark:
+            return AppContent.string("events.locations.minoruPark")
+        case .odlinNeighbourhoodPark:
+            return AppContent.string("events.locations.odlinNeighbourhoodPark")
+        case .odlinwoodNeighbourhoodPark:
+            return AppContent.string("events.locations.odlinwoodNeighbourhoodPark")
+        case .rcPalmerSecondarySchool:
+            return AppContent.string("events.locations.rcPalmerSecondarySchool")
         case .richmondTennisClub:
             return AppContent.string("events.locations.richmondTennisClub")
+        case .stevestonCommunityPark:
+            return AppContent.string("events.locations.stevestonCommunityPark")
         case .stevestonLondonTennisCourts:
             return AppContent.string("events.locations.stevestonLondonTennisCourts")
         case .tennisBCHub:
             return AppContent.string("events.locations.tennisBCHub")
         case .tennisBritishColumbia:
             return AppContent.string("events.locations.tennisBritishColumbia")
+        case .terraNovaNeighbourhoodPark:
+            return AppContent.string("events.locations.terraNovaNeighbourhoodPark")
         case .thompsonCommunityParkTennisCourts:
             return AppContent.string("events.locations.thompsonCommunityParkTennisCourts")
         case .southarmCourt:
             return AppContent.string("events.locations.southarmCourt")
+        case .alderwoodPark:
+            return AppContent.string("events.locations.alderwoodPark")
+        case .bellPark:
+            return AppContent.string("events.locations.bellPark")
+        case .bobRutledgePark:
+            return AppContent.string("events.locations.bobRutledgePark")
+        case .bridgeviewPark:
+            return AppContent.string("events.locations.bridgeviewPark")
+        case .claytonPark:
+            return AppContent.string("events.locations.claytonPark")
+        case .cloverdaleAthleticPark:
+            return AppContent.string("events.locations.cloverdaleAthleticPark")
+        case .cloverdaleHeightsPark:
+            return AppContent.string("events.locations.cloverdaleHeightsPark")
+        case .crescentPark:
+            return AppContent.string("events.locations.crescentPark")
+        case .douglasPark:
+            return AppContent.string("events.locations.douglasPark")
+        case .fleetwoodPark:
+            return AppContent.string("events.locations.fleetwoodPark")
+        case .fraserHeightsPark:
+            return AppContent.string("events.locations.fraserHeightsPark")
+        case .goldstonePark:
+            return AppContent.string("events.locations.goldstonePark")
+        case .hazelgrovePark:
+            return AppContent.string("events.locations.hazelgrovePark")
+        case .hummingbirdPark:
+            return AppContent.string("events.locations.hummingbirdPark")
+        case .kennedyPark:
+            return AppContent.string("events.locations.kennedyPark")
+        case .mapleGreenPark:
+            return AppContent.string("events.locations.mapleGreenPark")
+        case .meridianByTheSea:
+            return AppContent.string("events.locations.meridianByTheSea")
+        case .morganCreekPark:
+            return AppContent.string("events.locations.morganCreekPark")
+        case .newtonAthleticPark:
+            return AppContent.string("events.locations.newtonAthleticPark")
+        case .robsonPark:
+            return AppContent.string("events.locations.robsonPark")
+        case .royalKwantlenPark:
+            return AppContent.string("events.locations.royalKwantlenPark")
+        case .southSurreyAthleticPark:
+            return AppContent.string("events.locations.southSurreyAthleticPark")
+        case .sullivanPark:
+            return AppContent.string("events.locations.sullivanPark")
+        case .sunnysidePark:
+            return AppContent.string("events.locations.sunnysidePark")
+        case .almondPark:
+            return AppContent.string("events.locations.almondPark")
+        case .andyLivingstonePark:
+            return AppContent.string("events.locations.andyLivingstonePark")
+        case .brewersPark:
+            return AppContent.string("events.locations.brewersPark")
+        case .burrardViewPark:
+            return AppContent.string("events.locations.burrardViewPark")
+        case .captainCookPark:
+            return AppContent.string("events.locations.captainCookPark")
+        case .champlainHeightsPark:
+            return AppContent.string("events.locations.champlainHeightsPark")
+        case .charlesonPark:
+            return AppContent.string("events.locations.charlesonPark")
+        case .clarkPark:
+            return AppContent.string("events.locations.clarkPark")
+        case .davidLamPark:
+            return AppContent.string("events.locations.davidLamPark")
+        case .eburnePark:
+            return AppContent.string("events.locations.eburnePark")
+        case .elmPark:
+            return AppContent.string("events.locations.elmPark")
+        case .gardenPark:
+            return AppContent.string("events.locations.gardenPark")
+        case .granvilleLoopPark:
+            return AppContent.string("events.locations.granvilleLoopPark")
+        case .granvillePark:
+            return AppContent.string("events.locations.granvillePark")
+        case .graysPark:
+            return AppContent.string("events.locations.graysPark")
+        case .guelphPark:
+            return AppContent.string("events.locations.guelphPark")
+        case .hastingsCommunityPark:
+            return AppContent.string("events.locations.hastingsCommunityPark")
+        case .heatherPark:
+            return AppContent.string("events.locations.heatherPark")
+        case .hummPark:
+            return AppContent.string("events.locations.hummPark")
+        case .jerichoBeachPark:
+            return AppContent.string("events.locations.jerichoBeachPark")
+        case .johnHendryTroutLakePark:
+            return AppContent.string("events.locations.johnHendryTroutLakePark")
+        case .kasloPark:
+            return AppContent.string("events.locations.kasloPark")
+        case .kitsilanoBeachPark:
+            return AppContent.string("events.locations.kitsilanoBeachPark")
+        case .langaraGolfCourse:
+            return AppContent.string("events.locations.langaraGolfCourse")
+        case .macDonaldPark:
+            return AppContent.string("events.locations.macDonaldPark")
+        case .mcBridePark:
+            return AppContent.string("events.locations.mcBridePark")
+        case .mcSpaddenPark:
+            return AppContent.string("events.locations.mcSpaddenPark")
+        case .melbournePark:
+            return AppContent.string("events.locations.melbournePark")
+        case .memorialSouthPark:
+            return AppContent.string("events.locations.memorialSouthPark")
+        case .memorialWestPark:
+            return AppContent.string("events.locations.memorialWestPark")
+        case .moberlyPark:
+            return AppContent.string("events.locations.moberlyPark")
+        case .oakPark:
+            return AppContent.string("events.locations.oakPark")
+        case .pandoraPark:
+            return AppContent.string("events.locations.pandoraPark")
+        case .queenElizabethPark:
+            return AppContent.string("events.locations.queenElizabethPark")
+        case .riverfrontPark:
+            return AppContent.string("events.locations.riverfrontPark")
+        case .rupertPark:
+            return AppContent.string("events.locations.rupertPark")
+        case .stanleyPark:
+            return AppContent.string("events.locations.stanleyPark")
+        case .strathconaPark:
+            return AppContent.string("events.locations.strathconaPark")
+        case .sutcliffePark:
+            return AppContent.string("events.locations.sutcliffePark")
+        case .tatlowPark:
+            return AppContent.string("events.locations.tatlowPark")
+        case .vancouverRobsonPark:
+            return AppContent.string("events.locations.vancouverRobsonPark")
+        case .vancouverSlocanPark:
+            return AppContent.string("events.locations.vancouverSlocanPark")
+        case .westPointGreyPark:
+            return AppContent.string("events.locations.westPointGreyPark")
         }
     }
 }

@@ -211,7 +211,7 @@ private struct ChatConversationPreview: Identifiable {
     }
 
     var eventDisplayName: String {
-        "\(event.court.displayName) (\(DateFormattingHelper.eventDateString(from: event.startTime)))"
+        "\(event.courtDisplayName) (\(DateFormattingHelper.eventDateString(from: event.startTime)))"
     }
 }
 

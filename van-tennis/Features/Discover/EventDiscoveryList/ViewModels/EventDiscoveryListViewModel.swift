@@ -315,7 +315,9 @@ enum EventCityFilter: Hashable, Identifiable {
     static let options: [EventCityFilter] = [
         .all,
         .city(.richmond),
-        .city(.burnaby)
+        .city(.burnaby),
+        .city(.surrey),
+        .city(.vancouver)
     ]
 }
 

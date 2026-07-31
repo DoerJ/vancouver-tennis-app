@@ -301,20 +301,10 @@ struct CreateEventView: View {
                     .frame(width: 52, alignment: .leading)
 
                 Menu {
-                    ForEach(viewModel.city.courts) { court in
-                        Button {
-                            viewModel.court = court
-                        } label: {
-                            if viewModel.court == court {
-                                Label(court.displayName, systemImage: "checkmark")
-                            } else {
-                                Text(court.displayName)
-                            }
-                        }
-                    }
+                    courtMenuContent
                 } label: {
                     RallyBadge(
-                        viewModel.court.displayName,
+                        Constants.courtDisplayName(for: viewModel.court, in: viewModel.city),
                         color: RallyDiscoverStyle.primaryGreen,
                         minWidth: 98,
                         maxWidth: 210,
@@ -327,6 +317,35 @@ struct CreateEventView: View {
                 .buttonStyle(.plain)
 
                 Spacer()
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var courtMenuContent: some View {
+        if !Constants.courtDistrictGroups(for: viewModel.city).isEmpty {
+            ForEach(Constants.courtDistrictGroups(for: viewModel.city)) { group in
+                Section(group.district) {
+                    ForEach(group.courts) { court in
+                        courtMenuButton(court, title: court.displayName)
+                    }
+                }
+            }
+        } else {
+            ForEach(viewModel.city.courts) { court in
+                courtMenuButton(court, title: court.displayName)
+            }
+        }
+    }
+
+    private func courtMenuButton(_ court: TennisCourt, title: String) -> some View {
+        Button {
+            viewModel.court = court
+        } label: {
+            if viewModel.court == court {
+                Label(title, systemImage: "checkmark")
+            } else {
+                Text(title)
             }
         }
     }

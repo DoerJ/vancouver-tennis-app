@@ -106,7 +106,7 @@ struct ChatRoomView: View {
     private var chatHeader: some View {
         ZStack {
             VStack(spacing: 4) {
-                Text(event.court.displayName)
+                Text(event.courtDisplayName)
                     .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(RallyDiscoverStyle.ink)
                     .lineLimit(1)

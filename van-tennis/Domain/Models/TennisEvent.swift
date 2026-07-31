@@ -40,6 +40,10 @@ struct TennisEvent: Codable, Identifiable, Equatable, Hashable {
 
         return playerCount >= maxPlayers
     }
+
+    var courtDisplayName: String {
+        Constants.courtDisplayName(for: court, in: city)
+    }
 }
 
 struct TennisEventDraft: Equatable {

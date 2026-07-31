@@ -22,7 +22,7 @@ struct EventCardView: View {
         VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(event.court.displayName)
+                    Text(event.courtDisplayName)
                         .font(.system(size: 16, weight: .bold))
                         .foregroundStyle(RallyDiscoverStyle.ink)
 
