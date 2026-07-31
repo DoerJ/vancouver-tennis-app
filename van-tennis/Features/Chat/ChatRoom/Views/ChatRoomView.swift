@@ -216,10 +216,12 @@ struct ChatRoomView: View {
             let isCurrentUser = message.senderID == appState.userProfile?.id
 
             VStack(alignment: isCurrentUser ? .trailing : .leading, spacing: 8) {
-                Text(message.senderDisplayName)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(Color.black.opacity(0.6))
-                    .padding(.horizontal, 5)
+                if !isCurrentUser {
+                    Text(message.senderDisplayName)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(Color.black.opacity(0.6))
+                        .padding(.horizontal, 5)
+                }
 
                 messageBubble(message, isCurrentUser: isCurrentUser)
 
