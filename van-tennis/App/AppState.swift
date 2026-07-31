@@ -198,12 +198,8 @@ final class AppState: ObservableObject {
         else {
             return
         }
-        // When the app becomes active, it refreshes the profile and immediately verifies the profile realtime channel
-        realtimeSubscriptionManager.refreshProfileRealtimeSubscriptionIfNeeded(
-            userID: userID
-        ) { [weak self] updatedProfile in
-            self?.applyRealtimeProfileUpdate(updatedProfile)
-        }
+
+        ensureProfileRealtimeSubscription(userID: userID)
     }
 
     func updateCachedNotifications(_ notificationIDs: [UUID]) {
@@ -263,21 +259,6 @@ final class AppState: ObservableObject {
         self.userProfile = userProfile.updatingPendingEvents(
             userProfile.pendingEvents.filter { $0 != eventID }
         )
-    }
-
-    func handleMainTabAppeared() {
-        guard authenticationState == .signedIn,
-              let userID = userProfile?.id,
-              supabaseSession != nil
-        else {
-            return
-        }
-
-        realtimeSubscriptionManager.startProfileRealtimeFromMainTabIfNeeded(
-            userID: userID
-        ) { [weak self] updatedProfile in
-            self?.applyRealtimeProfileUpdate(updatedProfile)
-        }
     }
 
     func removeCachedEvent(_ eventID: UUID) {
@@ -574,6 +555,22 @@ final class AppState: ObservableObject {
         applyProfileState(userProfile)
         NotificationService.setUserSignedIn(true)
         authenticationState = nextAuthenticationState
+
+        if case .signedIn = nextAuthenticationState {
+            ensureProfileRealtimeSubscription(userID: userProfile.id)
+        }
+    }
+
+    private func ensureProfileRealtimeSubscription(userID: UUID) {
+        realtimeSubscriptionManager.ensureProfileRealtimeSubscription(
+            userID: userID,
+            onProfileUpdate: { [weak self] updatedProfile in
+                self?.applyRealtimeProfileUpdate(updatedProfile)
+            },
+            onSubscriptionRecovered: { [weak self] in
+                await self?.refreshCurrentProfile()
+            }
+        )
     }
 
     private func applyRealtimeProfileUpdate(_ updatedProfile: UserProfile) {
