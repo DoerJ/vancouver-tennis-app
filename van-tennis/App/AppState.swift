@@ -269,10 +269,12 @@ final class AppState: ObservableObject {
         cachedEventsByID[eventID] = nil
         cachedChatMessagesByEventID[eventID] = nil
 
-        self.userProfile = userProfile.updatingEvents(
-            hostedEvents: userProfile.hostedEvents.filter { $0 != eventID },
-            participatedEvents: userProfile.participatedEvents.filter { $0 != eventID }
-        )
+        self.userProfile = userProfile
+            .updatingEvents(
+                hostedEvents: userProfile.hostedEvents.filter { $0 != eventID },
+                participatedEvents: userProfile.participatedEvents.filter { $0 != eventID }
+            )
+            .removingChatMessageReadState(eventID: eventID)
     }
 
     func removeCachedNotification(_ notificationID: UUID) {

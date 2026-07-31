@@ -171,6 +171,27 @@ extension UserProfile {
             updatedAt: updatedAt
         )
     }
+
+    func removingChatMessageReadState(eventID: UUID) -> UserProfile {
+        UserProfile(
+            id: id,
+            email: email,
+            displayName: displayName,
+            avatarURL: avatarURL,
+            skillLevel: skillLevel,
+            gender: gender,
+            hostedEvents: hostedEvents,
+            participatedEvents: participatedEvents,
+            pendingEvents: pendingEvents,
+            notifications: notifications,
+            socialTags: socialTags,
+            isAllEventsRead: isAllEventsRead,
+            isAllNotificationsRead: isAllNotificationsRead,
+            chatMessageReadStates: chatMessageReadStates.filter { $0.id != eventID },
+            createdAt: createdAt,
+            updatedAt: updatedAt
+        )
+    }
 }
 
 struct NewUserProfile: Encodable {
