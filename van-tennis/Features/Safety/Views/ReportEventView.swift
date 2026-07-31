@@ -192,9 +192,9 @@ struct ReportEventView: View {
             .fill(isSelected ? RallyDiscoverStyle.accentGreen : Color.white)
             .overlay {
                 if isSelected {
-                    RoundedRectangle(cornerRadius: 2, style: .continuous)
-                        .fill(Color.white)
-                        .frame(width: 11, height: 11)
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(.white)
                 } else {
                     RoundedRectangle(cornerRadius: 4, style: .continuous)
                         .stroke(Color.black, lineWidth: 1.5)
