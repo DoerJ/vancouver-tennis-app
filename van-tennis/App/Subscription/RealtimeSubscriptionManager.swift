@@ -223,7 +223,7 @@ final class RealtimeSubscriptionManager {
             return
         }
 
-        // Health monitor in 3-minute intervals
+        // Health monitor in 30 seconds intervals
         profileRealtimeHealthTask = Task { [weak self] in
             while !Task.isCancelled {
                 do {

@@ -499,7 +499,7 @@ enum Constants {
     }
 
     enum Realtime {
-        static let profileHealthMonitorIntervalNanoseconds: UInt64 = 180_000_000_000
+        static let profileHealthMonitorIntervalNanoseconds: UInt64 = 30_000_000_000
         static let profileRecoveryGraceIntervalNanoseconds: UInt64 = 8_000_000_000
         static let profileRetryBaseIntervalNanoseconds: UInt64 = 1_000_000_000
         static let profileRetryMaximumExponent = 4
