@@ -1,5 +1,5 @@
-SUPABASE_PROJECT_URL = https:/$()/ivxbjkijapxogoqrcepe.supabase.co
-SUPABASE_ANON_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml2eGJqa2lqYXB4b2dvcXJjZXBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NzIxNDgsImV4cCI6MjA5NjM0ODE0OH0.xOcYp_EpKmv-8EpB9FoHoreI_bAaRaNBlGWElqR77zg
+SUPABASE_PROJECT_URL = http:/$()/192.168.1.170:54321
+SUPABASE_ANON_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
 GOOGLE_CLIENT_ID = 73032450093-93mj0bisvjkekfgt4l94n32ung090gfd.apps.googleusercontent.com
 GOOGLE_AUTHORIZATION_ENDPOINT = https:/$()/accounts.google.com/o/oauth2/v2/auth
 GOOGLE_TOKEN_ENDPOINT = https:/$()/oauth2.googleapis.com/token

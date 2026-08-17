@@ -41,6 +41,8 @@
 	<string>$(GOOGLE_TOKEN_ENDPOINT)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>RallyGo connects to your local Supabase server during development.</string>
 	<key>SupabaseAnonKey</key>
 	<string>$(SUPABASE_ANON_KEY)</string>
 	<key>SupabaseProjectURL</key>
