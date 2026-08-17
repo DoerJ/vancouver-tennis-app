@@ -12,7 +12,7 @@ struct TermsOfServiceView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     Text(content.title)
-                        .font(.system(size: 32, weight: .bold))
+                        .font(.rally(size: 32, weight: .bold))
                         .foregroundStyle(RallyDiscoverStyle.ink)
                         .fixedSize(horizontal: false, vertical: true)
 
@@ -54,11 +54,11 @@ struct TermsOfServiceView: View {
     private func termsMetadataRow(title: String, value: String) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
             Text(title)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.rally(size: 13, weight: .semibold))
                 .foregroundStyle(RallyDiscoverStyle.ink)
 
             Text(value)
-                .font(.system(size: 13, weight: .medium))
+                .font(.rally(size: 13, weight: .medium))
                 .foregroundStyle(RallyDiscoverStyle.mutedText)
         }
     }
@@ -66,7 +66,7 @@ struct TermsOfServiceView: View {
     private func termsSection(_ section: TermsOfServiceSection) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             Text(section.title)
-                .font(.system(size: 20, weight: .bold))
+                .font(.rally(size: 20, weight: .bold))
                 .foregroundStyle(RallyDiscoverStyle.ink)
 
             ForEach(section.paragraphs, id: \.self) { paragraph in
@@ -98,7 +98,7 @@ struct TermsOfServiceView: View {
     private func termsBullet(_ text: String) -> some View {
         HStack(alignment: .top, spacing: 10) {
             Text("•")
-                .font(.system(size: 15, weight: .semibold))
+                .font(.rally(size: 15, weight: .semibold))
                 .foregroundStyle(RallyDiscoverStyle.ink)
 
             termsParagraph(text)
@@ -107,7 +107,7 @@ struct TermsOfServiceView: View {
 
     private func termsParagraph(_ text: String) -> some View {
         Text(text)
-            .font(.system(size: 15, weight: .medium))
+            .font(.rally(size: 15, weight: .medium))
             .foregroundStyle(RallyDiscoverStyle.mutedText)
             .lineSpacing(4)
             .fixedSize(horizontal: false, vertical: true)

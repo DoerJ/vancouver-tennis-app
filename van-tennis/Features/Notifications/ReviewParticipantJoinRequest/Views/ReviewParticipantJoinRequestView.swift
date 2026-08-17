@@ -16,7 +16,7 @@ struct ReviewParticipantJoinRequestView: View {
                 .padding(.top, 24)
 
                 Text(AppContent.string("joinRequest.title"))
-                    .font(.system(size: 32, weight: .bold))
+                    .font(.rally(size: 32, weight: .bold))
                     .foregroundStyle(RallyDiscoverStyle.ink)
                     .padding(.top, 28)
 
@@ -66,20 +66,20 @@ struct ReviewParticipantJoinRequestView: View {
 
             if let errorMessage = viewModel.errorMessage {
                 Text(errorMessage)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.rally(size: 13, weight: .semibold))
                     .foregroundStyle(RallyDiscoverStyle.redBadge)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             if let profile = viewModel.senderProfile {
                 Text(AppContent.string("joinRequest.requestingPlayer"))
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.rally(size: 16, weight: .bold))
                     .foregroundStyle(RallyDiscoverStyle.ink)
                     .padding(.bottom, 6)
 
                 HStack(spacing: 10) {
                     Text(AppContent.string("joinRequest.nameValue", profile.displayName))
-                        .font(.system(size: 15, weight: .medium))
+                        .font(.rally(size: 15, weight: .medium))
                         .foregroundStyle(.black)
 
                     GenderIconView(profile.gender, size: 24)
@@ -90,7 +90,7 @@ struct ReviewParticipantJoinRequestView: View {
                 if let skillLevel = profile.skillLevel {
                     HStack(spacing: 12) {
                         Text(AppContent.string("joinRequest.skillLevelLabel"))
-                            .font(.system(size: 15, weight: .medium))
+                            .font(.rally(size: 15, weight: .medium))
                             .foregroundStyle(.black)
 
                         SkillLevelBadge(skillLevel, width: 71, minWidth: nil, showsShadow: true, shadowRadius: 9)
@@ -100,7 +100,7 @@ struct ReviewParticipantJoinRequestView: View {
                 if !profile.socialTags.isEmpty {
                     HStack(alignment: .top, spacing: 12) {
                         Text(GenderDisplayHelper.socialTagsLabel(for: profile.gender))
-                            .font(.system(size: 15, weight: .medium))
+                            .font(.rally(size: 15, weight: .medium))
                             .foregroundStyle(.black)
 
                         JoinRequestTagFlowLayout(horizontalSpacing: 10, verticalSpacing: 8) {

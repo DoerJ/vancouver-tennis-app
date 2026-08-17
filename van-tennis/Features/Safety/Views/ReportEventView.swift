@@ -37,7 +37,7 @@ struct ReportEventView: View {
 
                 if let errorMessage {
                     Text(errorMessage)
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.rally(size: 13, weight: .semibold))
                         .foregroundStyle(RallyDiscoverStyle.redBadge)
                         .padding(.top, 16)
                 }
@@ -66,14 +66,14 @@ struct ReportEventView: View {
                 Button(AppContent.string("common.done")) {
                     isDetailsFocused = false
                 }
-                .font(.system(size: 16, weight: .semibold))
+                .font(.rally(size: 16, weight: .semibold))
             }
         }
     }
 
     private var header: some View {
         Text(AppContent.string("events.detail.reportEvent"))
-            .font(.system(size: 32, weight: .bold))
+            .font(.rally(size: 32, weight: .bold))
             .foregroundStyle(RallyDiscoverStyle.ink)
     }
 
@@ -94,7 +94,7 @@ struct ReportEventView: View {
         Group {
             if reportableProfiles.isEmpty {
                 Text(AppContent.string("events.detail.noReportablePlayers"))
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.rally(size: 15, weight: .medium))
                     .foregroundStyle(RallyDiscoverStyle.mutedText)
             } else {
                 LazyVGrid(
@@ -126,7 +126,7 @@ struct ReportEventView: View {
             }
         } label: {
             Text(profile.displayName)
-                .font(.system(size: 10, weight: .semibold))
+                .font(.rally(size: 10, weight: .semibold))
                 .foregroundStyle(.white)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
@@ -140,7 +140,7 @@ struct ReportEventView: View {
                 .overlay(alignment: .trailing) {
                     if isSelected {
                         Image(systemName: "checkmark")
-                            .font(.system(size: 8, weight: .bold))
+                            .font(.rally(size: 8, weight: .bold))
                             .foregroundStyle(.white)
                             .padding(.trailing, 10)
                     }
@@ -173,7 +173,7 @@ struct ReportEventView: View {
         } label: {
             HStack(alignment: .center, spacing: 16) {
                 Text(reason.displayName)
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.rally(size: 15, weight: .medium))
                     .foregroundStyle(.black)
                     .multilineTextAlignment(.leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -193,7 +193,7 @@ struct ReportEventView: View {
             .overlay {
                 if isSelected {
                     Image(systemName: "checkmark")
-                        .font(.system(size: 12, weight: .bold))
+                        .font(.rally(size: 12, weight: .bold))
                         .foregroundStyle(.white)
                 } else {
                     RoundedRectangle(cornerRadius: 4, style: .continuous)
@@ -206,7 +206,7 @@ struct ReportEventView: View {
     private var detailsCard: some View {
         ZStack(alignment: .topLeading) {
             TextEditor(text: $reportDescription)
-                .font(.system(size: 15, weight: .medium))
+                .font(.rally(size: 15, weight: .medium))
                 .foregroundStyle(RallyDiscoverStyle.ink)
                 .scrollContentBackground(.hidden)
                 .submitLabel(.done)
@@ -216,7 +216,7 @@ struct ReportEventView: View {
 
             if reportDescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 Text(AppContent.string("events.detail.reportDetailsPlaceholder"))
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.rally(size: 15, weight: .medium))
                     .foregroundStyle(Color.black.opacity(0.30))
                     .padding(.horizontal, 28)
                     .padding(.vertical, 24)
@@ -235,7 +235,7 @@ struct ReportEventView: View {
 
     private func sectionTitle(_ title: String) -> some View {
         Text(title)
-            .font(.system(size: 16, weight: .bold))
+            .font(.rally(size: 16, weight: .bold))
             .foregroundStyle(RallyDiscoverStyle.ink)
             .frame(maxWidth: .infinity, alignment: .leading)
     }

@@ -29,14 +29,14 @@ struct UserProfileView: View {
 
                             if let displayNameErrorMessage = viewModel.displayNameErrorMessage {
                                 Text(displayNameErrorMessage)
-                                    .font(.footnote.weight(.medium))
+                                    .font(.rally(size: 13, weight: .medium))
                                     .foregroundStyle(RallyDiscoverStyle.redBadge)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                             }
 
                             if let skillLevelErrorMessage = viewModel.skillLevelErrorMessage {
                                 Text(skillLevelErrorMessage)
-                                    .font(.footnote.weight(.medium))
+                                    .font(.rally(size: 13, weight: .medium))
                                     .foregroundStyle(RallyDiscoverStyle.redBadge)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                             }
@@ -119,7 +119,7 @@ struct UserProfileView: View {
     private var profileTitleRow: some View {
         HStack(alignment: .center) {
             Text(AppContent.string("profile.title"))
-                .font(.system(size: 32, weight: .bold))
+                .font(.rally(size: 32, weight: .bold))
                 .foregroundStyle(RallyDiscoverStyle.ink)
 
             Spacer()
@@ -138,7 +138,7 @@ struct UserProfileView: View {
                 }
             } label: {
                 Text(viewModel.isSavingProfile ? AppContent.string("common.saving") : AppContent.string("common.save"))
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.rally(size: 13, weight: .semibold))
                     .foregroundStyle(.white)
                     .padding(.horizontal, 18)
                     .frame(height: 34)
@@ -161,7 +161,7 @@ struct UserProfileView: View {
             HStack(spacing: 4) {
                 if viewModel.isEditingDisplayName {
                     TextField(AppContent.string("profile.displayName"), text: $viewModel.editedDisplayName)
-                        .font(.system(size: 18, weight: .bold))
+                        .font(.rally(size: 18, weight: .bold))
                         .foregroundStyle(RallyDiscoverStyle.ink)
                         .textInputAutocapitalization(.words)
                         .submitLabel(.done)
@@ -172,7 +172,7 @@ struct UserProfileView: View {
                         }
                 } else {
                     Text(profileDisplayName)
-                        .font(.system(size: 18, weight: .bold))
+                        .font(.rally(size: 18, weight: .bold))
                         .foregroundStyle(RallyDiscoverStyle.ink)
                         .lineLimit(1)
                         .minimumScaleFactor(0.82)
@@ -203,7 +203,7 @@ struct UserProfileView: View {
         VStack(alignment: .leading, spacing: 24) {
             HStack(alignment: .center, spacing: 14) {
                 Text(AppContent.string("profile.skillLevelDisplayLabel"))
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.rally(size: 15, weight: .medium))
                     .foregroundStyle(.black)
 
                 if let skillLevel = viewModel.selectedSkillLevel ?? appState.userProfile?.skillLevel {
@@ -213,7 +213,7 @@ struct UserProfileView: View {
 
             HStack(alignment: .center, spacing: 14) {
                 Text(AppContent.string("profile.genderDisplayLabel"))
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.rally(size: 15, weight: .medium))
                     .foregroundStyle(.black)
 
                 genderMenu(selectedGender: viewModel.selectedGender ?? appState.userProfile?.gender)
@@ -251,7 +251,7 @@ struct UserProfileView: View {
 
                 if let socialTagsErrorMessage = viewModel.socialTagsErrorMessage {
                     Text(socialTagsErrorMessage)
-                        .font(.footnote.weight(.medium))
+                        .font(.rally(size: 13, weight: .medium))
                         .foregroundStyle(RallyDiscoverStyle.redBadge)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -263,7 +263,7 @@ struct UserProfileView: View {
         VStack(spacing: 12) {
             if let deleteAccountErrorMessage = viewModel.deleteAccountErrorMessage {
                 Text(deleteAccountErrorMessage)
-                    .font(.footnote.weight(.medium))
+                    .font(.rally(size: 13, weight: .medium))
                     .foregroundStyle(RallyDiscoverStyle.redBadge)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -273,7 +273,7 @@ struct UserProfileView: View {
             } label: {
                 HStack(spacing: 12) {
                     Image(systemName: "rectangle.portrait.and.arrow.right")
-                        .font(.system(size: 22, weight: .medium))
+                        .font(.rally(size: 22, weight: .medium))
 
                     Text(isSigningOut ? AppContent.string("common.signingOut") : AppContent.string("common.logOut"))
                 }
@@ -321,7 +321,7 @@ struct UserProfileView: View {
 
     private func legalLinkText(_ text: String) -> some View {
         Text(text)
-            .font(.system(size: 13, weight: .medium))
+            .font(.rally(size: 13, weight: .medium))
             .foregroundStyle(RallyDiscoverStyle.ink.opacity(0.65))
             .underline()
     }
@@ -356,7 +356,7 @@ struct UserProfileView: View {
 
     private var socialTagsLabel: some View {
         Text(AppContent.string("profile.socialTagsDisplayLabel"))
-            .font(.system(size: 15, weight: .medium))
+            .font(.rally(size: 15, weight: .medium))
             .foregroundStyle(.black)
     }
 
@@ -432,7 +432,7 @@ struct UserProfileView: View {
                 GenderIconView(selectedGender, size: 24)
 
                 Image(systemName: "chevron.down")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.rally(size: 11, weight: .semibold))
                     .foregroundStyle(Color.black.opacity(0.45))
             }
             .frame(height: 32)

@@ -29,7 +29,7 @@ struct ProfileSummaryRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(displayTitle)
-                .font(.body)
+                .font(.rally(size: 17))
 
             Text(
                 AppContent.string(
@@ -37,7 +37,7 @@ struct ProfileSummaryRow: View {
                     profile.skillLevel?.rawValue ?? AppContent.string("events.host.skillNotSet")
                 )
             )
-                .font(.subheadline)
+                .font(.rally(size: 15))
                 .foregroundStyle(.secondary)
 
             if !profile.socialTags.isEmpty {

@@ -123,11 +123,14 @@ struct ChatView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(AppContent.string("common.profile"))
 
+                LanguageMenuButton()
+                    .padding(.leading, 8)
+
                 Spacer()
             }
 
             Text(AppContent.string("chat.title"))
-                .font(.system(size: 32, weight: .bold))
+                .font(.rally(size: 32, weight: .bold))
                 .foregroundStyle(RallyDiscoverStyle.ink)
         }
     }
@@ -226,7 +229,7 @@ private struct ChatConversationCard: View {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .firstTextBaseline, spacing: 12) {
                     Text(preview.eventDisplayName)
-                        .font(.headline)
+                        .font(.rally(size: 17, weight: .semibold))
                         .foregroundStyle(RallyDiscoverStyle.ink)
                         .lineLimit(1)
 
@@ -234,13 +237,13 @@ private struct ChatConversationCard: View {
 
                     if let sentAt = preview.latestMessage?.sentAt {
                         Text(DateFormattingHelper.shortDateTimeString(from: sentAt))
-                            .font(.caption)
+                            .font(.rally(size: 12))
                             .foregroundStyle(RallyDiscoverStyle.mutedText)
                     }
                 }
 
                 Text(latestMessagePreviewText)
-                    .font(.subheadline)
+                    .font(.rally(size: 15))
                     .foregroundStyle(RallyDiscoverStyle.mutedText)
                     .lineLimit(2)
             }

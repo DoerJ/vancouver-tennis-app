@@ -38,10 +38,10 @@ struct SocialTagBadge: View {
 
             if showsCheckmark {
                 Image(systemName: "checkmark")
-                    .font(.system(size: checkmarkSize, weight: .bold))
+                    .font(.rally(size: checkmarkSize, weight: .bold))
             }
         }
-        .font(.system(size: 10, weight: .semibold))
+        .font(.rally(size: 10, weight: .semibold))
         .foregroundStyle(.white)
         .padding(.horizontal, horizontalPadding)
         .frame(height: 22)

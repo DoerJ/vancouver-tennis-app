@@ -19,6 +19,7 @@ struct RootView: View {
                 AppLoadingView()
             }
         }
+        .appLanguageFontStyle(appState.contentLanguage)
         .task {
             guard !hasRestoredSession else {
                 return

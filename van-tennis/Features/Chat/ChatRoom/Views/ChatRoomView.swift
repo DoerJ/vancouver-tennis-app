@@ -58,7 +58,7 @@ struct ChatRoomView: View {
 
             if let errorMessage = viewModel.errorMessage {
                 Text(errorMessage)
-                    .font(.footnote.weight(.medium))
+                    .font(.rally(size: 13, weight: .medium))
                     .foregroundStyle(RallyDiscoverStyle.redBadge)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 22)
@@ -67,7 +67,7 @@ struct ChatRoomView: View {
 
             if viewModel.draftMessageExceedsLimit {
                 Text(AppContent.string("chat.messageLengthError", Constants.Chat.maximumMessageLength))
-                    .font(.footnote.weight(.medium))
+                    .font(.rally(size: 13, weight: .medium))
                     .foregroundStyle(RallyDiscoverStyle.redBadge)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 22)
@@ -107,13 +107,13 @@ struct ChatRoomView: View {
         ZStack {
             VStack(spacing: 4) {
                 Text(event.courtDisplayName)
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.rally(size: 18, weight: .bold))
                     .foregroundStyle(RallyDiscoverStyle.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.78)
 
                 Text(DateFormattingHelper.eventDateWithWeekdayString(from: event.startTime))
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.rally(size: 12, weight: .medium))
                     .foregroundStyle(RallyDiscoverStyle.mutedText)
                     .lineLimit(1)
                     .minimumScaleFactor(0.82)
@@ -144,12 +144,12 @@ struct ChatRoomView: View {
                 .accessibilityHidden(true)
 
             Text(AppContent.string("chat.emptyRoom.title"))
-                .font(.system(size: 17, weight: .semibold))
+                .font(.rally(size: 17, weight: .semibold))
                 .lineSpacing(2)
                 .foregroundStyle(RallyDiscoverStyle.ink)
 
             Text(AppContent.string("chat.emptyRoom.description"))
-                .font(.system(size: 15, weight: .medium))
+                .font(.rally(size: 15, weight: .medium))
                 .lineSpacing(2)
                 .foregroundStyle(RallyDiscoverStyle.mutedText)
                 .multilineTextAlignment(.center)
@@ -166,7 +166,7 @@ struct ChatRoomView: View {
                 Text(AppContent.string("chat.messagePlaceholder"))
                     .foregroundStyle(Color.black.opacity(0.3))
             }
-                .font(.system(size: 15, weight: .medium))
+                .font(.rally(size: 15, weight: .medium))
                 .foregroundStyle(RallyDiscoverStyle.ink)
                 .lineLimit(1...4)
                 .focused($isComposerFocused)
@@ -193,7 +193,7 @@ struct ChatRoomView: View {
                         .frame(width: 86, height: 40)
                 } else {
                     Text(AppContent.string("chat.send"))
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.rally(size: 13, weight: .semibold))
                         .foregroundStyle(.white)
                         .frame(width: 86, height: 40)
                 }
@@ -218,7 +218,7 @@ struct ChatRoomView: View {
             VStack(alignment: isCurrentUser ? .trailing : .leading, spacing: 8) {
                 if !isCurrentUser {
                     Text(message.senderDisplayName)
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.rally(size: 14, weight: .medium))
                         .foregroundStyle(Color.black.opacity(0.6))
                         .padding(.horizontal, 5)
                 }
@@ -226,7 +226,7 @@ struct ChatRoomView: View {
                 messageBubble(message, isCurrentUser: isCurrentUser)
 
                 Text(DateFormattingHelper.timeString(from: message.sentAt))
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.rally(size: 14, weight: .medium))
                     .foregroundStyle(Color.black.opacity(0.6))
                     .padding(.horizontal, 5)
             }
@@ -236,7 +236,7 @@ struct ChatRoomView: View {
 
     private func systemMessageRow(_ message: ChatRoomMessage) -> some View {
         Text(systemMessageDisplayText(message))
-            .font(.caption)
+            .font(.rally(size: 12))
             .foregroundStyle(RallyDiscoverStyle.mutedText)
             .multilineTextAlignment(.center)
             .padding(.horizontal, 12)
@@ -287,7 +287,7 @@ struct ChatRoomView: View {
 
     private func bubbleText(_ message: ChatRoomMessage, isCurrentUser: Bool) -> some View {
         Text(Constants.Chat.displayBody(for: message.body))
-            .font(.system(size: 15, weight: .medium))
+            .font(.rally(size: 15, weight: .medium))
             .lineSpacing(2)
             .foregroundStyle(isCurrentUser ? .white : Color.black.opacity(0.5))
             .multilineTextAlignment(.leading)

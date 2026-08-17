@@ -8,6 +8,7 @@ final class AppState: ObservableObject {
     @Published var googleSession: GoogleAuthSession?
     @Published var supabaseSession: Session?
     @Published var userProfile: UserProfile?
+    @Published private(set) var contentLanguage = AppContent.currentLanguage
     @Published var eventsRevision = 0
     @Published private(set) var chatMessagesRevision = 0
     // Cached notifications are stored in memory to track read/unread state for the current user.
@@ -29,6 +30,7 @@ final class AppState: ObservableObject {
     private var isAwaitingDeletedAccountAcknowledgement = false
 
     init() {
+        AppContent.setLanguage(contentLanguage)
         startAuthStateChangesListener()
 
         NotificationCenter.default.publisher(for: NotificationService.deviceTokenDidUpdateNotification)
@@ -45,6 +47,15 @@ final class AppState: ObservableObject {
             }
             .store(in: &cancellables)
 
+    }
+
+    func setContentLanguage(_ language: AppContent.Language) {
+        guard contentLanguage != language else {
+            return
+        }
+
+        AppContent.setLanguage(language)
+        contentLanguage = language
     }
 
     func restoreExistingSession() async {

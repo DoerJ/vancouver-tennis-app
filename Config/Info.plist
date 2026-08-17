@@ -47,6 +47,10 @@
 	<string>$(SUPABASE_ANON_KEY)</string>
 	<key>SupabaseProjectURL</key>
 	<string>$(SUPABASE_PROJECT_URL)</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>NotoSansTC-VF.ttf</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

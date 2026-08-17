@@ -41,7 +41,7 @@ struct RallyBadge: View {
 
     var body: some View {
         Text(text)
-            .font(.system(size: fontSize, weight: .semibold))
+            .font(.rally(size: fontSize, weight: .semibold))
             .foregroundStyle(.white)
             .lineLimit(1)
             .minimumScaleFactor(minimumScaleFactor)

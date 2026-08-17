@@ -62,6 +62,7 @@ struct EventDiscoveryListView: View {
                                                 event: event,
                                                 hostProfile: viewModel.hostProfilesByID[event.hostID]
                                             )
+                                            .id(appState.contentLanguage)
                                         }
                                         .buttonStyle(.plain)
                                     }
@@ -174,13 +175,16 @@ struct EventDiscoveryListView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(AppContent.string("common.profile"))
 
+                LanguageMenuButton()
+                    .padding(.leading, 8)
+
                 Spacer()
 
                 HStack(spacing: 18) {
                     if let skillLevel = appState.userProfile?.skillLevel {
                         NavigationLink(value: EventDiscoveryRoute.createEvent(skillLevel)) {
                             Image(systemName: "plus.square")
-                                .font(.system(size: 28, weight: .regular))
+                                .font(.rally(size: 28, weight: .regular))
                                 .foregroundStyle(RallyDiscoverStyle.ink)
                         }
                         .accessibilityLabel(AppContent.string("discover.createEvent"))
@@ -200,7 +204,7 @@ struct EventDiscoveryListView: View {
             }
 
             Text(AppContent.string("discover.title"))
-                .font(.system(size: 32, weight: .bold))
+                .font(.rally(size: 32, weight: .bold))
                 .foregroundStyle(RallyDiscoverStyle.ink)
         }
     }
@@ -212,7 +216,7 @@ struct EventDiscoveryListView: View {
     private var eventFilters: some View {
         HStack(spacing: 8) {
             Image(systemName: "slider.horizontal.3")
-                .font(.system(size: 23, weight: .regular))
+                .font(.rally(size: 23, weight: .regular))
                 .foregroundStyle(RallyDiscoverStyle.ink)
                 .frame(width: 28, height: 28)
 
@@ -298,7 +302,7 @@ struct EventDiscoveryListView: View {
                 }
             } label: {
                 Image(systemName: "arrow.counterclockwise")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.rally(size: 18, weight: .semibold))
                     .frame(width: 32, height: 32)
             }
             .buttonStyle(.plain)

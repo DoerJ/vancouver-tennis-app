@@ -45,7 +45,7 @@ struct NotificationCardView: View {
                         .padding(.top, 7)
 
                     Text(notification.body)
-                        .font(.system(size: 16, weight: .medium))
+                        .font(.rally(size: 16, weight: .medium))
                         .foregroundStyle(RallyDiscoverStyle.ink)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -55,7 +55,7 @@ struct NotificationCardView: View {
                         NotificationTimeDisplayHelper.relativeCreatedAtText(notification.createdAt, now: context.date),
                         systemImage: "clock"
                     )
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.rally(size: 14, weight: .medium))
                         .foregroundStyle(RallyDiscoverStyle.mutedText)
                 }
             }

@@ -30,7 +30,7 @@ struct CreateEventView: View {
 
                     if let errorMessage = viewModel.errorMessage {
                         Text(errorMessage)
-                            .font(.footnote.weight(.medium))
+                            .font(.rally(size: 13, weight: .medium))
                             .foregroundStyle(RallyDiscoverStyle.redBadge)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 20)
@@ -87,7 +87,7 @@ struct CreateEventView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 34) {
             Text(AppContent.string("events.create.title"))
-                .font(.system(size: 32, weight: .bold))
+                .font(.rally(size: 32, weight: .bold))
                 .foregroundStyle(RallyDiscoverStyle.ink)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 16)
@@ -173,12 +173,12 @@ struct CreateEventView: View {
 
             HStack(spacing: 10) {
                 Image(systemName: "tennisball")
-                    .font(.system(size: 22, weight: .regular))
+                    .font(.rally(size: 22, weight: .regular))
                     .foregroundStyle(RallyDiscoverStyle.ink)
                     .frame(width: 28)
 
                 Text(AppContent.string("events.create.type"))
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.rally(size: 15, weight: .medium))
                     .foregroundStyle(.black)
                     .frame(width: 52, alignment: .leading)
 
@@ -190,13 +190,13 @@ struct CreateEventView: View {
                             HStack(spacing: 4) {
                                 if viewModel.eventType == type {
                                     Image(systemName: "checkmark")
-                                        .font(.system(size: 8, weight: .bold))
+                                        .font(.rally(size: 8, weight: .bold))
                                 }
 
                                 Text(type.displayName)
                                     .lineLimit(1)
                             }
-                            .font(.system(size: 10, weight: .semibold))
+                            .font(.rally(size: 10, weight: .semibold))
                             .foregroundStyle(.white)
                             .frame(width: 72, height: 22)
                             .background(Constants.EventTypeStyle.badgeColor(for: type), in: Capsule())
@@ -208,12 +208,12 @@ struct CreateEventView: View {
 
             HStack(spacing: 10) {
                 Image(systemName: "tennisball")
-                    .font(.system(size: 22, weight: .regular))
+                    .font(.rally(size: 22, weight: .regular))
                     .foregroundStyle(RallyDiscoverStyle.ink)
                     .frame(width: 28)
 
                 Text(AppContent.string("events.create.skillLevel"))
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.rally(size: 15, weight: .medium))
                     .foregroundStyle(.black)
 
                 SkillLevelBadge(viewModel.creatorSkillLevel, width: 71, minWidth: nil)
@@ -234,7 +234,7 @@ struct CreateEventView: View {
                     .frame(width: 24, height: 24)
 
                 Text(AppContent.string("events.create.maxPlayers", viewModel.maxPlayers))
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.rally(size: 15, weight: .medium))
                     .foregroundStyle(.black)
             }
 
@@ -258,7 +258,7 @@ struct CreateEventView: View {
                     .frame(width: 28, height: 28)
 
                 Text(AppContent.string("events.create.city"))
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.rally(size: 15, weight: .medium))
                     .foregroundStyle(.black)
                     .frame(width: 52, alignment: .leading)
 
@@ -291,12 +291,12 @@ struct CreateEventView: View {
 
             HStack(spacing: 10) {
                 Image(systemName: "sportscourt")
-                    .font(.system(size: 22, weight: .regular))
+                    .font(.rally(size: 22, weight: .regular))
                     .foregroundStyle(RallyDiscoverStyle.ink)
                     .frame(width: 28)
 
                 Text(AppContent.string("events.create.court"))
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.rally(size: 15, weight: .medium))
                     .foregroundStyle(.black)
                     .frame(width: 52, alignment: .leading)
 
@@ -352,7 +352,7 @@ struct CreateEventView: View {
 
     private func sectionTitle(_ title: String) -> some View {
         Text(title)
-            .font(.system(size: 16, weight: .bold))
+            .font(.rally(size: 16, weight: .bold))
             .foregroundStyle(RallyDiscoverStyle.ink)
     }
 
@@ -371,12 +371,12 @@ struct CreateEventView: View {
     ) -> some View {
         HStack(spacing: 10) {
             Image(systemName: systemImage)
-                .font(.system(size: 21, weight: .regular))
+                .font(.rally(size: 21, weight: .regular))
                 .foregroundStyle(RallyDiscoverStyle.ink)
                 .frame(width: 28)
 
             Text(label)
-                .font(.system(size: 15, weight: .medium))
+                .font(.rally(size: 15, weight: .medium))
                 .foregroundStyle(.black)
                 .frame(width: 50, alignment: .leading)
 
@@ -442,7 +442,7 @@ struct CreateEventView: View {
                 activeTimePicker = nil
             } label: {
                 Text(AppContent.string("common.ok"))
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.rally(size: 15, weight: .semibold))
                     .foregroundStyle(Color(.systemBackground))
                     .frame(maxWidth: .infinity)
                     .frame(height: 44)

@@ -146,7 +146,7 @@ struct NotificationListView: View {
                 .frame(width: 40, height: 40)
 
             Text(AppContent.string("notifications.title"))
-                .font(.system(size: 32, weight: .bold))
+                .font(.rally(size: 32, weight: .bold))
                 .foregroundStyle(RallyDiscoverStyle.ink)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

@@ -265,7 +265,7 @@ struct EventDetailView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline, spacing: 12) {
                 Text(event.courtDisplayName)
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.rally(size: 28, weight: .bold))
                     .foregroundStyle(RallyDiscoverStyle.ink)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
@@ -276,7 +276,7 @@ struct EventDetailView: View {
             }
 
             Text(detailSummaryText)
-                .font(.system(size: 17, weight: .medium))
+                .font(.rally(size: 17, weight: .medium))
                 .foregroundStyle(RallyDiscoverStyle.mutedText)
                 .lineSpacing(3)
                 .fixedSize(horizontal: false, vertical: true)
@@ -302,7 +302,7 @@ struct EventDetailView: View {
 
             if viewModel.participantProfiles.isEmpty {
                 Text(AppContent.string("events.participants.none"))
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.rally(size: 15, weight: .medium))
                     .foregroundStyle(RallyDiscoverStyle.mutedText)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(16)
@@ -334,7 +334,7 @@ struct EventDetailView: View {
 
         if let errorMessage = viewModel.errorMessage {
             Text(errorMessage)
-                .font(.footnote.weight(.semibold))
+                .font(.rally(size: 13, weight: .semibold))
                 .foregroundStyle(.red)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(12)
@@ -441,7 +441,7 @@ struct EventDetailView: View {
     private var pendingJoinRequestAction: some View {
         HStack(spacing: 10) {
             Text(AppContent.string("events.detail.waitingApproval"))
-                .font(.system(size: 16, weight: .semibold))
+                .font(.rally(size: 16, weight: .semibold))
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity, minHeight: 52)
                 .padding(.horizontal, 16)
@@ -553,13 +553,13 @@ struct EventDetailView: View {
             detailInfoIcon(systemImage: systemImage, imageName: imageName)
 
             Text(title)
-                .font(.system(size: 15, weight: .medium))
+                .font(.rally(size: 15, weight: .medium))
                 .foregroundStyle(RallyDiscoverStyle.mutedText)
 
             Spacer(minLength: 10)
 
             Text(value)
-                .font(.system(size: 15, weight: .semibold))
+                .font(.rally(size: 15, weight: .semibold))
                 .foregroundStyle(RallyDiscoverStyle.ink)
                 .multilineTextAlignment(.trailing)
         }
@@ -578,7 +578,7 @@ struct EventDetailView: View {
                 .accessibilityHidden(true)
         } else if let systemImage {
             Image(systemName: systemImage)
-                .font(.system(size: 18, weight: .semibold))
+                .font(.rally(size: 18, weight: .semibold))
                 .foregroundStyle(.black)
                 .frame(width: 26)
         }
@@ -744,7 +744,7 @@ private struct EventDetailReportButton: View {
                         Text(AppContent.string("events.detail.reportButton"))
                             .lineLimit(1)
                     }
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.rally(size: 13, weight: .semibold))
                     .foregroundStyle(.white)
                     .padding(.horizontal, 14)
                     .frame(height: 34)
@@ -781,7 +781,7 @@ private struct EventDetailFloatingSaveButton: View {
                     onSave()
                 } label: {
                     Text(isSaving ? AppContent.string("common.saving") : AppContent.string("common.save"))
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.rally(size: 13, weight: .semibold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 18)
                         .frame(height: 34)
@@ -856,12 +856,12 @@ private struct EventDetailSpecCard: View {
                 .frame(height: 22)
 
             Text(spec.title)
-                .font(.system(size: 11, weight: .medium))
+                .font(.rally(size: 11, weight: .medium))
                 .foregroundStyle(RallyDiscoverStyle.mutedText)
                 .lineLimit(1)
 
             Text(spec.value)
-                .font(.system(size: 12, weight: .semibold))
+                .font(.rally(size: 12, weight: .semibold))
                 .foregroundStyle(RallyDiscoverStyle.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.74)
@@ -891,7 +891,7 @@ private struct EventDetailSpecCard: View {
                 .accessibilityHidden(true)
         } else if let systemImage = spec.systemImage {
             Image(systemName: systemImage)
-                .font(.system(size: 18, weight: .semibold))
+                .font(.rally(size: 18, weight: .semibold))
                 .foregroundStyle(.black)
         }
     }
@@ -923,18 +923,18 @@ private struct EventDetailPlayersSpecCard: View {
     private var cardContent: some View {
         VStack(spacing: 8) {
             Image(systemName: spec.systemImage ?? "person.2")
-                .font(.system(size: 18, weight: .semibold))
+                .font(.rally(size: 18, weight: .semibold))
                 .foregroundStyle(.black)
                 .frame(height: 22)
 
             Text(spec.title)
-                .font(.system(size: 11, weight: .medium))
+                .font(.rally(size: 11, weight: .medium))
                 .foregroundStyle(RallyDiscoverStyle.mutedText)
                 .lineLimit(1)
 
             HStack(spacing: 6) {
                 Text(spec.value)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.rally(size: 12, weight: .semibold))
                     .foregroundStyle(RallyDiscoverStyle.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.74)
@@ -1004,7 +1004,7 @@ private struct EventDetailSectionTitle: View {
 
     var body: some View {
         Text(title)
-            .font(.system(size: 17, weight: .bold))
+            .font(.rally(size: 17, weight: .bold))
             .foregroundStyle(RallyDiscoverStyle.ink)
     }
 }
@@ -1019,7 +1019,7 @@ private struct EventDetailProfileCard: View {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 HStack(alignment: .center, spacing: 6) {
                     Text(displayTitle)
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.rally(size: 15, weight: .semibold))
                         .foregroundStyle(RallyDiscoverStyle.ink)
                         .lineLimit(1)
                         .minimumScaleFactor(0.82)
@@ -1059,7 +1059,7 @@ private struct EventDetailUnavailableProfileCard: View {
 
     var body: some View {
         Label(text, systemImage: "person.crop.circle.badge.questionmark")
-            .font(.system(size: 15, weight: .medium))
+            .font(.rally(size: 15, weight: .medium))
             .foregroundStyle(RallyDiscoverStyle.mutedText)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(16)

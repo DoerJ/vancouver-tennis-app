@@ -11,13 +11,13 @@ enum EventCity: String, CaseIterable, Codable, Identifiable, Hashable {
     var displayName: String {
         switch self {
         case .burnaby:
-            return AppContent.string("events.locations.burnaby")
+            return AppContent.string("events.cities.burnaby")
         case .richmond:
-            return AppContent.string("events.locations.richmond")
+            return AppContent.string("events.cities.richmond")
         case .surrey:
-            return AppContent.string("events.locations.surrey")
+            return AppContent.string("events.cities.surrey")
         case .vancouver:
-            return AppContent.string("events.locations.vancouver")
+            return AppContent.string("events.cities.vancouver")
         }
     }
 

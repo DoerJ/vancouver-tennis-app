@@ -34,7 +34,7 @@ struct MyEventsView: View {
                             LazyVStack(spacing: 28) {
                                 if let errorMessage = viewModel.errorMessage {
                                     Text(errorMessage)
-                                        .font(.footnote)
+                                        .font(.rally(size: 13))
                                         .foregroundStyle(.red)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                 }
@@ -73,6 +73,7 @@ struct MyEventsView: View {
                                                         currentUserID: appState.userProfile?.id
                                                     )
                                                 )
+                                                .id(appState.contentLanguage)
                                             }
                                             .buttonStyle(.plain)
                                         }
@@ -122,11 +123,14 @@ struct MyEventsView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(AppContent.string("common.profile"))
 
+                LanguageMenuButton()
+                    .padding(.leading, 8)
+
                 Spacer()
             }
 
             Text(AppContent.string("myEvents.title"))
-                .font(.system(size: 32, weight: .bold))
+                .font(.rally(size: 32, weight: .bold))
                 .foregroundStyle(RallyDiscoverStyle.ink)
         }
     }

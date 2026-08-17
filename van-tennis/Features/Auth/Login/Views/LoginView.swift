@@ -38,7 +38,7 @@ struct LoginView: View {
 
                 if let errorMessage = viewModel.errorMessage {
                     Text(errorMessage)
-                        .font(.footnote)
+                        .font(.rally(size: 13))
                         .foregroundStyle(.red)
                         .multilineTextAlignment(.center)
                 }
@@ -64,7 +64,7 @@ struct LoginView: View {
 
                 Text(title)
             }
-            .font(.system(size: 15, weight: .semibold))
+            .font(.rally(size: 15, weight: .semibold))
             .foregroundStyle(.white)
             .frame(height: 52)
             .frame(maxWidth: .infinity)

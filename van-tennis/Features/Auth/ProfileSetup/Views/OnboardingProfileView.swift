@@ -22,7 +22,7 @@ struct OnboardingProfileView: View {
                     header
 
                     Text(AppContent.string("auth.onboarding.skillLevel"))
-                        .font(.system(size: 16, weight: .bold))
+                        .font(.rally(size: 16, weight: .bold))
                         .foregroundStyle(RallyDiscoverStyle.ink)
                         .padding(.top, 84)
 
@@ -30,7 +30,7 @@ struct OnboardingProfileView: View {
                         .padding(.top, 30)
 
                     Text(Constants.SkillLevelStyle.description(for: selectedLevel ?? .one))
-                        .font(.system(size: 15, weight: .medium))
+                        .font(.rally(size: 15, weight: .medium))
                         .foregroundStyle(Color.black.opacity(0.5))
                         .lineSpacing(4)
                         .fixedSize(horizontal: false, vertical: true)
@@ -46,7 +46,7 @@ struct OnboardingProfileView: View {
                         .padding(.top, 28)
 
                     Text(AppContent.string("auth.onboarding.socialTags"))
-                        .font(.system(size: 16, weight: .bold))
+                        .font(.rally(size: 16, weight: .bold))
                         .foregroundStyle(RallyDiscoverStyle.ink)
                         .padding(.top, 30)
 
@@ -72,6 +72,18 @@ struct OnboardingProfileView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color.white)
             }
+
+            VStack {
+                HStack {
+                    LanguageMenuButton()
+
+                    Spacer()
+                }
+                .padding(.horizontal, 29)
+                .padding(.top, 20)
+
+                Spacer()
+            }
         }
         .onAppear {
             selectedLevel = appState.userProfile?.skillLevel ?? .one
@@ -83,7 +95,7 @@ struct OnboardingProfileView: View {
     private var header: some View {
         HStack(alignment: .top) {
             Text(AppContent.string("auth.onboarding.title"))
-                .font(.system(size: 32, weight: .bold))
+                .font(.rally(size: 32, weight: .bold))
                 .foregroundStyle(RallyDiscoverStyle.ink)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
@@ -173,7 +185,7 @@ struct OnboardingProfileView: View {
     private var genderSection: some View {
         HStack(spacing: 22) {
             Text(AppContent.string("auth.onboarding.gender"))
-                .font(.system(size: 16, weight: .bold))
+                .font(.rally(size: 16, weight: .bold))
                 .foregroundStyle(RallyDiscoverStyle.ink)
 
             Menu {
@@ -193,7 +205,7 @@ struct OnboardingProfileView: View {
                     GenderIconView(selectedGender, size: 24)
 
                     Image(systemName: "chevron.down")
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(.rally(size: 11, weight: .semibold))
                         .foregroundStyle(Color.black.opacity(0.45))
                 }
             }
@@ -264,7 +276,7 @@ struct OnboardingProfileView: View {
 
     private func inlineError(_ message: String) -> some View {
         Text(message)
-            .font(.system(size: 13, weight: .semibold))
+            .font(.rally(size: 13, weight: .semibold))
             .foregroundStyle(RallyDiscoverStyle.redBadge)
             .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity)

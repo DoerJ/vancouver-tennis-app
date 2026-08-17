@@ -11,7 +11,7 @@ struct RallyPrimaryActionButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 16, weight: .semibold))
+            .font(.rally(size: 16, weight: .semibold))
             .foregroundStyle(.white)
             .frame(minHeight: 52)
             .padding(.horizontal, 18)
@@ -43,7 +43,7 @@ struct RallyPrimaryActionButtonStyle: ButtonStyle {
 struct RallySurfaceActionButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 16, weight: .semibold))
+            .font(.rally(size: 16, weight: .semibold))
             .foregroundStyle(.black)
             .frame(minHeight: 52)
             .padding(.horizontal, 18)
@@ -57,7 +57,7 @@ struct RallySurfaceActionButtonStyle: ButtonStyle {
 struct RallyDestructiveActionButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 16, weight: .semibold))
+            .font(.rally(size: 16, weight: .semibold))
             .foregroundStyle(.white)
             .frame(minHeight: 52)
             .padding(.horizontal, 18)
@@ -68,7 +68,7 @@ struct RallyDestructiveActionButtonStyle: ButtonStyle {
 struct RallyCompactPrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 13, weight: .semibold))
+            .font(.rally(size: 13, weight: .semibold))
             .foregroundStyle(.white)
             .frame(width: 140, height: 40)
             .background(RallyDiscoverStyle.primaryGreen.opacity(configuration.isPressed ? 0.78 : 1), in: Capsule())
@@ -79,7 +79,7 @@ struct RallyCompactPrimaryButtonStyle: ButtonStyle {
 struct RallyCompactMutedButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 13, weight: .semibold))
+            .font(.rally(size: 13, weight: .semibold))
             .foregroundStyle(.white)
             .frame(width: 140, height: 40)
             .background(Color.black.opacity(configuration.isPressed ? 0.40 : 0.50), in: Capsule())
@@ -89,7 +89,7 @@ struct RallyCompactMutedButtonStyle: ButtonStyle {
 struct RallyFilterPillButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 10, weight: .semibold))
+            .font(.rally(size: 10, weight: .semibold))
             .foregroundStyle(.white)
             .frame(width: 71, height: 22)
             .background(RallyDiscoverStyle.accentGreen.opacity(configuration.isPressed ? 0.8 : 1))

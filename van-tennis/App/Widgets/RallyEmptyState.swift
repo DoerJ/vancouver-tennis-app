@@ -32,12 +32,12 @@ struct RallyEmptyState: View {
                 .accessibilityHidden(true)
 
             Text(title)
-                .font(.system(size: titleFontSize, weight: .semibold))
+                .font(.rally(size: titleFontSize, weight: .semibold))
                 .foregroundStyle(RallyDiscoverStyle.ink)
                 .multilineTextAlignment(.center)
 
             Text(description)
-                .font(.system(size: descriptionFontSize, weight: .medium))
+                .font(.rally(size: descriptionFontSize, weight: .medium))
                 .foregroundStyle(RallyDiscoverStyle.mutedText)
                 .multilineTextAlignment(.center)
                 .lineSpacing(2)

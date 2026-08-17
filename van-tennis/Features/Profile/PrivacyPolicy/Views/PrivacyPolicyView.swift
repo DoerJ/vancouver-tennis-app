@@ -12,7 +12,7 @@ struct PrivacyPolicyView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     Text(content.title)
-                        .font(.system(size: 32, weight: .bold))
+                        .font(.rally(size: 32, weight: .bold))
                         .foregroundStyle(RallyDiscoverStyle.ink)
                         .fixedSize(horizontal: false, vertical: true)
 
@@ -54,11 +54,11 @@ struct PrivacyPolicyView: View {
     private func privacyMetadataRow(title: String, value: String) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
             Text(title)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.rally(size: 13, weight: .semibold))
                 .foregroundStyle(RallyDiscoverStyle.ink)
 
             Text(value)
-                .font(.system(size: 13, weight: .medium))
+                .font(.rally(size: 13, weight: .medium))
                 .foregroundStyle(RallyDiscoverStyle.mutedText)
         }
     }
@@ -66,7 +66,7 @@ struct PrivacyPolicyView: View {
     private func privacySection(_ section: PrivacyPolicySection) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             Text(section.title)
-                .font(.system(size: 20, weight: .bold))
+                .font(.rally(size: 20, weight: .bold))
                 .foregroundStyle(RallyDiscoverStyle.ink)
 
             ForEach(section.paragraphs, id: \.self) { paragraph in
@@ -100,7 +100,7 @@ struct PrivacyPolicyView: View {
     private func privacySubsection(_ subsection: PrivacyPolicySubsection) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(subsection.title)
-                .font(.system(size: 17, weight: .bold))
+                .font(.rally(size: 17, weight: .bold))
                 .foregroundStyle(RallyDiscoverStyle.ink)
 
             ForEach(subsection.paragraphs, id: \.self) { paragraph in
@@ -120,7 +120,7 @@ struct PrivacyPolicyView: View {
     private func privacyBullet(_ text: String) -> some View {
         HStack(alignment: .top, spacing: 10) {
             Text("•")
-                .font(.system(size: 15, weight: .semibold))
+                .font(.rally(size: 15, weight: .semibold))
                 .foregroundStyle(RallyDiscoverStyle.ink)
 
             privacyParagraph(text)
@@ -129,7 +129,7 @@ struct PrivacyPolicyView: View {
 
     private func privacyParagraph(_ text: String) -> some View {
         Text(text)
-            .font(.system(size: 15, weight: .medium))
+            .font(.rally(size: 15, weight: .medium))
             .foregroundStyle(RallyDiscoverStyle.mutedText)
             .lineSpacing(4)
             .fixedSize(horizontal: false, vertical: true)

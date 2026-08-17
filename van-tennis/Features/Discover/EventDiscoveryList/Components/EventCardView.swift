@@ -23,20 +23,20 @@ struct EventCardView: View {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(event.courtDisplayName)
-                        .font(.system(size: 16, weight: .bold))
+                        .font(.rally(size: 16, weight: .bold))
                         .foregroundStyle(RallyDiscoverStyle.ink)
 
                     HStack(spacing: 10) {
                         Text(event.city.displayName)
-                            .font(.system(size: 15, weight: .medium))
+                            .font(.rally(size: 15, weight: .medium))
                             .foregroundStyle(RallyDiscoverStyle.mutedText)
 
                         HStack(spacing: 4) {
                             Image(systemName: "person.2")
-                                .font(.system(size: 15, weight: .medium))
+                                .font(.rally(size: 15, weight: .medium))
 
                             Text(maxPlayersText)
-                                .font(.system(size: 15, weight: .medium))
+                                .font(.rally(size: 15, weight: .medium))
                         }
                         .foregroundStyle(RallyDiscoverStyle.mutedText)
                     }
@@ -47,7 +47,7 @@ struct EventCardView: View {
                 HStack(spacing: 6) {
                     if event.isFull {
                         Text(AppContent.string("events.card.full"))
-                            .font(.caption.weight(.semibold))
+                            .font(.rally(size: 12, weight: .semibold))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 9)
                             .padding(.vertical, 5)
@@ -68,7 +68,7 @@ struct EventCardView: View {
                                 now: context.date
                             )
                         )
-                            .font(.system(size: 10, weight: .semibold))
+                            .font(.rally(size: 10, weight: .semibold))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 5)
@@ -82,12 +82,12 @@ struct EventCardView: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 10) {
                     Image(systemName: "tennisball")
-                        .font(.system(size: 22, weight: .regular))
+                        .font(.rally(size: 22, weight: .regular))
                         .frame(width: 24)
                         .foregroundStyle(RallyDiscoverStyle.ink)
 
                     Text(AppContent.string("events.card.levelLabel"))
-                        .font(.system(size: 15, weight: .medium))
+                        .font(.rally(size: 15, weight: .medium))
                         .foregroundStyle(RallyDiscoverStyle.mutedText)
 
                     SkillLevelBadge(event.skillLevel)
@@ -105,7 +105,7 @@ struct EventCardView: View {
                         .accessibilityHidden(true)
 
                     Text(hostLabel)
-                        .font(.system(size: 15, weight: .medium))
+                        .font(.rally(size: 15, weight: .medium))
                         .foregroundStyle(RallyDiscoverStyle.mutedText)
 
                     if showsHostSocialTags, let hostProfile, !hostProfile.socialTags.isEmpty {
@@ -129,7 +129,7 @@ struct EventCardView: View {
                         .accessibilityHidden(true)
 
                     Text(AppContent.string("events.card.dateLabel", dateText))
-                        .font(.system(size: 15, weight: .medium))
+                        .font(.rally(size: 15, weight: .medium))
                         .foregroundStyle(RallyDiscoverStyle.mutedText)
                         .lineLimit(1)
                         .minimumScaleFactor(0.82)
@@ -137,12 +137,12 @@ struct EventCardView: View {
 
                 HStack(spacing: 10) {
                     Image(systemName: "clock")
-                        .font(.system(size: 19, weight: .regular))
+                        .font(.rally(size: 19, weight: .regular))
                         .frame(width: 24)
                         .foregroundStyle(RallyDiscoverStyle.ink)
 
                     Text(AppContent.string("events.card.timeLabel", timeRangeText))
-                        .font(.system(size: 15, weight: .medium))
+                        .font(.rally(size: 15, weight: .medium))
                         .foregroundStyle(RallyDiscoverStyle.mutedText)
                         .lineLimit(1)
                         .minimumScaleFactor(0.82)

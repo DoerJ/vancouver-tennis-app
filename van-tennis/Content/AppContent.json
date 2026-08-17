@@ -149,11 +149,13 @@
       "casual": "Casual",
       "match": "Match"
     },
-    "locations": {
+    "cities": {
       "burnaby": "Burnaby",
       "richmond": "Richmond",
       "surrey": "Surrey",
-      "vancouver": "Vancouver",
+      "vancouver": "Vancouver"
+    },
+    "locations": {
       "bcitCourt": "BCIT Tennis Courts",
       "centralParkCourt": "Central Park Public Tennis Courts",
       "burnabyTennisClub": "Burnaby Tennis Club",
