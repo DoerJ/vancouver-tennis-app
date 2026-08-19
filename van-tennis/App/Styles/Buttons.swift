@@ -65,6 +65,21 @@ struct RallyDestructiveActionButtonStyle: ButtonStyle {
     }
 }
 
+struct RallyGreenOutlineActionButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.rally(size: 16, weight: .semibold))
+            .foregroundStyle(RallyDiscoverStyle.primaryGreen)
+            .frame(minHeight: 52)
+            .padding(.horizontal, 18)
+            .background(Color.white.opacity(configuration.isPressed ? 0.72 : 1), in: Capsule())
+            .overlay {
+                Capsule()
+                    .stroke(RallyDiscoverStyle.primaryGreen, lineWidth: 1)
+            }
+    }
+}
+
 struct RallyCompactPrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label

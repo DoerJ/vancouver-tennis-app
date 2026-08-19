@@ -448,7 +448,7 @@ struct EventDetailView: View {
                     }
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(RallySurfaceActionButtonStyle())
+                .buttonStyle(RallyPrimaryActionButtonStyle())
                 .disabled(isEventNotFound)
             }
 
@@ -476,18 +476,17 @@ struct EventDetailView: View {
             }
 
             if !isEventEnded && isCurrentUserHost {
-                Button(role: .destructive) {
+                Button {
                     isShowingCancelConfirmation = true
                 } label: {
                     if isCancelling {
                         ProgressView()
-                            .tint(.white)
+                            .tint(RallyDiscoverStyle.primaryGreen)
                             .frame(maxWidth: .infinity)
                     } else {
                         HStack(spacing: 8) {
-                            Image("disabled_by_default")
+                            Image("disabled_green")
                                 .resizable()
-                                .renderingMode(.template)
                                 .scaledToFit()
                                 .frame(width: 22, height: 22)
 
@@ -496,22 +495,23 @@ struct EventDetailView: View {
                             .frame(maxWidth: .infinity)
                     }
                 }
-                .buttonStyle(RallyDestructiveActionButtonStyle())
+                .buttonStyle(RallyGreenOutlineActionButtonStyle())
                 .disabled(isCancelling || isEventNotFound)
             }
 
             if !isEventEnded && isCurrentUserParticipant {
-                Button(role: .destructive) {
+                Button {
                     isShowingLeaveConfirmation = true
                 } label: {
                     if viewModel.isLeaving {
                         ProgressView()
-                            .tint(.white)
+                            .tint(RallyDiscoverStyle.primaryGreen)
                             .frame(maxWidth: .infinity)
                     } else {
                         HStack(spacing: 8) {
                             Image("login_white")
                                 .resizable()
+                                .renderingMode(.template)
                                 .scaledToFit()
                                 .frame(width: 22, height: 22)
 
@@ -520,7 +520,7 @@ struct EventDetailView: View {
                             .frame(maxWidth: .infinity)
                     }
                 }
-                .buttonStyle(RallyDestructiveActionButtonStyle())
+                .buttonStyle(RallyGreenOutlineActionButtonStyle())
                 .disabled(viewModel.isLeaving || isEventNotFound)
             }
 
@@ -541,11 +541,13 @@ struct EventDetailView: View {
             } label: {
                 if viewModel.isCancellingJoinRequest {
                     ProgressView()
-                        .tint(Color(red: 0.98, green: 0.28, blue: 0.13))
+                        .tint(RallyDiscoverStyle.primaryGreen)
                 } else {
                     Image("disabled_red")
                         .resizable()
+                        .renderingMode(.template)
                         .scaledToFit()
+                        .foregroundStyle(RallyDiscoverStyle.primaryGreen)
                         .frame(width: 28, height: 28)
                 }
             }

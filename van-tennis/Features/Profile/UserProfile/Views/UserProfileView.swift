@@ -268,7 +268,7 @@ struct UserProfileView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
 
-            Button(role: .destructive) {
+            Button {
                 isShowingLogOutConfirmation = true
             } label: {
                 HStack(spacing: 12) {
@@ -279,10 +279,10 @@ struct UserProfileView: View {
                 }
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(RallySurfaceActionButtonStyle())
+            .buttonStyle(RallyPrimaryActionButtonStyle())
             .disabled(isSigningOut)
 
-            Button(role: .destructive) {
+            Button {
                 isShowingDeleteAccountConfirmation = true
             } label: {
                 HStack(spacing: 10) {
@@ -296,7 +296,7 @@ struct UserProfileView: View {
                 }
                 .frame(maxWidth: .infinity)
             }
-            .buttonStyle(RallyDestructiveActionButtonStyle())
+            .buttonStyle(RallyGreenOutlineActionButtonStyle())
             .disabled(viewModel.isDeletingAccount)
         }
     }
