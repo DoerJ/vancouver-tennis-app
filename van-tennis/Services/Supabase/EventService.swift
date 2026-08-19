@@ -76,13 +76,23 @@ struct EventService {
     }
 
     func createEvent(_ draft: TennisEventDraft) async throws -> TennisEvent {
-        try await client
+        let inviteCode = RandomInviteCodeHelper.generateCode()
+
+        let event: TennisEvent = try await client
             .rpc(
                 "create_tennis_event",
-                params: CreateTennisEventParams(draft: draft)
+                params: CreateTennisEventParams(draft: draft, inviteCode: inviteCode)
             )
             .execute()
             .value
+
+        try await createEventInvite(
+            eventID: event.id,
+            inviteCode: inviteCode,
+            createdBy: event.hostID
+        )
+
+        return event
     }
 
     func cancelHostedEvent(_ event: TennisEvent) async throws {
@@ -121,6 +131,31 @@ struct EventService {
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return formatter
     }()
+
+    private func createEventInvite(eventID: UUID, inviteCode: String, createdBy: UUID) async throws {
+        try await client
+            .from("event_invites")
+            .insert(
+                NewEventInvite(
+                    eventID: eventID,
+                    inviteCode: inviteCode,
+                    createdBy: createdBy
+                )
+            )
+            .execute()
+    }
+}
+
+private struct NewEventInvite: Encodable {
+    let eventID: UUID
+    let inviteCode: String
+    let createdBy: UUID
+
+    enum CodingKeys: String, CodingKey {
+        case eventID = "event_id"
+        case inviteCode = "invite_code"
+        case createdBy = "created_by"
+    }
 }
 
 private struct PendingParticipantsRow: Decodable {
@@ -192,8 +227,9 @@ private struct CreateTennisEventParams: Encodable {
     let court: TennisCourt
     let courtDisplayName: String
     let skillLevel: SkillLevel
+    let inviteCode: String
 
-    init(draft: TennisEventDraft) {
+    init(draft: TennisEventDraft, inviteCode: String) {
         startTime = draft.startTime
         endTime = draft.endTime
         eventType = draft.eventType
@@ -202,6 +238,7 @@ private struct CreateTennisEventParams: Encodable {
         court = draft.court
         courtDisplayName = draft.court.displayName
         skillLevel = draft.skillLevel
+        self.inviteCode = inviteCode
     }
 
     enum CodingKeys: String, CodingKey {
@@ -213,6 +250,7 @@ private struct CreateTennisEventParams: Encodable {
         case court = "p_location_court"
         case courtDisplayName = "p_location_court_display_name"
         case skillLevel = "p_skill_level"
+        case inviteCode = "p_invite_code"
     }
 
     func encode(to encoder: Encoder) throws {
@@ -232,5 +270,6 @@ private struct CreateTennisEventParams: Encodable {
         try container.encode(court, forKey: .court)
         try container.encode(courtDisplayName, forKey: .courtDisplayName)
         try container.encode(skillLevel, forKey: .skillLevel)
+        try container.encode(inviteCode, forKey: .inviteCode)
     }
 }

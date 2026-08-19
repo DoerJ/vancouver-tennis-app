@@ -15,9 +15,12 @@ final class AppState: ObservableObject {
     @Published private(set) var cachedNotifications: [CachedNotificationState] = []
     @Published private(set) var cachedEventsByID: [UUID: TennisEvent] = [:]
     @Published private(set) var cachedChatMessagesByEventID: [UUID: [ChatRoomMessage]] = [:]
+    @Published private(set) var requestedInviteEventDetailID: UUID?
+    @Published private(set) var requestedDiscoverToastMessage: String?
 
     private let profileService = ProfileService()
     private let eventService = EventService()
+    private let eventInviteService = EventInviteService()
     private let chatMessageService = ChatMessageService()
     private let notificationEventService = NotificationEventService()
     private let deviceTokenService = DeviceTokenService()
@@ -26,6 +29,7 @@ final class AppState: ObservableObject {
     private var cancellables: Set<AnyCancellable> = []
     private var authStateChangesTask: Task<Void, Never>?
     private var activeChatEventID: UUID?
+    private var pendingInviteCode: String?
     private var lastSavedDeviceToken: String?
     private var isAwaitingDeletedAccountAcknowledgement = false
 
@@ -211,6 +215,26 @@ final class AppState: ObservableObject {
         }
 
         ensureProfileRealtimeSubscription(userID: userID)
+    }
+
+    func handleIncomingUniversalLink(_ url: URL) {
+        guard let inviteCode = InviteLinkHelper.inviteCode(from: url) else {
+            return
+        }
+
+        pendingInviteCode = inviteCode
+
+        Task {
+            await resolvePendingInviteLinkIfNeeded()
+        }
+    }
+
+    func consumeRequestedInviteEventDetailID() {
+        requestedInviteEventDetailID = nil
+    }
+
+    func consumeRequestedDiscoverToastMessage() {
+        requestedDiscoverToastMessage = nil
     }
 
     func updateCachedNotifications(_ notificationIDs: [UUID]) {
@@ -496,6 +520,9 @@ final class AppState: ObservableObject {
         googleSession = nil
         supabaseSession = nil
         userProfile = nil
+        pendingInviteCode = nil
+        requestedInviteEventDetailID = nil
+        requestedDiscoverToastMessage = nil
         cachedNotifications = []
         cachedEventsByID = [:]
         cachedChatMessagesByEventID = [:]
@@ -528,6 +555,9 @@ final class AppState: ObservableObject {
         googleSession = nil
         supabaseSession = nil
         userProfile = nil
+        pendingInviteCode = nil
+        requestedInviteEventDetailID = nil
+        requestedDiscoverToastMessage = nil
         cachedNotifications = []
         cachedEventsByID = [:]
         cachedChatMessagesByEventID = [:]
@@ -571,6 +601,31 @@ final class AppState: ObservableObject {
 
         if case .signedIn = nextAuthenticationState {
             ensureProfileRealtimeSubscription(userID: userProfile.id)
+            Task {
+                await resolvePendingInviteLinkIfNeeded()
+            }
+        }
+    }
+
+    private func resolvePendingInviteLinkIfNeeded() async {
+        guard authenticationState == .signedIn,
+              let pendingInviteCode
+        else {
+            return
+        }
+
+        do {
+            guard let event = try await eventInviteService.fetchEvent(inviteCode: pendingInviteCode) else {
+                self.pendingInviteCode = nil
+                requestedDiscoverToastMessage = AppContent.string("discover.inviteEventNotFound")
+                return
+            }
+
+            updateCachedEvents([event])
+            requestedInviteEventDetailID = event.id
+            self.pendingInviteCode = nil
+        } catch {
+            Logger.error("Failed to resolve invite link. inviteCode=\(pendingInviteCode), error=\(error.localizedDescription).")
         }
     }
 

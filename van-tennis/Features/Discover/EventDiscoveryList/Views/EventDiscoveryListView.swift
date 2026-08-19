@@ -4,8 +4,13 @@ struct EventDiscoveryListView: View {
     @EnvironmentObject private var appState: AppState
     @StateObject private var viewModel = EventDiscoveryListViewModel()
     @State private var navigationPath: [EventDiscoveryRoute] = []
+    @State private var isShowingToast = false
+    @State private var displayedToastTrigger = 0
+    @State private var toastResetTask: Task<Void, Never>?
     let resetTrigger: Int
     let requestedEventDetailID: UUID?
+    let toastMessage: String?
+    let toastTrigger: Int
     let onRequestedEventDetailOpened: () -> Void
     let onOpenProfile: () -> Void
     let onOpenNotifications: () -> Void
@@ -13,12 +18,16 @@ struct EventDiscoveryListView: View {
     init(
         resetTrigger: Int = 0,
         requestedEventDetailID: UUID? = nil,
+        toastMessage: String? = nil,
+        toastTrigger: Int = 0,
         onRequestedEventDetailOpened: @escaping () -> Void = {},
         onOpenProfile: @escaping () -> Void = {},
         onOpenNotifications: @escaping () -> Void = {}
     ) {
         self.resetTrigger = resetTrigger
         self.requestedEventDetailID = requestedEventDetailID
+        self.toastMessage = toastMessage
+        self.toastTrigger = toastTrigger
         self.onRequestedEventDetailOpened = onRequestedEventDetailOpened
         self.onOpenProfile = onOpenProfile
         self.onOpenNotifications = onOpenNotifications
@@ -30,74 +39,8 @@ struct EventDiscoveryListView: View {
                 RallyDiscoverStyle.surface
                     .ignoresSafeArea()
 
-                if viewModel.isLoading && viewModel.events.isEmpty {
-                    ProgressView(AppContent.string("common.loadingEvents"))
-                        .rallyLoadingStatusStyle()
-                } else if let errorMessage = viewModel.errorMessage, viewModel.events.isEmpty {
-                    ContentUnavailableView(
-                        AppContent.string("common.unableToLoadEvents"),
-                        systemImage: "exclamationmark.triangle",
-                        description: Text(errorMessage)
-                    )
-                } else {
-                    VStack(spacing: 0) {
-                        discoverHeader
-                            .padding(.horizontal, 28)
-                            .padding(.top, 18)
-
-                        eventFilters
-                            .padding(.horizontal, 28)
-                            .padding(.top, 24)
-
-                        ScrollView {
-                            LazyVStack(spacing: 28) {
-                                if viewModel.filteredEvents.isEmpty {
-                                    emptyEventsView
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.top, 80)
-                                } else {
-                                    ForEach(viewModel.filteredEvents) { event in
-                                        NavigationLink(value: EventDiscoveryRoute.eventDetail(event)) {
-                                            EventCardView(
-                                                event: event,
-                                                hostProfile: viewModel.hostProfilesByID[event.hostID]
-                                            )
-                                            .id(appState.contentLanguage)
-                                        }
-                                        .buttonStyle(.plain)
-                                    }
-
-                                    if viewModel.isLoadingNextPage {
-                                        ProgressView()
-                                            .padding(.vertical, 12)
-                                    }
-                                }
-                            }
-                            .padding(.horizontal, 13)
-                            .padding(.top, 48)
-                            .padding(.bottom, 24)
-                            .frame(maxWidth: .infinity)
-                        }
-                        .onScrollGeometryChange(for: Bool.self) { geometry in
-                            let distanceToBottom = geometry.contentSize.height - geometry.containerSize.height - geometry.contentOffset.y
-                            let canScroll = geometry.contentSize.height > geometry.containerSize.height
-                            return canScroll
-                                && geometry.contentOffset.y > 0
-                                && distanceToBottom < Constants.EventDiscovery.paginationTriggerDistance
-                        } action: { wasNearBottom, isNearBottom in
-                            guard !wasNearBottom, isNearBottom else {
-                                return
-                            }
-
-                            Task {
-                                await viewModel.loadNextPage()
-                            }
-                        }
-                        .refreshable {
-                            await viewModel.loadEvents()
-                        }
-                    }
-                }
+                contentView
+                toastOverlay
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
@@ -118,6 +61,11 @@ struct EventDiscoveryListView: View {
                 await viewModel.loadInitialEventsIfNeeded()
                 await openRequestedEventDetailIfNeeded()
             }
+            showToastIfNeeded()
+        }
+        .onDisappear {
+            toastResetTask?.cancel()
+            toastResetTask = nil
         }
         .onChange(of: viewModel.selectedCityFilter) {
             guard !viewModel.consumeShouldSkipNextFilterReload() else {
@@ -158,6 +106,9 @@ struct EventDiscoveryListView: View {
             Task {
                 await openRequestedEventDetailIfNeeded()
             }
+        }
+        .onChange(of: toastTrigger) {
+            showToastIfNeeded()
         }
     }
 
@@ -211,6 +162,89 @@ struct EventDiscoveryListView: View {
 
     private var notificationIconName: String {
         appState.hasUnreadNotifications ? "bell_orange" : "Bell"
+    }
+
+    @ViewBuilder
+    private var contentView: some View {
+        if viewModel.isLoading && viewModel.events.isEmpty {
+            ProgressView(AppContent.string("common.loadingEvents"))
+                .rallyLoadingStatusStyle()
+        } else if let errorMessage = viewModel.errorMessage, viewModel.events.isEmpty {
+            ContentUnavailableView(
+                AppContent.string("common.unableToLoadEvents"),
+                systemImage: "exclamationmark.triangle",
+                description: Text(errorMessage)
+            )
+        } else {
+            VStack(spacing: 0) {
+                discoverHeader
+                    .padding(.horizontal, 28)
+                    .padding(.top, 18)
+
+                eventFilters
+                    .padding(.horizontal, 28)
+                    .padding(.top, 24)
+
+                eventsScrollView
+            }
+        }
+    }
+
+    private var eventsScrollView: some View {
+        ScrollView {
+            LazyVStack(spacing: 28) {
+                if viewModel.filteredEvents.isEmpty {
+                    emptyEventsView
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 80)
+                } else {
+                    ForEach(viewModel.filteredEvents) { event in
+                        eventNavigationLink(for: event)
+                    }
+
+                    if viewModel.isLoadingNextPage {
+                        ProgressView()
+                            .padding(.vertical, 12)
+                    }
+                }
+            }
+            .padding(.horizontal, 13)
+            .padding(.top, 48)
+            .padding(.bottom, 24)
+            .frame(maxWidth: .infinity)
+        }
+        .onScrollGeometryChange(for: Bool.self) { geometry in
+            let distanceToBottom = geometry.contentSize.height - geometry.containerSize.height - geometry.contentOffset.y
+            let canScroll = geometry.contentSize.height > geometry.containerSize.height
+            return canScroll
+                && geometry.contentOffset.y > 0
+                && distanceToBottom < Constants.EventDiscovery.paginationTriggerDistance
+        } action: { wasNearBottom, isNearBottom in
+            guard !wasNearBottom, isNearBottom else {
+                return
+            }
+
+            Task {
+                await viewModel.loadNextPage()
+            }
+        }
+        .refreshable {
+            await viewModel.loadEvents()
+        }
+    }
+
+    @ViewBuilder
+    private var toastOverlay: some View {
+        if isShowingToast, let toastMessage {
+            RallyToast(
+                iconName: "down_face",
+                backgroundColor: Constants.Toast.darkBackground,
+                message: toastMessage
+            )
+            .padding(.top, 84)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .transition(.opacity)
+        }
     }
 
     private var eventFilters: some View {
@@ -319,6 +353,19 @@ struct EventDiscoveryListView: View {
             || viewModel.selectedEventTypeFilter != .all
     }
 
+    private func eventNavigationLink(for event: TennisEvent) -> some View {
+        let hostProfile = viewModel.hostProfilesByID[event.hostID]
+
+        return NavigationLink(value: EventDiscoveryRoute.eventDetail(event)) {
+            EventCardView(
+                event: event,
+                hostProfile: hostProfile
+            )
+            .id(appState.contentLanguage)
+        }
+        .buttonStyle(.plain)
+    }
+
     private func openRequestedEventDetailIfNeeded() async {
         guard let requestedEventDetailID else {
             return
@@ -337,6 +384,35 @@ struct EventDiscoveryListView: View {
         }
 
         onRequestedEventDetailOpened()
+    }
+
+    private func showToastIfNeeded() {
+        guard toastTrigger != displayedToastTrigger,
+              toastMessage != nil
+        else {
+            return
+        }
+
+        displayedToastTrigger = toastTrigger
+        toastResetTask?.cancel()
+        withAnimation(.linear(duration: 0.18)) {
+            isShowingToast = true
+        }
+
+        toastResetTask = Task {
+            do {
+                try await Task.sleep(nanoseconds: Constants.Toast.defaultDurationNanoseconds)
+            } catch {
+                return
+            }
+
+            await MainActor.run {
+                withAnimation(.linear(duration: 0.18)) {
+                    isShowingToast = false
+                }
+                toastResetTask = nil
+            }
+        }
     }
 
     @ViewBuilder

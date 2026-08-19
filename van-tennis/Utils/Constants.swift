@@ -2,6 +2,20 @@ import Foundation
 import SwiftUI
 
 enum Constants {
+    enum Links {
+        static let universalLinkHost = "rallygo.vercel.app"
+        static let inviteFallbackPath = "/invite/null"
+
+        static var universalLinkBaseURL: String {
+            "https://\(universalLinkHost)"
+        }
+    }
+
+    enum Toast {
+        static let defaultDurationNanoseconds: UInt64 = 3_000_000_000
+        static let darkBackground = Color(hex: 0x323232)
+    }
+
     struct TennisCourtDistrictGroup: Identifiable {
         let district: String
         let courts: [TennisCourt]
@@ -471,6 +485,7 @@ enum Constants {
         static let maximumDurationHours = 3
         static let defaultStartOffsetHours = 2
         static let defaultDurationHours = 1
+        static let inviteLinkCopyIconResetDurationNanoseconds: UInt64 = 2_000_000_000
     }
 
     enum EventDiscovery {

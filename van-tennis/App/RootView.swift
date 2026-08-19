@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 struct RootView: View {
@@ -20,6 +21,16 @@ struct RootView: View {
             }
         }
         .appLanguageFontStyle(appState.contentLanguage)
+        .onOpenURL { url in
+            appState.handleIncomingUniversalLink(url)
+        }
+        .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
+            guard let url = activity.webpageURL else {
+                return
+            }
+
+            appState.handleIncomingUniversalLink(url)
+        }
         .task {
             guard !hasRestoredSession else {
                 return

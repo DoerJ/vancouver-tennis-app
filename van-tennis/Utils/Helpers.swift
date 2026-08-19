@@ -216,3 +216,45 @@ enum ProfileDisplayHelper {
         return "\(title) \(suffix)"
     }
 }
+
+enum InviteLinkHelper {
+    static func inviteCode(from url: URL) -> String? {
+        guard let host = url.host?.lowercased(),
+              host == Constants.Links.universalLinkHost
+        else {
+            return nil
+        }
+
+        let pathComponents = url.pathComponents.filter { $0 != "/" }
+        guard pathComponents.count >= 2,
+              pathComponents[0].lowercased() == "invite"
+        else {
+            return nil
+        }
+
+        let inviteCode = pathComponents[1].trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !inviteCode.isEmpty,
+              inviteCode.lowercased() != "null"
+        else {
+            return nil
+        }
+
+        return inviteCode.uppercased()
+    }
+}
+
+enum RandomInviteCodeHelper {
+    private static let inviteCodeCharacters = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+    static func generateCode(length: Int = 6) -> String {
+        generateInviteCode(length: length)
+    }
+
+    static func generateInviteCode(length: Int = 6) -> String {
+        guard length > 0 else {
+            return ""
+        }
+
+        return String((0..<length).compactMap { _ in inviteCodeCharacters.randomElement() })
+    }
+}

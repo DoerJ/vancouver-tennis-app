@@ -11,6 +11,7 @@ struct TennisEvent: Codable, Identifiable, Equatable, Hashable {
     let court: TennisCourt
     let skillLevel: SkillLevel
     let participants: [UUID]
+    let inviteCode: String?
     let createdAt: Date?
     let updatedAt: Date?
 
@@ -25,6 +26,7 @@ struct TennisEvent: Codable, Identifiable, Equatable, Hashable {
         case court = "location_court"
         case skillLevel = "skill_level"
         case participants
+        case inviteCode = "invite_code"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }

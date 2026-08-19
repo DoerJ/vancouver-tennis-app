@@ -75,7 +75,8 @@
     "emptyFiltered": {
       "title": "No events match your filters",
       "description": "Try different location, skill level, or type filters."
-    }
+    },
+    "inviteEventNotFound": "There is no event found for this invite code"
   },
   "myEvents": {
     "title": "My Events",
@@ -360,6 +361,9 @@
       "court": "Court",
       "players": "Players",
       "editMaxPlayers": "Edit Max Players",
+      "shareInviteLink": "Share your invite link",
+      "inviteLinkCopied": "Invite link copied",
+      "inviteShareMessage": "Invite other players to your event",
       "chat": "Chat",
       "cancelEventTitle": "Cancel this event?",
       "cancelEvent": "Cancel Event",

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct EventDetailView: View {
     let onEventCancelled: (UUID) -> Void
@@ -19,6 +20,10 @@ struct EventDetailView: View {
     @State private var reportDescription = ""
     @State private var reportErrorMessage: String?
     @State private var pendingMaxPlayers: Int?
+    @State private var isInviteLinkCopied = false
+    @State private var isShowingInviteLinkCopiedToast = false
+    @State private var inviteLinkCopyResetTask: Task<Void, Never>?
+    @State private var inviteLinkToastResetTask: Task<Void, Never>?
 
     init(
         event: TennisEvent,
@@ -55,6 +60,17 @@ struct EventDetailView: View {
             floatingSaveButton
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 .ignoresSafeArea(edges: .top)
+
+            if isShowingInviteLinkCopiedToast {
+                RallyToast(
+                    iconName: "check_circle_white",
+                    backgroundColor: Color(red: 50.0 / 255.0, green: 50.0 / 255.0, blue: 50.0 / 255.0),
+                    message: AppContent.string("events.detail.inviteLinkCopied")
+                )
+                    .padding(.top, 84)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    .transition(.opacity)
+            }
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
@@ -108,6 +124,12 @@ struct EventDetailView: View {
         }
         .task {
             await loadEventDetails()
+        }
+        .onDisappear {
+            inviteLinkCopyResetTask?.cancel()
+            inviteLinkCopyResetTask = nil
+            inviteLinkToastResetTask?.cancel()
+            inviteLinkToastResetTask = nil
         }
         .sheet(isPresented: $isShowingReportSheet) {
             ReportEventView(
@@ -247,6 +269,8 @@ struct EventDetailView: View {
 
             playerSection
 
+            inviteLinkSection
+
             stateSection
 
             actionSection
@@ -319,6 +343,71 @@ struct EventDetailView: View {
                 }
             }
         }
+    }
+
+    private var inviteLinkSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            EventDetailSectionTitle(AppContent.string("events.detail.shareInviteLink"))
+
+            HStack(spacing: 14) {
+                HStack(spacing: 12) {
+                    Text(inviteLinkText)
+                        .font(.rally(size: 15, weight: .medium))
+                        .foregroundStyle(RallyDiscoverStyle.mutedText)
+                        .lineLimit(2)
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    Button {
+                        copyInviteLink()
+                    } label: {
+                        Image(isInviteLinkCopied ? "check_circle" : "content_copy")
+                            .resizable()
+                            .renderingMode(.template)
+                            .scaledToFit()
+                            .foregroundStyle(RallyDiscoverStyle.mutedText)
+                            .frame(width: 22, height: 22)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isInviteLinkCopied)
+                }
+                .padding(16)
+                .background(RallyDiscoverStyle.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .frame(maxWidth: .infinity)
+
+                ShareLink(
+                    item: inviteLinkURL,
+                    subject: Text(AppContent.string("events.detail.inviteShareMessage")),
+                    message: Text(Constants.Links.universalLinkHost),
+                    preview: SharePreview(
+                        AppContent.string("events.detail.inviteShareMessage"),
+                        image: Image("share_thumbnail"),
+                        icon: Image("share_thumbnail")
+                    )
+                ) {
+                    Image("share")
+                        .resizable()
+                        .renderingMode(.template)
+                        .scaledToFit()
+                        .foregroundStyle(RallyDiscoverStyle.mutedText)
+                        .frame(width: 24, height: 24)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private var inviteLinkText: String {
+        if let inviteCode = event.inviteCode?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !inviteCode.isEmpty {
+            return "\(Constants.Links.universalLinkBaseURL)/invite/\(inviteCode)"
+        }
+
+        return "\(Constants.Links.universalLinkBaseURL)\(Constants.Links.inviteFallbackPath)"
+    }
+
+    private var inviteLinkURL: URL {
+        URL(string: inviteLinkText) ?? URL(string: "\(Constants.Links.universalLinkBaseURL)\(Constants.Links.inviteFallbackPath)")!
     }
 
     @ViewBuilder
@@ -592,6 +681,50 @@ struct EventDetailView: View {
         event = latestEvent
         pendingMaxPlayers = nil
         hasRequestedToJoin = appState.userProfile?.pendingEvents.contains(latestEvent.id) == true
+    }
+
+    private func copyInviteLink() {
+        guard !isInviteLinkCopied else {
+            return
+        }
+
+        UIPasteboard.general.string = inviteLinkText
+        withAnimation(.linear(duration: 0.18)) {
+            isInviteLinkCopied = true
+            isShowingInviteLinkCopiedToast = true
+        }
+
+        inviteLinkCopyResetTask?.cancel()
+        inviteLinkCopyResetTask = Task {
+            do {
+                try await Task.sleep(nanoseconds: Constants.Event.inviteLinkCopyIconResetDurationNanoseconds)
+            } catch {
+                return
+            }
+
+            await MainActor.run {
+                withAnimation(.linear(duration: 0.18)) {
+                    isInviteLinkCopied = false
+                }
+                inviteLinkCopyResetTask = nil
+            }
+        }
+
+        inviteLinkToastResetTask?.cancel()
+        inviteLinkToastResetTask = Task {
+            do {
+                try await Task.sleep(nanoseconds: Constants.Event.inviteLinkCopyIconResetDurationNanoseconds)
+            } catch {
+                return
+            }
+
+            await MainActor.run {
+                withAnimation(.linear(duration: 0.18)) {
+                    isShowingInviteLinkCopiedToast = false
+                }
+                inviteLinkToastResetTask = nil
+            }
+        }
     }
 
     private func shouldRefreshAfterPendingRequestResolution(
@@ -1081,6 +1214,7 @@ private struct EventDetailUnavailableProfileCard: View {
                 court: .bcitCourt,
                 skillLevel: .three,
                 participants: [UUID()],
+                inviteCode: nil,
                 createdAt: nil,
                 updatedAt: nil
             )

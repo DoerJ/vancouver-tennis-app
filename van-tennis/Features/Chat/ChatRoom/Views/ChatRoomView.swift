@@ -319,6 +319,7 @@ struct ChatRoomView: View {
                 court: .bcitCourt,
                 skillLevel: .three,
                 participants: [],
+                inviteCode: nil,
                 createdAt: nil,
                 updatedAt: nil
             )

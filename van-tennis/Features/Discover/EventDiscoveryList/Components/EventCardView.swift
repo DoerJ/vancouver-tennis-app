@@ -196,7 +196,8 @@ struct EventCardView: View {
             court: .bcitCourt,
             skillLevel: .three,
             participants: [UUID()],
-            createdAt: nil,
+            inviteCode: nil,
+                createdAt: nil,
             updatedAt: nil
         )
     )

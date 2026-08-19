@@ -9,6 +9,8 @@ struct MainTabView: View {
     @State private var selectedJoinRequestNotificationID: UUID?
     @State private var requestedChatEventID: UUID?
     @State private var requestedEventDetailID: UUID?
+    @State private var discoverToastMessage: String?
+    @State private var discoverToastTrigger = 0
     @State private var isMainTabBarHidden = false
 
     var body: some View {
@@ -65,12 +67,21 @@ struct MainTabView: View {
             handleOpenedNotification(context)
         }
         .onAppear {
+            openRequestedInviteEventIfNeeded()
+            showRequestedDiscoverToastIfNeeded()
+
             guard appState.authenticationState == .signedIn,
                   let context = NotificationService.consumePendingOpenedNotificationContext() else {
                 return
             }
 
             handleOpenedNotification(context)
+        }
+        .onChange(of: appState.requestedInviteEventDetailID) {
+            openRequestedInviteEventIfNeeded()
+        }
+        .onChange(of: appState.requestedDiscoverToastMessage) {
+            showRequestedDiscoverToastIfNeeded()
         }
     }
 
@@ -81,6 +92,8 @@ struct MainTabView: View {
             EventDiscoveryListView(
                 resetTrigger: findResetTrigger,
                 requestedEventDetailID: requestedEventDetailID,
+                toastMessage: discoverToastMessage,
+                toastTrigger: discoverToastTrigger,
                 onRequestedEventDetailOpened: {
                     requestedEventDetailID = nil
                 },
@@ -145,6 +158,37 @@ struct MainTabView: View {
         requestedEventDetailID = nil
         isShowingProfile = false
         isShowingNotifications = true
+    }
+
+    private func openRequestedInviteEventIfNeeded() {
+        guard let eventID = appState.requestedInviteEventDetailID else {
+            return
+        }
+
+        isShowingProfile = false
+        isShowingNotifications = false
+        selectedJoinRequestNotificationID = nil
+        requestedChatEventID = nil
+        requestedEventDetailID = eventID
+        selectedTab = .find
+        appState.consumeRequestedInviteEventDetailID()
+    }
+
+    private func showRequestedDiscoverToastIfNeeded() {
+        guard let message = appState.requestedDiscoverToastMessage else {
+            return
+        }
+
+        isShowingProfile = false
+        isShowingNotifications = false
+        selectedJoinRequestNotificationID = nil
+        requestedChatEventID = nil
+        requestedEventDetailID = nil
+        discoverToastMessage = message
+        discoverToastTrigger += 1
+        findResetTrigger += 1
+        selectedTab = .find
+        appState.consumeRequestedDiscoverToastMessage()
     }
 
 }
