@@ -43,6 +43,7 @@ final class ChatRoomViewModel: ObservableObject {
                     id: message.id,
                     senderID: message.senderID,
                     senderDisplayName: profilesByID[message.senderID]?.displayName ?? AppContent.string("chat.unknownPlayer"),
+                    senderAvatarURL: profilesByID[message.senderID]?.avatarURL,
                     body: message.body,
                     sentAt: message.createdAt
                 )
@@ -105,6 +106,7 @@ final class ChatRoomViewModel: ObservableObject {
                 id: createdMessage.id,
                 senderID: createdMessage.senderID,
                 senderDisplayName: currentUser.displayName,
+                senderAvatarURL: currentUser.avatarURL,
                 body: createdMessage.body,
                 sentAt: createdMessage.createdAt
             )

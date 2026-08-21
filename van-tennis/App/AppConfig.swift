@@ -60,4 +60,17 @@ enum AppConfig {
         supabaseProjectURL.host != "YOUR_SUPABASE_PROJECT.supabase.co"
             && supabaseAnonKey != "YOUR_SUPABASE_ANON_KEY"
     }
+
+    static let profileAvatarStoragePath: String = {
+        guard let value = Bundle.main.object(forInfoDictionaryKey: "ProfileAvatarStoragePath") as? String else {
+            fatalError("Missing ProfileAvatarStoragePath in Info.plist")
+        }
+
+        let path = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !path.isEmpty else {
+            fatalError("ProfileAvatarStoragePath cannot be empty")
+        }
+
+        return path
+    }()
 }

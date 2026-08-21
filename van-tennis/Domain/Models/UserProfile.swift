@@ -229,6 +229,7 @@ struct NewUserProfile: Encodable {
 }
 
 struct UpdateUserProfile: Encodable {
+    let avatarURL: URL??
     let displayName: String?
     let skillLevel: SkillLevel?
     let gender: Gender?
@@ -242,6 +243,7 @@ struct UpdateUserProfile: Encodable {
     let chatMessageReadStates: [ChatMessageReadState]?
 
     enum CodingKeys: String, CodingKey {
+        case avatarURL = "avatar_url"
         case displayName = "display_name"
         case skillLevel = "skill_level"
         case gender
@@ -257,6 +259,14 @@ struct UpdateUserProfile: Encodable {
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
+
+        if let avatarURL {
+            if let avatarURL {
+                try container.encode(avatarURL, forKey: .avatarURL)
+            } else {
+                try container.encodeNil(forKey: .avatarURL)
+            }
+        }
 
         try container.encodeIfPresent(displayName, forKey: .displayName)
         try container.encodeIfPresent(skillLevel, forKey: .skillLevel)

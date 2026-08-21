@@ -112,16 +112,9 @@ struct ChatView: View {
     private var chatHeader: some View {
         VStack(alignment: .leading, spacing: 34) {
             HStack(alignment: .center) {
-                Button {
+                ProfileAvatarHeaderButton(avatarURL: appState.userProfile?.avatarURL) {
                     onOpenProfile()
-                } label: {
-                    Image("profile")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 40, height: 40)
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel(AppContent.string("common.profile"))
 
                 LanguageMenuButton()
                     .padding(.leading, 8)
@@ -278,7 +271,13 @@ private struct ChatConversationCard: View {
             return systemMessagePreviewText(body: body, senderID: latestMessage.senderID)
         }
 
-        return "\(latestMessage.senderDisplayName): \(body)"
+        return "\(senderDisplayName(for: latestMessage)): \(body)"
+    }
+
+    private func senderDisplayName(for message: ChatRoomMessage) -> String {
+        message.senderID == preview.currentUserID
+            ? AppContent.string("chat.self")
+            : message.senderDisplayName
     }
 
     private func systemMessagePreviewText(body: String, senderID: UUID) -> String {

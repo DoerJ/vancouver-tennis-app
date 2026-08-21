@@ -7,6 +7,7 @@ struct ChatRoomView: View {
     @FocusState private var isComposerFocused: Bool
 
     let event: TennisEvent
+    private let messageAvatarSize: CGFloat = 32
 
     var body: some View {
         VStack(spacing: 0) {
@@ -223,15 +224,29 @@ struct ChatRoomView: View {
                         .padding(.horizontal, 5)
                 }
 
-                messageBubble(message, isCurrentUser: isCurrentUser)
+                HStack(alignment: .bottom, spacing: 10) {
+                    if isCurrentUser {
+                        messageBubble(message, isCurrentUser: true)
+                        messageAvatar(message)
+                    } else {
+                        messageAvatar(message)
+                        messageBubble(message, isCurrentUser: false)
+                    }
+                }
 
                 Text(DateFormattingHelper.timeString(from: message.sentAt))
                     .font(.rally(size: 14, weight: .medium))
                     .foregroundStyle(Color.black.opacity(0.6))
                     .padding(.horizontal, 5)
+                    .padding(isCurrentUser ? .trailing : .leading, messageAvatarSize + 10)
             }
             .frame(maxWidth: .infinity, alignment: isCurrentUser ? .trailing : .leading)
         }
+    }
+
+    private func messageAvatar(_ message: ChatRoomMessage) -> some View {
+        ProfileAvatarImageView(url: message.senderAvatarURL, size: messageAvatarSize)
+            .accessibilityHidden(true)
     }
 
     private func systemMessageRow(_ message: ChatRoomMessage) -> some View {

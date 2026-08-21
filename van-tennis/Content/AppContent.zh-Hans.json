@@ -139,6 +139,7 @@
     "messageLengthError": "消息不能超过 %d 个字符。",
     "unreadAccessibility": "%d 条未读消息",
     "unableToLoad": "无法加载聊天",
+    "self": "你",
     "unknownPlayer": "未知球员"
   },
   "events": {
@@ -399,6 +400,7 @@
       "title": "参与者",
       "fallback": "参与者",
       "you": "（你）",
+      "self": "你",
       "none": "暂无参与者"
     },
     "host": {
@@ -433,6 +435,11 @@
     "genderDisplayLabel": "性别：",
     "genderValue": "性别：%@",
     "genderNotSet": "未设置性别",
+    "avatarPickerTitle": "选择你的头像",
+    "avatarPickerOpen": "选择个人头像",
+    "avatarPickerLoading": "正在加载头像...",
+    "avatarPickerEmpty": "暂无可用头像。",
+    "avatarPickerInvalidPath": "头像存储路径无效。",
     "socialTagsDisplayLabel": "我的标签：",
     "editSocialTags": "编辑社交标签",
     "logOutTitle": "退出登录？",

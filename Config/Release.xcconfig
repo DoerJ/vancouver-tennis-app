@@ -3,3 +3,4 @@ SUPABASE_ANON_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 GOOGLE_CLIENT_ID = 73032450093-93mj0bisvjkekfgt4l94n32ung090gfd.apps.googleusercontent.com
 GOOGLE_AUTHORIZATION_ENDPOINT = https:/$()/accounts.google.com/o/oauth2/v2/auth
 GOOGLE_TOKEN_ENDPOINT = https:/$()/oauth2.googleapis.com/token
+PROFILE_AVATAR_STORAGE_PATH = /storage/v1/object/public/profile-avatars

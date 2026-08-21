@@ -39,6 +39,8 @@
 	<string>$(GOOGLE_CLIENT_ID)</string>
 	<key>GoogleTokenEndpoint</key>
 	<string>$(GOOGLE_TOKEN_ENDPOINT)</string>
+	<key>ProfileAvatarStoragePath</key>
+	<string>$(PROFILE_AVATAR_STORAGE_PATH)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSLocalNetworkUsageDescription</key>

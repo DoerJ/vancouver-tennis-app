@@ -315,7 +315,7 @@ struct EventDetailView: View {
                 EventDetailProfileCard(
                     profile: hostProfile,
                     fallbackTitle: AppContent.string("events.host.fallback"),
-                    titleSuffix: isCurrentUserHost ? AppContent.string("events.participants.you") : nil
+                    titleOverride: isCurrentUserHost ? AppContent.string("events.participants.self") : nil
                 )
             } else {
                 EventDetailUnavailableProfileCard(text: AppContent.string("events.host.unavailable"))
@@ -337,7 +337,9 @@ struct EventDetailView: View {
                         EventDetailProfileCard(
                             profile: participant,
                             fallbackTitle: AppContent.string("events.participants.fallback"),
-                            titleSuffix: participant.id == appState.userProfile?.id ? AppContent.string("events.participants.you") : nil
+                            titleOverride: participant.id == appState.userProfile?.id
+                                ? AppContent.string("events.participants.self")
+                                : nil
                         )
                     }
                 }
@@ -635,8 +637,16 @@ struct EventDetailView: View {
     private var detailSummaryText: String {
         AppContent.string(
             "events.card.hostLabel",
-            viewModel.hostProfile?.displayName ?? AppContent.string("events.card.hostFallback")
+            detailHostDisplayName
         )
+    }
+
+    private var detailHostDisplayName: String {
+        if isCurrentUserHost {
+            return AppContent.string("events.participants.self")
+        }
+
+        return viewModel.hostProfile?.displayName ?? AppContent.string("events.card.hostFallback")
     }
 
     private func detailInfoRow(title: String, value: String, systemImage: String? = nil, imageName: String? = nil) -> some View {
@@ -1148,31 +1158,48 @@ private struct EventDetailProfileCard: View {
     let profile: UserProfile
     let fallbackTitle: String
     let titleSuffix: String?
+    let titleOverride: String?
+
+    init(
+        profile: UserProfile,
+        fallbackTitle: String,
+        titleSuffix: String? = nil,
+        titleOverride: String? = nil
+    ) {
+        self.profile = profile
+        self.fallbackTitle = fallbackTitle
+        self.titleSuffix = titleSuffix
+        self.titleOverride = titleOverride
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                HStack(alignment: .center, spacing: 6) {
-                    Text(displayTitle)
-                        .font(.rally(size: 15, weight: .semibold))
-                        .foregroundStyle(RallyDiscoverStyle.ink)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.82)
+        HStack(alignment: .top, spacing: 12) {
+            ProfileAvatarImageView(url: profile.avatarURL, size: 36)
 
-                    GenderIconView(profile.gender, size: 18)
-                        .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    HStack(alignment: .center, spacing: 6) {
+                        Text(displayTitle)
+                            .font(.rally(size: 15, weight: .semibold))
+                            .foregroundStyle(RallyDiscoverStyle.ink)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.82)
+
+                        GenderIconView(profile.gender, size: 18)
+                            .accessibilityHidden(true)
+                    }
+
+                    Spacer(minLength: 8)
+
+                    SkillLevelBadge(profile.skillLevel)
                 }
 
-                Spacer(minLength: 8)
-
-                SkillLevelBadge(profile.skillLevel)
-            }
-
-            if !profile.socialTags.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 6) {
-                        ForEach(profile.socialTags, id: \.self) { tag in
-                            SocialTagBadge(tag, horizontalPadding: 10)
+                if !profile.socialTags.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 6) {
+                            ForEach(profile.socialTags, id: \.self) { tag in
+                                SocialTagBadge(tag, horizontalPadding: 10)
+                            }
                         }
                     }
                 }
@@ -1184,7 +1211,11 @@ private struct EventDetailProfileCard: View {
     }
 
     private var displayTitle: String {
-        ProfileDisplayHelper.displayName(profile.displayName, fallback: fallbackTitle, suffix: titleSuffix)
+        if let titleOverride {
+            return titleOverride
+        }
+
+        return ProfileDisplayHelper.displayName(profile.displayName, fallback: fallbackTitle, suffix: titleSuffix)
     }
 
 }

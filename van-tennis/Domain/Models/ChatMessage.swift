@@ -36,6 +36,7 @@ struct ChatRoomMessage: Identifiable, Equatable {
     let id: UUID
     let senderID: UUID
     let senderDisplayName: String
+    let senderAvatarURL: URL?
     let body: String
     let sentAt: Date
 }

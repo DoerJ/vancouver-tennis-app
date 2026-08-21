@@ -3,3 +3,4 @@ SUPABASE_ANON_KEY = YOUR_SUPABASE_ANON_KEY
 GOOGLE_CLIENT_ID = YOUR_GOOGLE_CLIENT_ID
 GOOGLE_AUTHORIZATION_ENDPOINT = https:/$()/accounts.google.com/o/oauth2/v2/auth
 GOOGLE_TOKEN_ENDPOINT = https:/$()/oauth2.googleapis.com/token
+PROFILE_AVATAR_STORAGE_PATH = /storage/v1/object/public/profile-avatars

@@ -23,7 +23,7 @@ struct ProfileService {
             id: user.id,
             email: user.email,
             displayName: defaultDisplayName(for: user),
-            avatarURL: defaultAvatarURL(for: user),
+            avatarURL: nil,
             skillLevel: nil,
             gender: nil,
             hostedEvents: [],
@@ -89,6 +89,7 @@ struct ProfileService {
 
     func updateProfile(
         userID: UUID,
+        avatarURL: URL?? = nil,
         displayName: String? = nil,
         skillLevel: SkillLevel? = nil,
         gender: Gender? = nil,
@@ -105,6 +106,7 @@ struct ProfileService {
             .from("profiles")
             .update(
                 UpdateUserProfile(
+                    avatarURL: avatarURL,
                     displayName: displayName,
                     skillLevel: skillLevel,
                     gender: gender,
@@ -191,16 +193,6 @@ struct ProfileService {
         }
     }
 
-    private func defaultAvatarURL(for user: User) -> URL? {
-        for key in ["avatar_url", "picture"] {
-            if let urlString = user.userMetadata[key]?.stringValue,
-               let url = URL(string: urlString) {
-                return url
-            }
-        }
-
-        return nil
-    }
 }
 
 private struct MarkCurrentUserChatMessagesReadParams: Encodable {

@@ -7,7 +7,9 @@ struct UserProfileView: View {
     @State private var isSigningOut = false
     @State private var isShowingLogOutConfirmation = false
     @State private var isShowingDeleteAccountConfirmation = false
+    @State private var isShowingAvatarPicker = false
     @FocusState private var isDisplayNameFocused: Bool
+    private let profileAvatarSize: CGFloat = 56
 
     init(onSaveCompleted: @escaping () -> Void = {}) {
         self.onSaveCompleted = onSaveCompleted
@@ -107,6 +109,10 @@ struct UserProfileView: View {
             } message: {
                 Text(AppContent.string("profile.accountDeletedMessage"))
             }
+            .sheet(isPresented: $isShowingAvatarPicker) {
+                AvatarPickerView()
+                    .environmentObject(appState)
+            }
         }
         .onAppear {
             viewModel.syncProfileIfNeeded(appState.userProfile)
@@ -152,11 +158,14 @@ struct UserProfileView: View {
 
     private var profileIdentityRow: some View {
         HStack(spacing: 26) {
-            Image("profile")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 56, height: 56)
-                .accessibilityHidden(true)
+            Button {
+                isShowingAvatarPicker = true
+            } label: {
+                profileAvatarView
+            }
+            .buttonStyle(.plain)
+            .disabled(viewModel.isSavingProfile)
+            .accessibilityLabel(AppContent.string("profile.avatarPickerOpen"))
 
             HStack(spacing: 4) {
                 if viewModel.isEditingDisplayName {
@@ -197,6 +206,14 @@ struct UserProfileView: View {
 
             Spacer()
         }
+    }
+
+    private var profileAvatarView: some View {
+        ProfileAvatarImageView(
+            url: appState.userProfile?.avatarURL,
+            size: profileAvatarSize
+        )
+        .contentShape(Circle())
     }
 
     private var profileDetails: some View {

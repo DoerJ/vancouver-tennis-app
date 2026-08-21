@@ -109,6 +109,7 @@ final class AppState: ObservableObject {
     }
 
     func updateProfile(
+        avatarURL: URL?? = nil,
         displayName: String? = nil,
         skillLevel: SkillLevel? = nil,
         gender: Gender? = nil,
@@ -118,12 +119,13 @@ final class AppState: ObservableObject {
             throw AppStateError.missingAuthenticatedUser
         }
 
-        guard displayName != nil || skillLevel != nil || gender != nil || socialTags != nil else {
+        guard avatarURL != nil || displayName != nil || skillLevel != nil || gender != nil || socialTags != nil else {
             return
         }
 
         let updatedProfile = try await profileService.updateProfile(
             userID: supabaseSession.user.id,
+            avatarURL: avatarURL,
             displayName: displayName,
             skillLevel: skillLevel,
             gender: gender,
@@ -735,6 +737,7 @@ final class AppState: ObservableObject {
                     id: message.id,
                     senderID: message.senderID,
                     senderDisplayName: profilesByID[message.senderID]?.displayName ?? AppContent.string("chat.unknownPlayer"),
+                    senderAvatarURL: profilesByID[message.senderID]?.avatarURL,
                     body: message.body,
                     sentAt: message.createdAt
                 )
@@ -751,12 +754,13 @@ final class AppState: ObservableObject {
 
     private func chatRoomMessage(from chatMessage: ChatMessage) async throws -> ChatRoomMessage {
         let profiles = try await profileService.fetchProfiles(userIDs: [chatMessage.senderID])
-        let displayName = profiles.first?.displayName ?? AppContent.string("chat.unknownPlayer")
+        let profile = profiles.first
 
         return ChatRoomMessage(
             id: chatMessage.id,
             senderID: chatMessage.senderID,
-            senderDisplayName: displayName,
+            senderDisplayName: profile?.displayName ?? AppContent.string("chat.unknownPlayer"),
+            senderAvatarURL: profile?.avatarURL,
             body: chatMessage.body,
             sentAt: chatMessage.createdAt
         )

@@ -139,6 +139,7 @@
     "messageLengthError": "Message must be no more than %d characters.",
     "unreadAccessibility": "%d unread messages",
     "unableToLoad": "Unable to load chats",
+    "self": "You",
     "unknownPlayer": "Unknown Player"
   },
   "events": {
@@ -399,6 +400,7 @@
       "title": "Participants",
       "fallback": "Participant",
       "you": "(You)",
+      "self": "You",
       "none": "No participants yet"
     },
     "host": {
@@ -433,6 +435,11 @@
     "genderDisplayLabel": "Gender:",
     "genderValue": "Gender: %@",
     "genderNotSet": "Gender not set",
+    "avatarPickerTitle": "Choose your avatar",
+    "avatarPickerOpen": "Choose profile avatar",
+    "avatarPickerLoading": "Loading avatars...",
+    "avatarPickerEmpty": "No avatars available.",
+    "avatarPickerInvalidPath": "Profile avatar storage path is invalid.",
     "socialTagsDisplayLabel": "My Tags:",
     "editSocialTags": "Edit social tags",
     "logOutTitle": "Log out?",

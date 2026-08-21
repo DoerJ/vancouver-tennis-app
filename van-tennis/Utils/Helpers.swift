@@ -1,4 +1,6 @@
 import Foundation
+import ImageIO
+import UIKit
 
 enum DateFormattingHelper {
     static func eventDateTimeString(from date: Date) -> String {
@@ -256,5 +258,40 @@ enum RandomInviteCodeHelper {
         }
 
         return String((0..<length).compactMap { _ in inviteCodeCharacters.randomElement() })
+    }
+}
+
+enum ImageDownsamplingHelper {
+    static func targetPixelSize(
+        size: CGFloat,
+        displayScale: CGFloat
+    ) -> Int {
+        max(Int((size * displayScale).rounded(.up)), 1)
+    }
+
+    static func downsampleImage(
+        data: Data,
+        targetPixelSize: Int
+    ) -> UIImage? {
+        let imageSourceOptions = [
+            kCGImageSourceShouldCache: false
+        ] as CFDictionary
+
+        guard let imageSource = CGImageSourceCreateWithData(data as CFData, imageSourceOptions) else {
+            return nil
+        }
+
+        let downsampleOptions = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: targetPixelSize
+        ] as CFDictionary
+
+        guard let cgImage = CGImageSourceCreateThumbnailAtIndex(imageSource, 0, downsampleOptions) else {
+            return nil
+        }
+
+        return UIImage(cgImage: cgImage)
     }
 }

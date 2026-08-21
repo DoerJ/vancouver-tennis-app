@@ -115,16 +115,9 @@ struct EventDiscoveryListView: View {
     private var discoverHeader: some View {
         VStack(alignment: .leading, spacing: 34) {
             HStack(alignment: .center) {
-                Button {
+                ProfileAvatarHeaderButton(avatarURL: appState.userProfile?.avatarURL) {
                     onOpenProfile()
-                } label: {
-                    Image("profile")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 40, height: 40)
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel(AppContent.string("common.profile"))
 
                 LanguageMenuButton()
                     .padding(.leading, 8)
